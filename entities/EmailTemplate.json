@@ -1,0 +1,12 @@
+{
+    "name": "EmailTemplate",
+    "description": "Customizable email templates for automated notifications",
+    "properties": {
+      "name": { "type": "string", "description": "Display name of the template" },
+      "type": { "type": "string", "description": "Event type: QUOTATION_SENT | PAYMENT_CONFIRMED | VOUCHER_ISSUED | REQUEST_CREATED | CUSTOM" },
+      "subject": { "type": "string", "description": "Email subject line (supports {{variables}})" },
+      "bodyHtml": { "type": "string", "description": "HTML body content with {{variable}} placeholders" },
+      "isActive": { "type": "boolean", "description": "Whether this template is used for automated sends", "default": true },
+      "description": { "type": "string", "description": "Short description of what this template is for" }
+    }
+  }

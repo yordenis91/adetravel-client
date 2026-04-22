@@ -1,0 +1,18 @@
+{
+    "name": "Payment",
+    "description": "Payment registration linked to a travel request",
+    "properties": {
+      "requestId": { "type": "string", "description": "Linked request ID" },
+      "quotationId": { "type": "string", "description": "Linked quotation ID (optional)" },
+      "clientId": { "type": "string", "description": "Linked client ID" },
+      "paymentNumber": { "type": "string", "description": "Format: PAG-YYYY-MM-####" },
+      "amount": { "type": "number", "description": "Payment amount" },
+      "currency": { "type": "string", "description": "CLP or USD" },
+      "paymentDate": { "type": "string", "description": "Date of payment" },
+      "method": { "type": "string", "description": "EFECTIVO/TARJETA/TRANSFERENCIA/CHEQUE/WEBPAY" },
+      "status": { "type": "string", "description": "PENDIENTE/COMPLETADO/CANCELADO" },
+      "reference": { "type": "string", "description": "Bank transfer reference or receipt number" },
+      "notes": { "type": "string" }
+    }
+  }
+  

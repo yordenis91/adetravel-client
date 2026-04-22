@@ -1,0 +1,90 @@
+{
+    "name": "Client",
+    "description": "Travel agency client information",
+    "properties": {
+      "firstName": {
+        "type": "string",
+        "description": "Client's first name"
+      },
+      "lastName": {
+        "type": "string",
+        "description": "Client's last name"
+      },
+      "email": {
+        "type": "string",
+        "description": "Client's email address"
+      },
+      "phone": {
+        "type": "string",
+        "description": "Client's phone number"
+      },
+      "rut": {
+        "type": "string",
+        "description": "Chilean national ID (RUT)"
+      },
+      "passportNumber": {
+        "type": "string",
+        "description": "Passport number"
+      },
+      "passportExpiry": {
+        "type": "string",
+        "description": "Passport expiry date"
+      },
+      "passportIssueDate": {
+        "type": "string",
+        "description": "Passport issue date"
+      },
+      "passportCountry": {
+        "type": "string",
+        "description": "Passport issuing country"
+      },
+      "birthDate": {
+        "type": "string",
+        "description": "Client's birth date"
+      },
+      "nationality": {
+        "type": "string",
+        "description": "Client's nationality"
+      },
+      "address": {
+        "type": "string",
+        "description": "Client's physical address"
+      },
+      "frequentFlyerNumbers": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of frequent flyer program numbers"
+      },
+      "restrictions": {
+        "type": "string",
+        "description": "Dietary or travel restrictions"
+      },
+      "referralSource": {
+        "type": "string",
+        "description": "Source of referral (CONSULATE/REFERRAL/WEBSITE/OTHER)"
+      },
+      "bankAccount": {
+        "type": "string",
+        "description": "Bank account number"
+      },
+      "bankName": {
+        "type": "string",
+        "description": "Name of the bank"
+      },
+      "bankAccountHolder": {
+        "type": "string",
+        "description": "Name of the bank account holder"
+      },
+      "bankEmail": {
+        "type": "string",
+        "description": "Email associated with the bank account"
+      },
+      "isActive": {
+        "type": "boolean",
+        "default": true,
+        "description": "Whether the client record is active"
+      }
+    }
+  }

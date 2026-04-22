@@ -1,0 +1,22 @@
+{
+    "name": "Voucher",
+    "description": "Travel service voucher issued to clients",
+    "properties": {
+      "voucherNumber": { "type": "string", "description": "Format: VCH-YYYY-MM-####" },
+      "requestId": { "type": "string", "description": "Linked request ID" },
+      "clientId": { "type": "string", "description": "Linked client ID" },
+      "providerId": { "type": "string", "description": "Linked provider ID" },
+      "serviceType": { "type": "string", "description": "HOTEL/AÉREO/TOUR/TRANSFER/SEGURO/RESTAURANT/OTRO" },
+      "serviceName": { "type": "string", "description": "Name of the service/hotel/tour" },
+      "serviceDetails": { "type": "string", "description": "Additional details about the service" },
+      "checkIn": { "type": "string", "description": "Start date or check-in date" },
+      "checkOut": { "type": "string", "description": "End date or check-out date" },
+      "destination": { "type": "string", "description": "Destination city/country" },
+      "passengerNames": { "type": "array", "items": { "type": "string" }, "description": "List of passenger names on the voucher" },
+      "confirmationCode": { "type": "string", "description": "Provider confirmation code/reference" },
+      "status": { "type": "string", "description": "BORRADOR/EMITIDO/CANCELADO" },
+      "notes": { "type": "string", "description": "Internal notes" },
+      "amount": { "type": "number", "description": "Service amount" },
+      "currency": { "type": "string", "description": "CLP or USD" }
+    }
+  }

@@ -1,0 +1,9 @@
+{
+    "name": "User",
+    "properties": {
+      "agencyRole": { "type": "string", "description": "Agency-level role: GERENTE / AGENTE_SENIOR / AGENTE / ASISTENTE" },
+      "department": { "type": "string", "description": "Department or team name" },
+      "phone": { "type": "string", "description": "Contact phone number" },
+      "isActive": { "type": "boolean", "description": "Whether the user account is active" }
+    }
+  }

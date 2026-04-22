@@ -1,0 +1,14 @@
+{
+    "name": "ActivityLog",
+    "description": "Activity and audit log for the travel agency",
+    "properties": {
+      "action": { "type": "string", "description": "Action performed (e.g. CLIENTE_CREADO, SOLICITUD_ACTUALIZADA)" },
+      "entityType": { "type": "string", "description": "Entity type affected (Cliente, Solicitud, Cotización, Pago, Voucher)" },
+      "entityId": { "type": "string", "description": "ID of the affected entity" },
+      "entityLabel": { "type": "string", "description": "Human-readable label (e.g. request number, client name)" },
+      "description": { "type": "string", "description": "Human-readable description of the action" },
+      "performedBy": { "type": "string", "description": "Email or name of who performed the action" },
+      "metadata": { "type": "string", "description": "Optional JSON string with extra context" }
+    }
+  }
+  

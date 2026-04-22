@@ -1,0 +1,95 @@
+{
+    "name": "Provider",
+    "description": "Travel service provider information",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Provider's legal name"
+      },
+      "fantasyName": {
+        "type": "string",
+        "description": "Provider's commercial name"
+      },
+      "rut": {
+        "type": "string",
+        "description": "Chilean national ID (RUT)"
+      },
+      "country": {
+        "type": "string",
+        "description": "Country of origin"
+      },
+      "city": {
+        "type": "string",
+        "description": "City of origin"
+      },
+      "address": {
+        "type": "string",
+        "description": "Physical address"
+      },
+      "phone": {
+        "type": "string",
+        "description": "Contact phone number"
+      },
+      "email": {
+        "type": "string",
+        "description": "Contact email address"
+      },
+      "businessType": {
+        "type": "string",
+        "description": "Type of service (RENT_A_CAR/TOUR_OPERATOR/INSURANCE/AIRLINE/HOTEL/PRIVATE_HOUSE/PRIVATE_CAR/TOURIST_SERVICES/RESTAURANT/OTHER)"
+      },
+      "executiveName": {
+        "type": "string",
+        "description": "Executive contact name"
+      },
+      "executivePhone": {
+        "type": "string",
+        "description": "Executive contact phone"
+      },
+      "executiveEmail": {
+        "type": "string",
+        "description": "Executive contact email"
+      },
+      "contactName": {
+        "type": "string",
+        "description": "Operational contact name"
+      },
+      "contactPhone": {
+        "type": "string",
+        "description": "Operational contact phone"
+      },
+      "contactEmail": {
+        "type": "string",
+        "description": "Operational contact email"
+      },
+      "contactRut": {
+        "type": "string",
+        "description": "Operational contact RUT"
+      },
+      "bankAccount": {
+        "type": "string",
+        "description": "Bank account number"
+      },
+      "bankName": {
+        "type": "string",
+        "description": "Name of the bank"
+      },
+      "bankAccountHolder": {
+        "type": "string",
+        "description": "Name of the bank account holder"
+      },
+      "paymentMethod": {
+        "type": "string",
+        "description": "Preferred payment method (CREDIT_CARD/DEBIT_CARD/WEBPAY/TRANSFER/CASH/CHECK)"
+      },
+      "vatPercentage": {
+        "type": "number",
+        "description": "VAT percentage applied"
+      },
+      "isActive": {
+        "type": "boolean",
+        "default": true,
+        "description": "Whether the provider record is active"
+      }
+    }
+  }

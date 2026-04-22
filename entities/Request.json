@@ -1,0 +1,57 @@
+{
+    "name": "Request",
+    "description": "Service request or travel inquiry",
+    "properties": {
+      "requestNumber": {
+        "type": "string",
+        "description": "Formatted ID (ADET-YYYY-MM-####)"
+      },
+      "clientId": {
+        "type": "string",
+        "description": "ID of the associated client"
+      },
+      "isPackage": {
+        "type": "boolean",
+        "description": "Whether the request is for a complete travel package"
+      },
+      "requestDate": {
+        "type": "string",
+        "description": "Date of the request"
+      },
+      "originCountry": {
+        "type": "string"
+      },
+      "originCity": {
+        "type": "string"
+      },
+      "destinationCountry": {
+        "type": "string"
+      },
+      "destinationCity": {
+        "type": "string"
+      },
+      "durationDays": {
+        "type": "number"
+      },
+      "budgetMin": {
+        "type": "number"
+      },
+      "budgetMax": {
+        "type": "number"
+      },
+      "status": {
+        "type": "string",
+        "description": "Current status (Recepcionada/Cotizada/Confirmada/Cancelada/Vendida)"
+      },
+      "description": {
+        "type": "string"
+      },
+      "services": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of service types requested"
+      }
+    }
+  }

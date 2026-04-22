@@ -1,0 +1,21 @@
+{
+    "name": "Quotation",
+    "description": "Formal travel quotation linked to a request",
+    "properties": {
+      "requestId": { "type": "string", "description": "Linked request ID" },
+      "clientId": { "type": "string", "description": "Linked client ID" },
+      "quotationNumber": { "type": "string", "description": "Format: COTIZ-YYYY-MM-####" },
+      "validUntil": { "type": "string", "description": "Expiry date of the quotation" },
+      "status": { "type": "string", "description": "Borrador/Enviada/Aceptada/Rechazada" },
+      "currency": { "type": "string", "description": "CLP or USD" },
+      "items": { "type": "array", "items": { "type": "string" }, "description": "JSON-serialized line items: {service, description, quantity, unitPrice, total}" },
+      "subtotal": { "type": "number" },
+      "taxPercentage": { "type": "number", "description": "IVA percentage (default 19)" },
+      "taxAmount": { "type": "number" },
+      "discount": { "type": "number", "description": "Discount amount" },
+      "total": { "type": "number", "description": "Final total including tax minus discount" },
+      "notes": { "type": "string" },
+      "termsAndConditions": { "type": "string" }
+    }
+  }
+  
