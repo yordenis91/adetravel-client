@@ -18,6 +18,8 @@ import Bitacora from "./pages/Bitacora";
 import Usuarios from "./pages/Usuarios";
 import Configuracion from "./pages/Configuracion";
 import EmailTemplates from "./pages/EmailTemplates";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import { BrandingBadge } from "./components/BrandingBadge";
 
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/configuracion" element={<Configuracion />} />
             <Route path="/plantillas-email" element={<EmailTemplates />} />
+            <Route path="/auth/login" element={<Login />} />
+            <Route path="/auth/register" element={<Register />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
