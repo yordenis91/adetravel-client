@@ -30,7 +30,7 @@ export default function RequestsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: requests = [], isLoading: isRequestsLoading } = useQuery({
+  const { data: requestsResponseData, isLoading: isRequestsLoading } = useQuery({
     queryKey: ["requests", activeTab],
     queryFn: async () => {
       if (activeTab === "all") return await api.get('/requests?sortBy=-created_at');
@@ -38,11 +38,12 @@ export default function RequestsPage() {
     }
   });
 
-  const { data: clientsResponseData = [] } = useQuery({
+  const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients-all"],
     queryFn: async () => await api.get('/clients')
   });
 
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
 
   const filteredRequests = requests.filter((req: any) => {

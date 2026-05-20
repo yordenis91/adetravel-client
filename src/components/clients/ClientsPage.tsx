@@ -26,7 +26,7 @@ export default function ClientsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: responseData = [] } = useQuery({
+  const { data: responseData = [], isLoading } = useQuery({
     queryKey: ["clients", activeTab],
     queryFn: async () => {
       if (activeTab === "active") return await api.get('/clients?isActive=true&sortBy=-created_at');

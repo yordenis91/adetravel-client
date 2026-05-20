@@ -13,12 +13,12 @@ export default function ConfirmacionesPage() {
   const [activeTab, setActiveTab] = useState("Todas");
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
 
-  const { data: requestsResponseData = [] } = useQuery({
+  const { data: requestsResponseData = [], isLoading: isRequestsLoading } = useQuery({
     queryKey: ["requests"],
     queryFn: () => api.get('/requests'),
   });
 
-  const { data: clientsResponseData = [] } = useQuery({
+  const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
   });
@@ -177,7 +177,7 @@ export default function ConfirmacionesPage() {
           clients={clients}
           payments={payments}
           vouchers={vouchers}
-          isLoading={isLoadingRequests}
+          isLoading={isRequestsLoading || isClientsLoading}
           onView={(request) => setSelectedRequest(request)}
         />
       </div>

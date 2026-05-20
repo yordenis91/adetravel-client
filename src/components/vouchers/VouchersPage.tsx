@@ -89,8 +89,6 @@ export default function VouchersPage() {
 
   const isLoading = isLoadingVouchers || isLoadingRequests || isLoadingClients || isLoadingProviders;
 
-  const isLoading = isLoadingVouchers || isLoadingRequests || isLoadingClients || isLoadingProviders;
-
   const filteredVouchers = useMemo(() => {
     return vouchers.filter((voucher: any) => {
       const client = clients.find(c => c.id === voucher.clientId);

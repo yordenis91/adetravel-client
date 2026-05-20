@@ -52,17 +52,17 @@ export default function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: paymentsResponseData = [] } = useQuery({
+  const { data: paymentsResponseData = [], isLoading: isPaymentsLoading } = useQuery({
     queryKey: ["payments"],
     queryFn: () => api.get('/payments?sortBy=-created_at'),
   });
 
-  const { data: requestsResponseData = [] } = useQuery({
+  const { data: requestsResponseData = [], isLoading: isRequestsLoading } = useQuery({
     queryKey: ["requests"],
     queryFn: () => api.get('/requests'),
   });
 
-  const { data: clientsResponseData = [] } = useQuery({
+  const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
   });
@@ -77,9 +77,7 @@ export default function PaymentsPage() {
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
   const paymentTemplates = Array.isArray(paymentTemplatesResponseData) ? paymentTemplatesResponseData : (paymentTemplatesResponseData as any)?.data || [];
 
-  const isLoading = isLoadingPayments || isLoadingRequests || isLoadingClients;
-
-  const isLoading = isLoadingPayments || isLoadingRequests || isLoadingClients;
+ const isLoading = isPaymentsLoading || isRequestsLoading || isClientsLoading;
 
   const filteredPayments = useMemo(() => {
     return payments.filter((payment: any) => {

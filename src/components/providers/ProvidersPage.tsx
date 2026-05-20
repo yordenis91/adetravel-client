@@ -35,7 +35,7 @@ export default function ProvidersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: responseData = [] } = useQuery({
+  const { data: responseData = [], isLoading} = useQuery({
     queryKey: ["providers", activeTab],
     queryFn: async () => {
       if (activeTab === "active") return await api.get('/providers?isActive=true&sortBy=-created_at');

@@ -63,7 +63,7 @@ export default function UsuariosPage() {
   const [copied, setCopied] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: responseData = [] } = useQuery({
+  const { data: responseData = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: () => api.get('/users')
   });

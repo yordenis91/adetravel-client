@@ -77,20 +77,24 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
   const queryClient = useQueryClient();
   const isEditing = !!payment;
 
-  const { data: requests = [] } = useQuery({
+  const { data: requestsResponseData = [] } = useQuery({
     queryKey: ["requests"],
-    queryFn: () => Request.list(),
+    queryFn: () => api.get('/requests'), // Cambiado de Request.list() a api.get para mantener consistencia con la otra página
   });
 
-  const { data: quotations = [] } = useQuery({
+  const { data: quotationsResponseData = [] } = useQuery({
     queryKey: ["quotations"],
     queryFn: () => api.get('/quotations'),
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: clientsResponseData = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
   });
+
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
+  const quotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
+  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

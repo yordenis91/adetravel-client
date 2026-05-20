@@ -72,7 +72,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
   const isEditing = !!quotation;
   const [items, setItems] = useState<LineItem[]>([]);
 
-  const { data: requests = [] } = useQuery({
+  const { data: requestsResponseData = [] } = useQuery({
     queryKey: ["requests"],
     queryFn: () => api.get('/requests'),
     enabled: open,
@@ -84,6 +84,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
     enabled: open,
   });
 
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
 
   const form = useForm<QuotationFormValues>({

@@ -39,22 +39,22 @@ export default function QuotationsPage() {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [pdfQuotation, setPdfQuotation] = useState<any>(null);
 
-  const { data: quotationsResponseData = [] } = useQuery({
+  const { data: quotationsResponseData = [], isLoading: loadingQuotations} = useQuery({
     queryKey: ["quotations"],
     queryFn: () => api.get('/quotations'),
   });
 
-  const { data: requestsResponseData = [] } = useQuery({
+  const { data: requestsResponseData = [], isLoading: loadingRequests } = useQuery({
     queryKey: ["requests"],
     queryFn: () => api.get('/requests'),
   });
 
-  const { data: clientsResponseData = [] } = useQuery({
+  const { data: clientsResponseData = [], isLoading: loadingClients } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
   });
 
-  const { data: quotationTemplatesResponseData = [] } = useQuery({
+  const { data: quotationTemplatesResponseData = [], isLoading: loadingQuotationTemplates } = useQuery({
     queryKey: ['emailTemplates', 'QUOTATION_SENT'],
     queryFn: () => api.get('/email-templates?type=QUOTATION_SENT&isActive=true')
   });
@@ -63,6 +63,8 @@ export default function QuotationsPage() {
   const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
   const quotationTemplates = Array.isArray(quotationTemplatesResponseData) ? quotationTemplatesResponseData : (quotationTemplatesResponseData as any)?.data || [];
+
+  const isLoading = loadingClients || loadingRequests || loadingQuotations || loadingQuotationTemplates;
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string, status: string }) => 

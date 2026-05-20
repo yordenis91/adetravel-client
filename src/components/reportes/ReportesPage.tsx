@@ -47,8 +47,6 @@ export default function ReportesPage() {
 
   const isLoading = loadingClients || loadingRequests || loadingQuotations || loadingPayments;
 
-  const isLoading = loadingClients || loadingRequests || loadingQuotations || loadingPayments;
-
   const stats = useMemo(() => {
     const totalClients = clients.length;
     const totalRequests = requests.length;

@@ -81,20 +81,24 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
   const queryClient = useQueryClient();
   const isEditing = !!voucher;
 
-  const { data: requests = [] } = useQuery({
+  const { data: requestsResponseData = [] } = useQuery({
     queryKey: ["requests"],
-    queryFn: () => Request.list(),
+    queryFn: () => api.get('/requests'),
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: clientsResponseData = [] } = useQuery({
     queryKey: ["clients"],
-    queryFn: () => Client.list(),
+    queryFn: () => api.get('/clients'),
   });
 
-  const { data: providers = [] } = useQuery({
+  const { data: providersResponseData = [] } = useQuery({
     queryKey: ["providers"],
     queryFn: () => api.get('/providers'),
   });
+
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
+  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+  const providers = Array.isArray(providersResponseData) ? providersResponseData : (providersResponseData as any)?.data || [];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
