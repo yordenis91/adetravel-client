@@ -1,0 +1,95 @@
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { auth, AuthUser } from "@/lib/auth";
+
+interface AuthContextType {
+  user: AuthUser | null;
+  token: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (fullName: string, email: string, password: string) => Promise<void>;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+const TOKEN_KEY = "ade_token";
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem(TOKEN_KEY);
+    if (savedToken) {
+      setToken(savedToken);
+      fetchMe();
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
+
+  async function fetchMe() {
+    try {
+      const currentUser = await auth.me();
+      setUser(currentUser);
+    } catch {
+      localStorage.removeItem(TOKEN_KEY);
+      setToken(null);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function login(email: string, password: string) {
+    setIsLoading(true);
+    try {
+      const { token: newToken, user: newUser } = await auth.login({ email, password });
+      setToken(newToken);
+      setUser(newUser);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function register(fullName: string, email: string, password: string) {
+    setIsLoading(true);
+    try {
+      const { token: newToken, user: newUser } = await auth.register({ fullName, email, password });
+      setToken(newToken);
+      setUser(newUser);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function logout() {
+    auth.logout();
+    setToken(null);
+    setUser(null);
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth debe usarse dentro de AuthProvider");
+  return ctx;
+}

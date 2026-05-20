@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { auth } from "@/lib/auth";
+import { useAuth } from "@/context/AuthContext";
 
 const loginSchema = z.object({
   email: z.string().email("Correo inválido"),
@@ -25,6 +25,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const {
@@ -40,15 +41,15 @@ export default function Login() {
   });
 
   useEffect(() => {
-    if (auth.isAuthenticated()) {
+    if (isAuthenticated) {
       navigate("/dashboard", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   const onSubmit = async (values: LoginValues) => {
     try {
       setLoading(true);
-      await auth.login(values);
+      await login(values.email, values.password);
       toast.success("Bienvenido de nuevo");
       navigate("/dashboard", { replace: true });
     } catch (error: any) {

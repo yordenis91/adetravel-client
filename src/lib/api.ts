@@ -3,7 +3,7 @@ const BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 type RequestMethod = "POST" | "PATCH" | "DELETE" | "PUT";
 
 async function request(path: string, options?: RequestInit) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("ade_token");
   const res = await fetch(`${BASE}${path}`, {
     headers: {
       "Content-Type": "application/json",

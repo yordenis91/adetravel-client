@@ -17,27 +17,49 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 export default function DashboardPage() {
+  // CORRECCIÓN: Manejo seguro con try/catch y extracción del total/array paginado
   const { data: clientCount = 0 } = useQuery({
     queryKey: ["client-count"],
     queryFn: async () => {
-      const clients = await api.get('/clients');
-      return clients.length;
+      try {
+        const clients = await api.get('/clients');
+        if (!clients) return 0;
+        // Si el backend usa sendList, vendrá en .total o .data.length. Si viene como array directo, usa .length
+        return clients.total ?? (Array.isArray(clients) ? clients.length : clients?.data?.length || 0);
+      } catch (error) {
+        console.error("Error al cargar contador de clientes:", error);
+        return 0; // Evita retornar undefined
+      }
     }
   });
 
+  // CORRECCIÓN: Manejo seguro para peticiones de solicitudes activas
   const { data: activeRequests = 0 } = useQuery({
     queryKey: ["active-requests-count"],
     queryFn: async () => {
-      const requests = await api.get('/requests?status=Recepcionada');
-      return requests.length;
+      try {
+        const requests = await api.get('/requests?status=RECEPCIONADA');
+        if (!requests) return 0;
+        return requests.total ?? (Array.isArray(requests) ? requests.length : requests?.data?.length || 0);
+      } catch (error) {
+        console.error("Error al cargar solicitudes activas:", error);
+        return 0;
+      }
     }
   });
 
+  // CORRECCIÓN: Manejo seguro para peticiones de viajes confirmados
   const { data: confirmedThisMonth = 0 } = useQuery({
     queryKey: ["confirmed-requests-count"],
     queryFn: async () => {
-      const requests = await api.get('/requests?status=Confirmada');
-      return requests.length;
+      try {
+        const requests = await api.get('/requests?status=CONFIRMADA');
+        if (!requests) return 0;
+        return requests.total ?? (Array.isArray(requests) ? requests.length : requests?.data?.length || 0);
+      } catch (error) {
+        console.error("Error al cargar viajes confirmados:", error);
+        return 0;
+      }
     }
   });
 

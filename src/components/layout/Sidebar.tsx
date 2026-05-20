@@ -84,7 +84,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   useEffect(() => {
     async function loadMe() {
       try {
-        const user = await api.get('/user/me');
+        const user = await api.get('/auth/me');
         setMe(user);
       } catch (error) {
         console.error("Error loading user info for sidebar", error);

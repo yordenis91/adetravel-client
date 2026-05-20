@@ -25,7 +25,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export function RecentRequests() {
-  const { data: requests, isLoading } = useQuery({
+  const { data: responseData, isLoading } = useQuery({
     queryKey: ["recent-requests"],
     queryFn: () => api.get('/requests?sortBy=-created_at&limit=5'),
   });
@@ -39,6 +39,11 @@ export function RecentRequests() {
       </div>
     );
   }
+
+  // CORRECCIÓN: sendList del backend envuelve el array en un objeto. Extraemos la propiedad data de forma segura.
+  const requests = Array.isArray(responseData)
+    ? responseData
+    : (responseData as any)?.data || [];
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -54,7 +59,7 @@ export function RecentRequests() {
         </Button>
       </div>
 
-      {!requests || requests.length === 0 ? (
+      {requests.length === 0 ? (
         <div className="text-center py-12 px-4 border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/50">
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
             <FileText className="w-6 h-6 text-muted-foreground/30" />

@@ -4,7 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import Providers from "./pages/Providers";
@@ -31,28 +33,126 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/clientes" element={<Clients />} />
-            <Route path="/proveedores" element={<Providers />} />
-            <Route path="/solicitudes" element={<Requests />} />
-            <Route path="/cotizaciones" element={<Quotations />} />
-            <Route path="/confirmaciones" element={<Confirmaciones />} />
-            <Route path="/pagos" element={<Payments />} />
-            <Route path="/vouchers" element={<Vouchers />} />
-            <Route path="/reportes" element={<Reportes />} />
-            <Route path="/bitacora" element={<Bitacora />} />
-            <Route path="/usuarios" element={<Usuarios />} />
-            <Route path="/configuracion" element={<Configuracion />} />
-            <Route path="/plantillas-email" element={<EmailTemplates />} />
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/register" element={<Register />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Redirección de raíz a dashboard */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              
+              {/* Rutas públicas */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
+              
+              {/* Rutas protegidas */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/clientes"
+                element={
+                  <ProtectedRoute>
+                    <Clients />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/proveedores"
+                element={
+                  <ProtectedRoute>
+                    <Providers />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/solicitudes"
+                element={
+                  <ProtectedRoute>
+                    <Requests />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/cotizaciones"
+                element={
+                  <ProtectedRoute>
+                    <Quotations />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/confirmaciones"
+                element={
+                  <ProtectedRoute>
+                    <Confirmaciones />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pagos"
+                element={
+                  <ProtectedRoute>
+                    <Payments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/vouchers"
+                element={
+                  <ProtectedRoute>
+                    <Vouchers />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reportes"
+                element={
+                  <ProtectedRoute>
+                    <Reportes />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/bitacora"
+                element={
+                  <ProtectedRoute>
+                    <Bitacora />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/usuarios"
+                element={
+                  <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                    <Usuarios />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/configuracion"
+                element={
+                  <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                    <Configuracion />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/plantillas-email"
+                element={
+                  <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                    <EmailTemplates />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
         <BrandingBadge />
       </TooltipProvider>
     </QueryClientProvider>

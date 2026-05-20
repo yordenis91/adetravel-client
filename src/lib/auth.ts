@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 
-const TOKEN_KEY = "token";
+const TOKEN_KEY = "ade_token";
 
 export interface AuthUser {
   id: string;

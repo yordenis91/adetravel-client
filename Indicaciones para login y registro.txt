@@ -1,0 +1,837 @@
+1. Contexto de Autenticación
+src/context/AuthContext.tsx
+tsx
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { api } from "../lib/api";
+
+interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  role: "ADMINISTRADOR" | "USUARIO";
+  agencyRole?: string;
+  department?: string;
+  phone?: string;
+  isActive: boolean;
+}
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({ children }: { children: https://React.ReactNode }) {
+  const [user, setUser]       = useState<User | null>(null);
+  const [token, setToken]     = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Al montar, recuperar sesión del localStorage
+  useEffect(() => {
+    const savedToken = https://localStorage.getItem("ade_token");
+    if (savedToken) {
+      setToken(savedToken);
+      fetchMe(savedToken);
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
+
+  async function fetchMe(savedToken: string) {
+    try {
+      const res = await https://api.get("/auth/me", savedToken);
+      setUser(https://res.data);
+    } catch {
+      // Token inválido o expirado — limpiar
+      https://localStorage.removeItem("ade_token");
+      setToken(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function login(email: string, password: string) {
+    const res = await https://api.post("/auth/login", { email, password });
+    const { token: newToken, user: newUser } = https://res.data;
+
+    https://localStorage.setItem("ade_token", newToken);
+    setToken(newToken);
+    setUser(newUser);
+  }
+
+  function logout() {
+    https://localStorage.removeItem("ade_token");
+    setToken(null);
+    setUser(null);
+  }
+
+  return (
+    <https://AuthContext.Provider
+      value={{
+        user,
+        token,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth debe usarse dentro de AuthProvider");
+  return ctx;
+}
+________________________________________
+2. API helper actualizado con token
+src/lib/api.ts
+ts
+const BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
+async function request(
+  path: string,
+  options?: RequestInit,
+  token?: string
+) {
+  const savedToken = token || https://localStorage.getItem("ade_token");
+
+  const res = await fetch(`${BASE}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(savedToken ? { Authorization: `Bearer ${savedToken}` } : {}),
+    },
+    ...options,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data?.error || "Error del servidor");
+  }
+
+  return data;
+}
+
+export const api = {
+  get:    (path: string, token?: string)              => request(path, {}, token),
+  post:   (path: string, body: any, token?: string)   => request(path, { method: "POST",  body: https://JSON.stringify(body) }, token),
+  patch:  (path: string, body: any, token?: string)   => request(path, { method: "PATCH", body: https://JSON.stringify(body) }, token),
+  delete: (path: string, token?: string)              => request(path, { method: "DELETE" }, token),
+};
+________________________________________
+3. Ruta Protegida
+src/components/ProtectedRoute.tsx
+tsx
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+interface Props {
+  children: https://React.ReactNode;
+  allowedRoles?: string[];
+}
+
+export function ProtectedRoute({ children, allowedRoles }: Props) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Mostrar spinner mientras se verifica la sesión
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0F1E3C]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+          <p className="text-white/60 text-sm font-manrope">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && user && !allowedRoles.includes(https://user.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
+________________________________________
+4. Página de Login
+src/pages/Login.tsx
+tsx
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { Eye, EyeOff, Plane, AlertCircle, Loader2 } from "lucide-react";
+
+export default function Login() {
+  const { login } = useAuth();
+  const navigate   = useNavigate();
+
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
+
+  async function handleSubmit(e: https://React.FormEvent) {
+    https://e.preventDefault();
+    setError("");
+
+    if (!email || !password) {
+      setError("Por favor completa todos los campos.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await login(https://email.trim().toLowerCase(), password);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(https://err.message || "Credenciales incorrectas. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex font-manrope">
+
+      {/* ── Panel izquierdo — decorativo ── */}
+      <div className="hidden lg:flex flex-col justify-between w-[480px] shrink-0 bg-[#0F1E3C] px-12 py-14 relative overflow-hidden">
+
+        {/* Círculos decorativos */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#C9A84C]/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-[#C9A84C]/10 blur-3xl pointer-events-none" />
+
+        {/* Logo */}
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-10 h-10 rounded-xl bg-[#C9A84C] flex items-center justify-center">
+            <Plane className="w-5 h-5 text-[#0F1E3C]" strokeWidth={2} />
+          </div>
+          <div>
+            <p className="text-white font-playfair text-lg font-semibold leading-none">ADE Travel</p>
+            <p className="text-white/40 text-xs mt-0.5">Sistema de Gestión</p>
+          </div>
+        </div>
+
+        {/* Quote central */}
+        <div className="relative z-10 space-y-6">
+          <div className="w-12 h-0.5 bg-[#C9A84C]" />
+          <h2 className="text-white font-playfair text-3xl font-semibold leading-snug">
+            Gestiona cada viaje<br />
+            con precisión y<br />
+            <span className="text-[#C9A84C]">elegancia.</span>
+          </h2>
+          <p className="text-white/50 text-sm leading-relaxed">
+            Cotizaciones, pagos, vouchers y clientes en un solo lugar diseñado para agencias profesionales.
+          </p>
+        </div>
+
+        {/* Footer panel */}
+        <p className="text-white/25 text-xs relative z-10">
+          © {new Date().getFullYear()} ADE Travel. Todos los derechos reservados.
+        </p>
+      </div>
+
+      {/* ── Panel derecho — formulario ── */}
+      <div className="flex-1 flex items-center justify-center bg-[#F5F7FA] px-6 py-12">
+        <div className="w-full max-w-sm">
+
+          {/* Logo mobile */}
+          <div className="flex items-center gap-3 mb-10 lg:hidden">
+            <div className="w-9 h-9 rounded-xl bg-[#0F1E3C] flex items-center justify-center">
+              <Plane className="w-4 h-4 text-[#C9A84C]" strokeWidth={2} />
+            </div>
+            <span className="text-[#0F1E3C] font-playfair text-lg font-semibold">ADE Travel</span>
+          </div>
+
+          <h1 className="text-[#0F1E3C] font-playfair text-3xl font-bold mb-1">
+            Bienvenido
+          </h1>
+          <p className="text-slate-500 text-sm mb-8">
+            Ingresa tus credenciales para continuar
+          </p>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-6">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700">
+                Correo electrónico
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(https://e.target.value)}
+                placeholder="tu@email.com"
+                autoComplete="email"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800
+                           placeholder:text-slate-400 text-sm outline-none
+                           focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20
+                           transition-all duration-200"
+              />
+            </div>
+
+            {/* Contraseña */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium text-slate-700">
+                  Contraseña
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-[#C9A84C] hover:text-[#A68B3E] transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPass ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(https://e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 bg-white text-slate-800
+                             placeholder:text-slate-400 text-sm outline-none
+                             focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20
+                             transition-all duration-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(p => !p)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-[#0F1E3C] hover:bg-[#1E2F4F] active:scale-[0.98]
+                         text-white text-sm font-semibold transition-all duration-200
+                         flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Ingresando...
+                </>
+              ) : (
+                "Iniciar sesión"
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-xs text-slate-400">o</span>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+
+          <p className="text-center text-sm text-slate-500">
+            ¿Primera vez?{" "}
+            <Link
+              to="/register"
+              className="text-[#C9A84C] hover:text-[#A68B3E] font-medium transition-colors"
+            >
+              Crea tu cuenta
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+________________________________________
+5. Página de Registro
+src/pages/Register.tsx
+tsx
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { api } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+import {
+  Eye, EyeOff, Plane, AlertCircle,
+  CheckCircle2, Loader2, Check
+} from "lucide-react";
+
+// Requisitos de contraseña
+const REQUIREMENTS = [
+  { label: "Al menos 8 caracteres",     test: (p: string) => https://p.length >= 8 },
+  { label: "Una letra mayúscula",        test: (p: string) => /[A-Z]/.test(p) },
+  { label: "Una letra minúscula",        test: (p: string) => /[a-z]/.test(p) },
+  { label: "Un número",                  test: (p: string) => /\d/.test(p) },
+];
+
+export default function Register() {
+  const navigate  = useNavigate();
+  const { login } = useAuth();
+
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Paso 1 — datos personales
+  const [firstName, setFirstName] = useState("");
+  const [lastName,  setLastName]  = useState("");
+  const [email,     setEmail]     = useState("");
+
+  // Paso 2 — contraseña
+  const [password,  setPassword]  = useState("");
+  const [confirm,   setConfirm]   = useState("");
+  const [showPass,  setShowPass]  = useState(false);
+  const [showConf,  setShowConf]  = useState(false);
+
+  const [error,     setError]     = useState("");
+  const [loading,   setLoading]   = useState(false);
+  const [success,   setSuccess]   = useState(false);
+
+  const passwordStrength = https://REQUIREMENTS.filter(r => https://r.test(password)).length;
+
+  const strengthLabel = ["", "Débil", "Regular", "Buena", "Fuerte"][passwordStrength];
+  const strengthColor = [
+    "",
+    "bg-red-400",
+    "bg-orange-400",
+    "bg-yellow-400",
+    "bg-emerald-500",
+  ][passwordStrength];
+
+  // ── Paso 1: validar y avanzar ──
+  function handleStep1(e: https://React.FormEvent) {
+    https://e.preventDefault();
+    setError("");
+
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      setError("Todos los campos son obligatorios.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Ingresa un correo electrónico válido.");
+      return;
+    }
+    setStep(2);
+  }
+
+  // ── Paso 2: crear cuenta ──
+  async function handleStep2(e: https://React.FormEvent) {
+    https://e.preventDefault();
+    setError("");
+
+    if (passwordStrength < 3) {
+      setError("La contraseña no cumple los requisitos mínimos.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Llamar al endpoint de setup (primer usuario = admin)
+      // O al endpoint de registro normal si ya hay usuarios
+      await https://api.post("/auth/setup", {
+        email:    https://email.trim().toLowerCase(),
+        fullName: `${https://firstName.trim()} ${https://lastName.trim()}`,
+        password,
+      });
+
+      setSuccess(true);
+
+      // Auto-login tras registro exitoso
+      setTimeout(async () => {
+        await login(https://email.trim().toLowerCase(), password);
+        navigate("/dashboard");
+      }, 1500);
+
+    } catch (err: any) {
+      setError(https://err.message || "No se pudo crear la cuenta. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Pantalla de éxito ──
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA] font-manrope">
+        <div className="text-center space-y-4 animate-in fade-in-0 zoom-in-95 duration-500">
+          <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+          </div>
+          <h2 className="text-[#0F1E3C] font-playfair text-2xl font-bold">¡Cuenta creada!</h2>
+          <p className="text-slate-500 text-sm">Redirigiendo al sistema...</p>
+          <div className="w-8 h-8 border-3 border-[#C9A84C] border-t-transparent rounded-full animate-spin mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex font-manrope">
+
+      {/* ── Panel izquierdo ── */}
+      <div className="hidden lg:flex flex-col justify-between w-[480px] shrink-0 bg-[#0F1E3C] px-12 py-14 relative overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#C9A84C]/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-[#C9A84C]/10 blur-3xl pointer-events-none" />
+
+        {/* Logo */}
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-10 h-10 rounded-xl bg-[#C9A84C] flex items-center justify-center">
+            <Plane className="w-5 h-5 text-[#0F1E3C]" strokeWidth={2} />
+          </div>
+          <div>
+            <p className="text-white font-playfair text-lg font-semibold leading-none">ADE Travel</p>
+            <p className="text-white/40 text-xs mt-0.5">Sistema de Gestión</p>
+          </div>
+        </div>
+
+        {/* Pasos visuales */}
+        <div className="relative z-10 space-y-8">
+          <div className="w-12 h-0.5 bg-[#C9A84C]" />
+          <h2 className="text-white font-playfair text-3xl font-semibold leading-snug">
+            Configura tu<br />
+            <span className="text-[#C9A84C]">agencia</span> en<br />
+            minutos.
+          </h2>
+
+          <div className="space-y-4">
+            {[
+              { n: 1, label: "Datos personales",  desc: "Nombre y correo electrónico" },
+              { n: 2, label: "Seguridad",          desc: "Crea una contraseña segura"  },
+            ].map(s => (
+              <div key={s.n} className="flex items-start gap-4">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold transition-colors duration-300
+                  ${step >= s.n
+                    ? "bg-[#C9A84C] text-[#0F1E3C]"
+                    : "bg-white/10 text-white/40"}`}
+                >
+                  {step > s.n ? <Check className="w-4 h-4" /> : s.n}
+                </div>
+                <div>
+                  <p className={`text-sm font-semibold transition-colors duration-300
+                    ${step >= s.n ? "text-white" : "text-white/40"}`}>
+                    {https://s.label}
+                  </p>
+                  <p className="text-white/30 text-xs">{https://s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-white/25 text-xs relative z-10">
+          © {new Date().getFullYear()} ADE Travel. Todos los derechos reservados.
+        </p>
+      </div>
+
+      {/* ── Panel derecho ── */}
+      <div className="flex-1 flex items-center justify-center bg-[#F5F7FA] px-6 py-12">
+        <div className="w-full max-w-sm">
+
+          {/* Logo mobile */}
+          <div className="flex items-center gap-3 mb-10 lg:hidden">
+            <div className="w-9 h-9 rounded-xl bg-[#0F1E3C] flex items-center justify-center">
+              <Plane className="w-4 h-4 text-[#C9A84C]" strokeWidth={2} />
+            </div>
+            <span className="text-[#0F1E3C] font-playfair text-lg font-semibold">ADE Travel</span>
+          </div>
+
+          {/* Indicador de paso mobile */}
+          <div className="flex items-center gap-2 mb-6 lg:hidden">
+            {[1, 2].map(s => (
+              <div
+                key={s}
+                className={`h-1 flex-1 rounded-full transition-all duration-300
+                  ${step >= s ? "bg-[#C9A84C]" : "bg-slate-200"}`}
+              />
+            ))}
+          </div>
+
+          <h1 className="text-[#0F1E3C] font-playfair text-3xl font-bold mb-1">
+            {step === 1 ? "Crear cuenta" : "Elige tu contraseña"}
+          </h1>
+          <p className="text-slate-500 text-sm mb-8">
+            {step === 1
+              ? "Paso 1 de 2 — Información básica"
+              : "Paso 2 de 2 — Seguridad de la cuenta"}
+          </p>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-6">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* ── STEP 1 ── */}
+          {step === 1 && (
+            <form onSubmit={handleStep1} className="space-y-5">
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700">Nombre</label>
+                  <input
+                    value={firstName}
+                    onChange={e => setFirstName(https://e.target.value)}
+                    placeholder="Ana"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800
+                               placeholder:text-slate-400 text-sm outline-none
+                               focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700">Apellido</label>
+                  <input
+                    value={lastName}
+                    onChange={e => setLastName(https://e.target.value)}
+                    placeholder="González"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800
+                               placeholder:text-slate-400 text-sm outline-none
+                               focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700">Correo electrónico</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(https://e.target.value)}
+                  placeholder="ana@adetravel.cl"
+                  autoComplete="email"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800
+                             placeholder:text-slate-400 text-sm outline-none
+                             focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 transition-all"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-[#0F1E3C] hover:bg-[#1E2F4F] active:scale-[0.98]
+                           text-white text-sm font-semibold transition-all duration-200 mt-2"
+              >
+                Continuar →
+              </button>
+            </form>
+          )}
+
+          {/* ── STEP 2 ── */}
+          {step === 2 && (
+            <form onSubmit={handleStep2} className="space-y-5">
+
+              {/* Contraseña */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700">Contraseña</label>
+                <div className="relative">
+                  <input
+                    type={showPass ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(https://e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 bg-white text-slate-800
+                               placeholder:text-slate-400 text-sm outline-none
+                               focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 transition-all"
+                  />
+                  <button type="button" onClick={() => setShowPass(p => !p)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" tabIndex={-1}>
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {/* Barra de fortaleza */}
+                {password && (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex gap-1">
+                      {[1,2,3,4].map(i => (
+                        <div key={i}
+                          className={`h-1 flex-1 rounded-full transition-all duration-300
+                            ${i <= passwordStrength ? strengthColor : "bg-slate-200"}`} />
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Fortaleza: <span className="font-medium text-slate-700">{strengthLabel}</span>
+                    </p>
+
+                    {/* Requisitos */}
+                    <div className="space-y-1">
+                      {https://REQUIREMENTS.map(req => (
+                        <div key={https://req.label} className="flex items-center gap-2">
+                          <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors
+                            ${https://req.test(password) ? "bg-emerald-500" : "bg-slate-200"}`}>
+                            {https://req.test(password) && <Check className="w-2 h-2 text-white" strokeWidth={3} />}
+                          </div>
+                          <span className={`text-xs transition-colors
+                            ${https://req.test(password) ? "text-emerald-600" : "text-slate-400"}`}>
+                            {https://req.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirmar contraseña */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700">Confirmar contraseña</label>
+                <div className="relative">
+                  <input
+                    type={showConf ? "text" : "password"}
+                    value={confirm}
+                    onChange={e => setConfirm(https://e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full px-4 py-3 pr-12 rounded-xl border bg-white text-slate-800
+                               placeholder:text-slate-400 text-sm outline-none transition-all
+                               ${confirm && confirm !== password
+                                 ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                                 : "border-slate-200 focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20"}`}
+                  />
+                  <button type="button" onClick={() => setShowConf(p => !p)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" tabIndex={-1}>
+                    {showConf ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {confirm && confirm !== password && (
+                  <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
+                )}
+                {confirm && confirm === password && (
+                  <p className="text-xs text-emerald-600 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Las contraseñas coinciden
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setError(""); }}
+                  className="flex-1 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50
+                             text-slate-700 text-sm font-medium transition-all duration-200"
+                >
+                  ← Volver
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-3 rounded-xl bg-[#0F1E3C] hover:bg-[#1E2F4F] active:scale-[0.98]
+                             text-white text-sm font-semibold transition-all duration-200
+                             flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {loading ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Creando...</>
+                  ) : (
+                    "Crear cuenta"
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+
+          <p className="text-center text-sm text-slate-500 mt-6">
+            ¿Ya tienes cuenta?{" "}
+            <Link to="/login" className="text-[#C9A84C] hover:text-[#A68B3E] font-medium transition-colors">
+              Inicia sesión
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+________________________________________
+6. Conectar todo en App.tsx
+tsx
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import Login    from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+// ... resto de imports
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Rutas públicas */}
+          <Route path="/login"    element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Rutas protegidas */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Solo ADMINISTRADOR */}
+          <Route path="/usuarios" element={
+            <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+              <Usuarios />
+            </ProtectedRoute>
+          } />
+
+          {/* Redirect raíz → dashboard */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+________________________________________
+Resumen del flujo completo
+Usuario entra a /login
+    ↓
+Completa email + contraseña
+    ↓
+POST /api/auth/login → recibe { token, user }
+    ↓
+Token guardado en localStorage
+    ↓
+AuthContext guarda user en memoria
+    ↓
+Redirige a /dashboard
+    ↓
+Cada request lleva Authorization: Bearer <token>
+    ↓
+authMiddleware verifica token en cada endpoint
+    ↓
+Al cerrar sesión: localStorage limpio + estado reseteado → /login
+Feature	Implementado
+Login con validación	✅
+Registro en 2 pasos	✅
+Indicador de fortaleza de contraseña	✅
+Mostrar/ocultar contraseña	✅
+Rutas protegidas por rol	✅
+Persistencia de sesión (localStorage)	✅
+Auto-login tras registro	✅
+Diseño responsive navy/gold	✅
+
