@@ -38,10 +38,12 @@ export default function RequestsPage() {
     }
   });
 
-  const { data: clients = [], isLoading: isClientsLoading } = useQuery({
+  const { data: clientsResponseData = [] } = useQuery({
     queryKey: ["clients-all"],
-    queryFn: async () => await Client.list()
+    queryFn: async () => await api.get('/clients')
   });
+
+  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
 
   const filteredRequests = requests.filter((req: any) => {
     const searchLower = searchTerm.toLowerCase();

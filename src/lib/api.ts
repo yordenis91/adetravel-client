@@ -2,6 +2,49 @@ const BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 type RequestMethod = "POST" | "PATCH" | "DELETE" | "PUT";
 
+/**
+ * Estructura estándar de respuesta paginada del backend
+ * El backend SIEMPRE devuelve este formato para endpoints de listas
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Estructura que puede venir del servidor - puede ser directamente un array
+ * o un objeto paginado, dependiendo del endpoint
+ */
+export type ApiResponse<T> = T[] | PaginatedResponse<T> | T | null;
+
+/**
+ * Helper para extraer array de cualquier formato de respuesta
+ */
+export function extractArrayFromResponse<T>(response: ApiResponse<T>): T[] {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (response && typeof response === 'object' && 'data' in response) {
+    return (response as any).data || [];
+  }
+  return [];
+}
+
+/**
+ * Helper para extraer total de un response paginado
+ */
+export function extractTotalFromResponse<T>(response: ApiResponse<T>): number {
+  if ('total' in (response as any)) {
+    return (response as any).total;
+  }
+  if (Array.isArray(response)) {
+    return response.length;
+  }
+  return 0;
+}
+
 async function request(path: string, options?: RequestInit) {
   const token = localStorage.getItem("ade_token");
   const res = await fetch(`${BASE}${path}`, {

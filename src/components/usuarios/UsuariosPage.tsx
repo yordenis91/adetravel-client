@@ -63,10 +63,12 @@ export default function UsuariosPage() {
   const [copied, setCopied] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: responseData = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => User.list()
+    queryFn: () => api.get('/users')
   });
+
+  const users = Array.isArray(responseData) ? responseData : (responseData as any)?.data || [];
 
   useEffect(() => {
     async function loadMe() {

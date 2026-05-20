@@ -25,26 +25,35 @@ export function useRequests(params: RequestsQueryParams) {
     }
   });
 
-  return useQuery({
+  const { data: responseData, ...rest } = useQuery({
     queryKey: ["requests", params],
-    queryFn: () => api.get(`/requests?${query.toString()}`)
+    queryFn: async () => api.get(`/requests?${query.toString()}`)
   });
+
+  const data = Array.isArray(responseData) ? responseData : (responseData as any)?.data || [];
+  return { data, ...rest };
 }
 
 export function useRequest(id: string) {
-  return useQuery({
+  const { data: responseData, ...rest } = useQuery({
     queryKey: ["requests", id],
-    queryFn: () => api.get(`/requests/${id}`),
+    queryFn: async () => api.get(`/requests/${id}`),
     enabled: Boolean(id)
   });
+
+  const data = responseData && !Array.isArray(responseData) ? responseData : (responseData as any)?.data || null;
+  return { data, ...rest };
 }
 
 export function useRequestStats() {
-  return useQuery({
+  const { data: responseData, ...rest } = useQuery({
     queryKey: ["requests", "stats"],
-    queryFn: () => api.get("/requests/stats"),
+    queryFn: async () => api.get("/requests/stats"),
     staleTime: 60_000
   });
+
+  const data = responseData && !Array.isArray(responseData) ? responseData : (responseData as any)?.data || {};
+  return { data, ...rest };
 }
 
 export function useCreateRequest() {

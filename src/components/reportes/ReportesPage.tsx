@@ -20,25 +20,32 @@ const NAVY = "#0F1E3C";
 const GOLD = "#C9A84C";
 
 export default function ReportesPage() {
-  const { data: clients = [], isLoading: loadingClients } = useQuery({
+  const { data: clientsResponseData = [], isLoading: loadingClients } = useQuery({
     queryKey: ["clients-all"],
     queryFn: () => api.get('/clients')
   });
 
-  const { data: requests = [], isLoading: loadingRequests } = useQuery({
+  const { data: requestsResponseData = [], isLoading: loadingRequests } = useQuery({
     queryKey: ["requests-all"],
     queryFn: () => api.get('/requests')
   });
 
-  const { data: quotations = [], isLoading: loadingQuotations } = useQuery({
+  const { data: quotationsResponseData = [], isLoading: loadingQuotations } = useQuery({
     queryKey: ["quotations-all"],
     queryFn: () => api.get('/quotations')
   });
 
-  const { data: payments = [], isLoading: loadingPayments } = useQuery({
+  const { data: paymentsResponseData = [], isLoading: loadingPayments } = useQuery({
     queryKey: ["payments-all"],
     queryFn: () => api.get('/payments')
   });
+
+  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
+  const quotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
+  const payments = Array.isArray(paymentsResponseData) ? paymentsResponseData : (paymentsResponseData as any)?.data || [];
+
+  const isLoading = loadingClients || loadingRequests || loadingQuotations || loadingPayments;
 
   const isLoading = loadingClients || loadingRequests || loadingQuotations || loadingPayments;
 

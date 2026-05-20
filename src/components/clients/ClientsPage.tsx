@@ -26,7 +26,7 @@ export default function ClientsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: clients = [], isLoading } = useQuery({
+  const { data: responseData = [] } = useQuery({
     queryKey: ["clients", activeTab],
     queryFn: async () => {
       if (activeTab === "active") return await api.get('/clients?isActive=true&sortBy=-created_at');
@@ -34,6 +34,8 @@ export default function ClientsPage() {
       return await api.get('/clients?sortBy=-created_at');
     }
   });
+
+  const clients = Array.isArray(responseData) ? responseData : (responseData as any)?.data || [];
 
   const filteredClients = clients.filter((client: any) => {
     const searchLower = searchTerm.toLowerCase();

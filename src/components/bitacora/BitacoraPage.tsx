@@ -39,10 +39,16 @@ export default function BitacoraPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: logs = [], isLoading } = useQuery<ActivityLogItem[]>({
+  const { data: logsResponseData = [], isLoading } = useQuery<any[]>({
     queryKey: ["activity-logs"],
-    queryFn: () => api.get("/activity-logs?limit=200").then((result: any) => result?.data ?? []),
+    queryFn: async () => {
+      const result = await api.get("/activity-logs?limit=200");
+      const logsArray = Array.isArray(result) ? result : (result as any)?.data || [];
+      return logsArray;
+    }
   });
+
+  const logs = Array.isArray(logsResponseData) ? logsResponseData : (logsResponseData as any)?.data || [];
 
   const filteredLogs = logs.filter((log) => {
     const matchesType = filterType === "all" || log.entityType === filterType;

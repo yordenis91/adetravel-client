@@ -35,14 +35,16 @@ export default function ProvidersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: providers = [], isLoading } = useQuery({
+  const { data: responseData = [] } = useQuery({
     queryKey: ["providers", activeTab],
     queryFn: async () => {
-      if (activeTab === "active") return await Provider.filter({ isActive: true }, "-created_at");
-      if (activeTab === "inactive") return await Provider.filter({ isActive: false }, "-created_at");
+      if (activeTab === "active") return await api.get('/providers?isActive=true&sortBy=-created_at');
+      if (activeTab === "inactive") return await api.get('/providers?isActive=false&sortBy=-created_at');
       return await api.get('/providers?sortBy=-created_at');
     }
   });
+
+  const providers = Array.isArray(responseData) ? responseData : (responseData as any)?.data || [];
 
   const filteredProviders = providers.filter((p: any) => {
     const searchLower = searchTerm.toLowerCase();

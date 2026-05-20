@@ -56,30 +56,38 @@ export default function VouchersPage() {
   const [pdfVoucher, setPdfVoucher] = useState<any>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
 
-  const { data: vouchers = [], isLoading: isLoadingVouchers } = useQuery({
+  const { data: vouchersResponseData = [], isLoading: isLoadingVouchers } = useQuery({
     queryKey: ["vouchers"],
     queryFn: () => api.get('/vouchers?sortBy=-created_at'),
   });
 
-  const { data: requests = [], isLoading: isLoadingRequests } = useQuery({
+  const { data: requestsResponseData = [], isLoading: isLoadingRequests } = useQuery({
     queryKey: ["requests"],
     queryFn: () => api.get('/requests'),
   });
 
-  const { data: clients = [], isLoading: isLoadingClients } = useQuery({
+  const { data: clientsResponseData = [], isLoading: isLoadingClients } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
   });
 
-  const { data: providers = [], isLoading: isLoadingProviders } = useQuery({
+  const { data: providersResponseData = [], isLoading: isLoadingProviders } = useQuery({
     queryKey: ["providers"],
     queryFn: () => api.get('/providers'),
   });
 
-  const { data: voucherTemplates = [] } = useQuery({
+  const { data: voucherTemplatesResponseData = [] } = useQuery({
     queryKey: ['emailTemplates', 'VOUCHER_ISSUED'],
     queryFn: () => api.get('/email-templates?type=VOUCHER_ISSUED&isActive=true')
   });
+
+  const vouchers = Array.isArray(vouchersResponseData) ? vouchersResponseData : (vouchersResponseData as any)?.data || [];
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
+  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+  const providers = Array.isArray(providersResponseData) ? providersResponseData : (providersResponseData as any)?.data || [];
+  const voucherTemplates = Array.isArray(voucherTemplatesResponseData) ? voucherTemplatesResponseData : (voucherTemplatesResponseData as any)?.data || [];
+
+  const isLoading = isLoadingVouchers || isLoadingRequests || isLoadingClients || isLoadingProviders;
 
   const isLoading = isLoadingVouchers || isLoadingRequests || isLoadingClients || isLoadingProviders;
 

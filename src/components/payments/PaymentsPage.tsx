@@ -52,25 +52,32 @@ export default function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
+  const { data: paymentsResponseData = [] } = useQuery({
     queryKey: ["payments"],
     queryFn: () => api.get('/payments?sortBy=-created_at'),
   });
 
-  const { data: requests = [], isLoading: isLoadingRequests } = useQuery({
+  const { data: requestsResponseData = [] } = useQuery({
     queryKey: ["requests"],
     queryFn: () => api.get('/requests'),
   });
 
-  const { data: clients = [], isLoading: isLoadingClients } = useQuery({
+  const { data: clientsResponseData = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
   });
 
-  const { data: paymentTemplates = [] } = useQuery({
+  const { data: paymentTemplatesResponseData = [] } = useQuery({
     queryKey: ['emailTemplates', 'PAYMENT_CONFIRMED'],
     queryFn: () => api.get('/email-templates?type=PAYMENT_CONFIRMED&isActive=true')
   });
+
+  const payments = Array.isArray(paymentsResponseData) ? paymentsResponseData : (paymentsResponseData as any)?.data || [];
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
+  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+  const paymentTemplates = Array.isArray(paymentTemplatesResponseData) ? paymentTemplatesResponseData : (paymentTemplatesResponseData as any)?.data || [];
+
+  const isLoading = isLoadingPayments || isLoadingRequests || isLoadingClients;
 
   const isLoading = isLoadingPayments || isLoadingRequests || isLoadingClients;
 

@@ -13,30 +13,36 @@ export default function ConfirmacionesPage() {
   const [activeTab, setActiveTab] = useState("Todas");
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
 
-  const { data: requests = [], isLoading: isLoadingRequests } = useQuery({
+  const { data: requestsResponseData = [] } = useQuery({
     queryKey: ["requests"],
     queryFn: () => api.get('/requests'),
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: clientsResponseData = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
   });
 
-  const { data: payments = [] } = useQuery({
+  const { data: paymentsResponseData = [] } = useQuery({
     queryKey: ["payments"],
     queryFn: () => api.get('/payments'),
   });
 
-  const { data: vouchers = [] } = useQuery({
+  const { data: vouchersResponseData = [] } = useQuery({
     queryKey: ["vouchers"],
     queryFn: () => api.get('/vouchers'),
   });
 
-  const { data: quotations = [] } = useQuery({
+  const { data: quotationsResponseData = [] } = useQuery({
     queryKey: ["quotations"],
     queryFn: () => api.get('/quotations'),
   });
+
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
+  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+  const payments = Array.isArray(paymentsResponseData) ? paymentsResponseData : (paymentsResponseData as any)?.data || [];
+  const vouchers = Array.isArray(vouchersResponseData) ? vouchersResponseData : (vouchersResponseData as any)?.data || [];
+  const quotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
 
   const confirmedRequests = useMemo(() => {
     return requests.filter((r: any) => r.status === "Confirmada" || r.status === "Vendida");

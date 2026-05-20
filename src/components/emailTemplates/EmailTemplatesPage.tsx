@@ -61,10 +61,12 @@ export default function EmailTemplatesPage() {
   const [filterType, setFilterType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: templates, isLoading } = useQuery({
+  const { data: templatesResponseData, isLoading } = useQuery({
     queryKey: ["emailTemplates"],
     queryFn: () => api.get('/email-templates?sortBy=-created_at'),
   });
+
+  const templates = Array.isArray(templatesResponseData) ? templatesResponseData : (templatesResponseData as any)?.data || [];
 
   const toggleActiveMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => 

@@ -78,11 +78,13 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
     enabled: open,
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: clientsResponseData = [] } = useQuery({
     queryKey: ["clients"],
-    queryFn: () => Client.list(),
+    queryFn: () => api.get('/clients'),
     enabled: open,
   });
+
+  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
 
   const form = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationSchema),
