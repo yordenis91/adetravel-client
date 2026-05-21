@@ -33,7 +33,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
-import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -52,13 +51,21 @@ const requestSchema = z.object({
   status: z.string().default("Recepcionada"),
   description: z.string().optional(),
   services: z.array(z.string()).default([]),
+}).refine(data => {
+  // Validar solo si ambos tienen valor y el máximo es mayor a cero
+  if (data.budgetMin !== undefined && data.budgetMax !== undefined && data.budgetMax > 0) {
+    return data.budgetMax >= data.budgetMin;
+  }
+  return true;
+}, {
+  message: "Debe ser mayor o igual al mínimo",
+  path: ["budgetMax"]
 });
 
 type RequestFormValues = z.infer<typeof requestSchema>;
 
 const AVAILABLE_SERVICES = [
-  "VUELO", "HOTEL", "TRASLADO", "SEGURO", "TOUR", 
-  "ALQUILER_AUTO", "CRUCERO", "EXCURSION", "VISA", "OTRO"
+"HOTEL", "AEREO", "TOUR", "TRANSFER", "SEGURO", "RENT_A_CAR", "CRUCERO", "OTRO"
 ];
 
 interface RequestFormDialogProps {
@@ -128,45 +135,24 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
     }
   }, [request, form, open]);
 
-  const generateRequestNumber = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `ADET-${year}-${month}-${random}`;
-  };
-
-  const onSubmit = async (values: RequestFormValues) => {
+   const onSubmit = async (values: RequestFormValues) => {
     try {
       if (isEditing) {
-        await Request.update(request.id, values);
-        await logActivity({
-          action: "SOLICITUD_ACTUALIZADA",
-          entityType: "Solicitud",
-          entityId: request.id,
-          entityLabel: request.requestNumber,
-          description: `Se actualizó la solicitud ${request.requestNumber} con destino a ${values.destinationCity}.`,
-        });
+        // CORRECCIÓN: Usar api.patch en lugar de Request.update y quitar logActivity
+        await api.patch(`/requests/${request.id}`, values);
         toast({ title: "Solicitud actualizada", description: "Los cambios se guardaron correctamente." });
       } else {
-        const requestNumber = generateRequestNumber();
-        const newRequest = await Request.create({ ...values, requestNumber });
-        await logActivity({
-          action: "SOLICITUD_CREADA",
-          entityType: "Solicitud",
-          entityId: (newRequest as any).id,
-          entityLabel: requestNumber,
-          description: `Se creó una nueva solicitud (${requestNumber}) para ${values.destinationCity}.`,
-        });
-        toast({ title: "Solicitud creada", description: `Solicitud ${requestNumber} registrada con éxito.` });
+        // CORRECCIÓN: Usar api.post, el backend generará el ID automáticamente
+        await api.post('/requests', values);
+        toast({ title: "Solicitud creada", description: `La solicitud ha sido registrada con éxito.` });
       }
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({ 
         title: "Error", 
-        description: "Hubo un problema al procesar la solicitud.",
+        description: error.message || "Hubo un problema al procesar la solicitud.",
         variant: "destructive"
       });
     }

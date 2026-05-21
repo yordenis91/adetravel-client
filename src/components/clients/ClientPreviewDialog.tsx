@@ -21,7 +21,9 @@ import {
   Compass, 
   HeartCrack, 
   CreditCard,
-  Building
+  Building,
+  CalendarDays,
+  FileText
 } from "lucide-react";
 
 interface ClientPreviewDialogProps {
@@ -39,6 +41,15 @@ export function ClientPreviewDialog({ open, onOpenChange, client }: ClientPrevie
     REFERRAL: "Referido",
     WEBSITE: "Sitio Web",
     OTHER: "Otros / Directo",
+  };
+
+  // Helper para mostrar fechas de forma segura
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "—";
+    // Evita desfases de zona horaria si viene en formato YYYY-MM-DD
+    const parts = dateStr.split("-");
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return dateStr;
   };
 
   return (
@@ -86,16 +97,45 @@ export function ClientPreviewDialog({ open, onOpenChange, client }: ClientPrevie
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                 <Fingerprint className="w-4 h-4 text-primary/70" /> Identificación Oficial
               </h4>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">RUT / ID</p>
                   <p className="text-sm font-medium text-navy mt-0.5">{client.rut || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pasaporte</p>
-                  <p className="text-sm font-medium text-navy mt-0.5">{client.passportNumber || "—"}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <CalendarDays className="w-3 h-3 text-slate-400" /> F. Nacimiento
+                  </p>
+                  <p className="text-sm font-medium text-navy mt-0.5">{formatDate(client.birthDate)}</p>
                 </div>
               </div>
+
+              {/* Sub-Sección de Pasaporte */}
+              <div className="pt-3 border-t border-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-2">
+                  <FileText className="w-3 h-3 text-slate-400" /> Datos de Pasaporte
+                </p>
+                <div className="bg-white p-3.5 rounded-xl border border-slate-100 grid grid-cols-2 gap-y-3 gap-x-4">
+                  <div>
+                    <span className="text-[9px] font-bold uppercase text-muted-foreground block">Número</span>
+                    <span className="text-xs font-semibold text-navy">{client.passportNumber || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold uppercase text-muted-foreground block">País de Emisión</span>
+                    <span className="text-xs font-semibold text-navy">{client.passportCountry || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold uppercase text-muted-foreground block">F. Emisión</span>
+                    <span className="text-xs font-semibold text-navy">{formatDate(client.passportIssueDate)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold uppercase text-muted-foreground block text-amber-600">F. Vencimiento</span>
+                    <span className="text-xs font-bold text-amber-700">{formatDate(client.passportExpiry)}</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="pt-2 border-t border-slate-100">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <MapPin className="w-3 h-3 text-slate-400" /> Dirección Residencial
@@ -172,6 +212,15 @@ export function ClientPreviewDialog({ open, onOpenChange, client }: ClientPrevie
                       <span className="text-xs font-semibold text-navy mt-0.5 block truncate">{client.bankAccountHolder || "—"}</span>
                     </div>
                   </div>
+                  {/* NUEVO: Correo para comprobantes bancarios */}
+                  {client.bankEmail && (
+                    <div className="bg-white/60 p-2.5 rounded-lg border border-purple-100/30">
+                      <span className="text-[9px] font-bold uppercase text-muted-foreground flex items-center gap-1">
+                        <Mail className="w-3 h-3 text-purple-400" /> Email para Comprobantes
+                      </span>
+                      <span className="text-xs font-semibold text-navy mt-0.5 block truncate">{client.bankEmail}</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground italic pl-1">No se han ingresado datos bancarios de respaldo.</p>

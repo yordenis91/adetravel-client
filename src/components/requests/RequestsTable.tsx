@@ -144,7 +144,7 @@ export function RequestsTable({
                 </div>
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center justify-end gap-1 ">
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(request)}>
                     <Eye className="w-4 h-4" />
                   </Button>
