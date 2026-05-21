@@ -35,7 +35,7 @@ export function QuotationPDFPreview({
 }: QuotationPDFPreviewProps) {
   if (!quotation) return null;
 
-  const items = quotation.items.map((i: string) => JSON.parse(i));
+  const parsedItems = (quotation.items || []).map((i: any) => typeof i === "string" ? JSON.parse(i) : i);
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(quotation.currency === "CLP" ? "es-CL" : "en-US", {
@@ -336,7 +336,7 @@ export function QuotationPDFPreview({
                   </tr>
                 </thead>
                 <tbody className="text-[11px]">
-                  {items.map((item: any, idx: number) => (
+                  {parsedItems.map((item: any, idx: number) => (
                     <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                       <td className="py-4 px-4 border-b border-slate-100">
                         <div className="font-bold text-[#0F1E3C]">{item.service}</div>

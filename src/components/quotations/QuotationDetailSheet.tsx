@@ -47,7 +47,7 @@ export function QuotationDetailSheet({
 }: QuotationDetailSheetProps) {
   if (!quotation) return null;
 
-  const items = quotation.items.map((i: string) => JSON.parse(i));
+  const parsedItems = (quotation.items || []).map((i: any) => typeof i === "string" ? JSON.parse(i) : i);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(quotation.currency === "CLP" ? "es-CL" : "en-US", {
       style: "currency",
@@ -157,7 +157,7 @@ export function QuotationDetailSheet({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {items.map((item: any, idx: number) => (
+                    {parsedItems.map((item: any, idx: number) => (
                       <tr key={idx} className="hover:bg-slate-50/30 transition-colors">
                         <td className="py-4 px-6">
                           <div className="font-bold text-navy">{item.service}</div>
