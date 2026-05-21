@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ClientsTable } from "./ClientsTable";
 import { ClientFormDialog } from "./ClientFormDialog";
+import { ClientPreviewDialog } from "./ClientPreviewDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -22,6 +23,8 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedPreviewClient, setSelectedPreviewClient] = useState<any>(null);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -69,6 +72,11 @@ export default function ClientsPage() {
     if (window.confirm("¿Estás seguro de que deseas desactivar este cliente?")) {
       deactivateMutation.mutate(id);
     }
+  };
+
+  const handleView = (client: any) => {
+    setSelectedPreviewClient(client);
+    setIsPreviewOpen(true);
   };
 
   return (
@@ -151,6 +159,7 @@ export default function ClientsPage() {
           isLoading={isLoading} 
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onView={handleView}
         />
       </div>
 
@@ -159,6 +168,12 @@ export default function ClientsPage() {
         onOpenChange={setIsFormOpen} 
         client={selectedClient}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["clients"] })}
+      />
+
+      <ClientPreviewDialog 
+        open={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        client={selectedPreviewClient}
       />
     </div>
   );

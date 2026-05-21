@@ -31,7 +31,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { logActivity } from "@/lib/activityLogger";
+//import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, X } from "lucide-react";
 
@@ -42,6 +42,10 @@ const clientSchema = z.object({
   phone: z.string().optional(),
   rut: z.string().optional(),
   passportNumber: z.string().optional(),
+  passportExpiry: z.string().optional(),     // 1. NUEVO: Fecha vencimiento pasaporte
+  passportIssueDate: z.string().optional(),  // 2. NUEVO: Fecha emisión pasaporte
+  passportCountry: z.string().optional(),    // 3. NUEVO: País del pasaporte
+  birthDate: z.string().optional(),          // 4. NUEVO: Fecha de nacimiento
   nationality: z.string().optional(),
   address: z.string().optional(),
   referralSource: z.string().optional(),
@@ -49,6 +53,7 @@ const clientSchema = z.object({
   bankName: z.string().optional(),
   bankAccount: z.string().optional(),
   bankAccountHolder: z.string().optional(),
+  bankEmail: z.string().email("Email bancario inválido").or(z.string().length(0)).optional(), // 5. NUEVO: Email del banco
   isActive: z.boolean().default(true),
 });
 
@@ -74,6 +79,10 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
       phone: "",
       rut: "",
       passportNumber: "",
+      passportExpiry: "",      // NUEVO
+      passportIssueDate: "",   // NUEVO
+      passportCountry: "",     // NUEVO
+      birthDate: "",      // NUEVO
       nationality: "",
       address: "",
       referralSource: "OTHER",
@@ -81,6 +90,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
       bankName: "",
       bankAccount: "",
       bankAccountHolder: "",
+      bankEmail: "",           // NUEVO
       isActive: true,
     },
   });
@@ -94,6 +104,10 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
         phone: client.phone || "",
         rut: client.rut || "",
         passportNumber: client.passportNumber || "",
+        passportExpiry: client.passportExpiry || "",      // NUEVO
+        passportIssueDate: client.passportIssueDate || "",// NUEVO
+        passportCountry: client.passportCountry || "",    // NUEVO
+        birthDate: client.birthDate || "",                // NUEVO
         nationality: client.nationality || "",
         address: client.address || "",
         referralSource: client.referralSource || "OTHER",
@@ -101,6 +115,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
         bankName: client.bankName || "",
         bankAccount: client.bankAccount || "",
         bankAccountHolder: client.bankAccountHolder || "",
+        bankEmail: client.bankEmail || "",                // NUEVO
         isActive: client.isActive ?? true,
       });
     } else {
@@ -111,6 +126,10 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
         phone: "",
         rut: "",
         passportNumber: "",
+        passportExpiry: "",      // NUEVO
+        passportIssueDate: "",   // NUEVO
+        passportCountry: "",     // NUEVO
+        birthDate: "",           // NUEVO
         nationality: "",
         address: "",
         referralSource: "OTHER",
@@ -118,41 +137,49 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
         bankName: "",
         bankAccount: "",
         bankAccountHolder: "",
+        bankEmail: "",          // NUEVO
         isActive: true,
       });
     }
   }, [client, form, open]);
 
-  const onSubmit = async (values: ClientFormValues) => {
+const onSubmit = async (values: ClientFormValues) => {
     try {
+      // 1. Limpiamos los campos vacíos convirtiéndolos en 'undefined'.
+      // Esto evita que Zod en el backend trate un espacio en blanco ("") como si fuera un RUT/Email duplicado.
+      const cleanValues = {
+        ...values,
+        email: values.email?.trim() === "" ? undefined : values.email,
+        rut: values.rut?.trim() === "" ? undefined : values.rut,
+      };
+
       if (isEditing) {
-        await api.patch(`/clients/${client.id}`, values);
-        await logActivity({
-          action: "CLIENTE_ACTUALIZADO",
-          entityType: "Cliente",
-          entityId: client.id,
-          entityLabel: `${values.firstName} ${values.lastName}`,
-          description: `Se actualizaron los datos del cliente ${values.firstName} ${values.lastName}.`,
-        });
+        // Usamos cleanValues y quitamos la llamada manual a logActivity
+        await api.patch(`/clients/${client.id}`, cleanValues);
         toast({ title: "Cliente actualizado", description: "Los datos se guardaron correctamente." });
       } else {
-        const newClient = await api.post('/clients', values);
-        await logActivity({
-          action: "CLIENTE_CREADO",
-          entityType: "Cliente",
-          entityId: (newClient as any).id,
-          entityLabel: `${values.firstName} ${values.lastName}`,
-          description: `Se registró un nuevo cliente: ${values.firstName} ${values.lastName}.`,
-        });
+        await api.post('/clients', cleanValues);
         toast({ title: "Cliente creado", description: "El nuevo cliente ha sido registrado." });
       }
+      
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      
+      // 2. Extraemos el mensaje real del servidor para mostrar el aviso al usuario
+      let errorMessage = "Hubo un problema al guardar los datos.";
+      try {
+        // Manejo por si el error viene como string JSON desde la API
+        const parsedError = JSON.parse(error.message);
+        if (parsedError.error) errorMessage = parsedError.error;
+      } catch (e) {
+        if (error.message) errorMessage = error.message;
+      }
+
       toast({ 
-        title: "Error", 
-        description: "Hubo un problema al guardar los datos.",
+        title: "No se pudo guardar", 
+        description: errorMessage, // Mostrará: "Ya existe un cliente con el RUT X"
         variant: "destructive"
       });
     }
@@ -236,6 +263,22 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
                       )}
                     />
                   </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="birthDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fecha de Nacimiento</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} className="bg-slate-50 border-slate-100" />
+                          </FormControl>
+                          <FormMessage className="text-[10px]" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <Separator className="bg-slate-100" />
@@ -268,6 +311,48 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pasaporte</FormLabel>
                           <FormControl>
                             <Input placeholder="Número de pasaporte" {...field} className="bg-slate-50 border-slate-100" />
+                          </FormControl>
+                          <FormMessage className="text-[10px]" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="passportCountry"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País Pasaporte</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ej: Chile" {...field} className="bg-slate-50 border-slate-100" />
+                          </FormControl>
+                          <FormMessage className="text-[10px]" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="passportIssueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">F. Emisión</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} className="bg-slate-50 border-slate-100" />
+                          </FormControl>
+                          <FormMessage className="text-[10px]" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="passportExpiry"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">F. Vencimiento</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} className="bg-slate-50 border-slate-100" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -413,6 +498,23 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
                       )}
                     />
                   </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="bankEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Avisos Bancarios</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="correo-banco@ejemplo.com" {...field} className="bg-slate-50 border-slate-100" />
+                          </FormControl>
+                          <FormMessage className="text-[10px]" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                 </div>
               </div>
             </ScrollArea>

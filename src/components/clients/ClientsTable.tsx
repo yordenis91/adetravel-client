@@ -24,9 +24,10 @@ interface ClientsTableProps {
   isLoading: boolean;
   onEdit: (client: any) => void;
   onDelete: (id: string) => void;
+  onView: (client: any) => void;
 }
 
-export function ClientsTable({ clients, isLoading, onEdit, onDelete }: ClientsTableProps) {
+export function ClientsTable({ clients, isLoading, onEdit, onDelete, onView}: ClientsTableProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -116,7 +117,12 @@ export function ClientsTable({ clients, isLoading, onEdit, onDelete }: ClientsTa
               </TableCell>
               <TableCell className="text-right pr-6">
                 <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5">
+                  <Button 
+                  variant="ghost"
+                   size="icon"
+                   className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5"
+                   onClick={() => onView(client)}
+                   >
                     <Eye className="w-4 h-4" />
                   </Button>
                   <Button 
