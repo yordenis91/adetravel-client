@@ -6,6 +6,7 @@ import { ClientFormDialog } from "./ClientFormDialog";
 import { ClientPreviewDialog } from "./ClientPreviewDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   Plus, 
   Search, 
@@ -21,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function ClientsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [itemToConfirm, setItemToConfirm] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -69,9 +71,8 @@ export default function ClientsPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm("¿Estás seguro de que deseas desactivar este cliente?")) {
-      deactivateMutation.mutate(id);
-    }
+    // Controlado por estado: abrimos el AlertDialog y guardamos el id
+    setItemToConfirm(id);
   };
 
   const handleView = (client: any) => {
@@ -175,6 +176,21 @@ export default function ClientsPage() {
         onOpenChange={setIsPreviewOpen}
         client={selectedPreviewClient}
       />
+
+      <AlertDialog open={!!itemToConfirm} onOpenChange={(open) => !open && setItemToConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>Esta acción desactivará al cliente y no se podrá deshacer desde aquí.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (itemToConfirm) { deactivateMutation.mutate(itemToConfirm); setItemToConfirm(null); } }}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
