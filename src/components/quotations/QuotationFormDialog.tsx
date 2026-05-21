@@ -133,7 +133,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
       });
       
       try {
-        const parsedItems = quotation.items.map((i: string) => JSON.parse(i));
+        const parsedItems = quotation.items.map((i: any) => typeof i === "string" ? JSON.parse(i) : i);
         setItems(parsedItems);
       } catch (e) {
         console.error("Error parsing items", e);
@@ -187,7 +187,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
     try {
       const payload = {
         ...values,
-        items: items.map(i => JSON.stringify({ ...i, total: i.quantity * i.unitPrice })),
+        items: items.map(i => ({ ...i, total: i.quantity * i.unitPrice })),
         subtotal: totals.subtotal,
         taxAmount: totals.taxAmount,
         total: totals.total,
