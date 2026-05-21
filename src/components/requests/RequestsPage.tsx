@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useRequests, useChangeRequestStatus } from "@/hooks/useRequests";
 import { RequestsTable } from "./RequestsTable";
 import { RequestFormDialog } from "./RequestFormDialog";
 import { RequestDetailSheet } from "./RequestDetailSheet";
@@ -30,20 +31,13 @@ export default function RequestsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: requestsResponseData, isLoading: isRequestsLoading } = useQuery({
-    queryKey: ["requests", activeTab],
-    queryFn: async () => {
-      if (activeTab === "all") return await api.get('/requests?sortBy=-created_at');
-      return await api.get(`/requests?status=${activeTab}&sortBy=-created_at`);
-    }
-  });
+  const { data: requests, isLoading: isRequestsLoading } = useRequests({ status: activeTab === "all" ? undefined : activeTab });
 
   const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients-all"],
     queryFn: async () => await api.get('/clients')
   });
 
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
 
   const filteredRequests = requests.filter((req: any) => {
@@ -55,20 +49,7 @@ export default function RequestsPage() {
     );
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => 
-      Request.update(id, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
-      toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." });
-      
-      // Update selected request in detail sheet if open
-      if (selectedRequest) {
-        const updated = requests.find((r: any) => r.id === selectedRequest.id);
-        if (updated) setSelectedRequest(updated);
-      }
-    }
-  });
+  const updateStatusMutation = useChangeRequestStatus();
 
   const handleEdit = (request: any) => {
     setSelectedRequest(request);
@@ -87,11 +68,20 @@ export default function RequestsPage() {
   };
 
   const handleStatusChange = (id: string, newStatus: string) => {
-    handleStatusUpdate(id, newStatus);
+    updateStatusMutation.mutate({ id, status: newStatus }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["requests"] });
+        toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." });
+        if (selectedRequest) {
+          const updated = requests.find((r: any) => r.id === selectedRequest.id);
+          if (updated) setSelectedRequest(updated);
+        }
+      }
+    });
   };
 
   const handleStatusUpdate = (id: string, status: string) => {
-    updateStatusMutation.mutate({ id, status });
+    handleStatusChange(id, status);
   };
 
   const getStats = (status: string) => {

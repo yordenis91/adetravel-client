@@ -14,13 +14,19 @@ type ChangeStatusPayload = {
   notes?: string;
 };
 
+type ChangeStatusWithIdPayload = {
+  id: string;
+  status: string;
+  notes?: string;
+};
+
 type RequestMutationPayload = Record<string, unknown>;
 
 export function useRequests(params: RequestsQueryParams) {
   const query = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
+    if (value !== undefined && value !== "" && value !== "all") {
       query.set(key, String(value));
     }
   });
@@ -67,14 +73,13 @@ export function useCreateRequest() {
   });
 }
 
-export function useChangeRequestStatus(id: string) {
+export function useChangeRequestStatus() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: ChangeStatusPayload) => api.patch(`/requests/${id}/status`, payload),
+    mutationFn: (payload: ChangeStatusWithIdPayload) => api.patch(`/requests/${payload.id}/status`, payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["requests"] });
-      void qc.invalidateQueries({ queryKey: ["requests", id] });
     }
   });
 }
