@@ -23,6 +23,8 @@ import {
   MoreHorizontal, 
   FileText, 
   ArrowRight, 
+  ArrowLeft,
+  RefreshCw,
   XCircle,
   MapPin,
   Calendar
@@ -157,27 +159,55 @@ export function RequestsTable({
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Gestionar Estado</DropdownMenuLabel>
+
+                      {/* Desde Recepcionada */}
                       {request.status === "Recepcionada" && (
                         <DropdownMenuItem onClick={() => onStatusChange(request.id, "Cotizada")}>
                           <ArrowRight className="mr-2 h-4 w-4 text-amber-500" />
                           Marcar como Cotizada
                         </DropdownMenuItem>
                       )}
+
+                      {/* Desde Cotizada */}
                       {request.status === "Cotizada" && (
-                        <DropdownMenuItem onClick={() => onStatusChange(request.id, "Confirmada")}>
-                          <ArrowRight className="mr-2 h-4 w-4 text-emerald-500" />
-                          Marcar como Confirmada
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem onClick={() => onStatusChange(request.id, "Confirmada")}>
+                            <ArrowRight className="mr-2 h-4 w-4 text-emerald-500" />
+                            Marcar como Confirmada
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onStatusChange(request.id, "Recepcionada")}>
+                            <ArrowLeft className="mr-2 h-4 w-4 text-blue-500" />
+                            Volver a Recepcionada
+                          </DropdownMenuItem>
+                        </>
                       )}
+
+                      {/* Desde Confirmada */}
                       {request.status === "Confirmada" && (
-                        <DropdownMenuItem onClick={() => onStatusChange(request.id, "Vendida")}>
-                          <ArrowRight className="mr-2 h-4 w-4 text-purple-500" />
-                          Marcar como Vendida
+                        <>
+                          <DropdownMenuItem onClick={() => onStatusChange(request.id, "Vendida")}>
+                            <ArrowRight className="mr-2 h-4 w-4 text-purple-500" />
+                            Marcar como Vendida
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onStatusChange(request.id, "Cotizada")}>
+                            <ArrowLeft className="mr-2 h-4 w-4 text-amber-500" />
+                            Volver a Cotizada
+                          </DropdownMenuItem>
+                        </>
+                      )}
+
+                      {/* Desde Cancelada (Reabrir) */}
+                      {request.status === "Cancelada" && (
+                        <DropdownMenuItem onClick={() => onStatusChange(request.id, "Recepcionada")}>
+                          <RefreshCw className="mr-2 h-4 w-4 text-blue-500" />
+                          Reabrir Solicitud
                         </DropdownMenuItem>
                       )}
-                      {request.status !== "Cancelada" && request.status !== "Vendida" && (
+
+                      {/* Opción global de Cancelar (Solo si no está vendida ni cancelada previamente) */}
+                      { ["Recepcionada", "Cotizada", "Confirmada"].includes(request.status) && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(request.id, "Cancelada")}>
