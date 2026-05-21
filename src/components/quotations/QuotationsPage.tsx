@@ -77,12 +77,12 @@ export default function QuotationsPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string, status: string }) => 
-      api.patch(`/quotations/${id}`, { status }),
-    onSuccess: () => {
+      api.patch(`/quotations/${id}/status`, { status: status.toUpperCase() }), // enviar estado en MAYÚSCULAS como espera el backend
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
       toast({ title: "Estado actualizado", description: "La cotización ha cambiado de estado exitosamente." });
       if (viewedQuotation) {
-        setViewedQuotation((prev: any) => ({ ...prev, status: statusTab })); // Simple local update for detail view
+        setViewedQuotation((prev: any) => ({ ...prev, status: formatStatus(variables.status) }));
       }
     },
   });
