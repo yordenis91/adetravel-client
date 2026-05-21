@@ -31,7 +31,19 @@ export default function RequestsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: requests, isLoading: isRequestsLoading } = useRequests({ status: activeTab === "all" ? undefined : activeTab });
+
+  // Normaliza el estado a formato capitalizado para el frontend
+  const formatStatus = (s?: string) => {
+    if (!s) return "Recepcionada";
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  };
+
+  const { data: requestsResponseData, isLoading: isRequestsLoading } = useRequests({ status: activeTab === "all" ? undefined : activeTab });
+  const rawRequests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
+  const requests = rawRequests.map((req: any) => ({
+    ...req,
+    status: formatStatus(req.status)
+  }));
 
   const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients-all"],
