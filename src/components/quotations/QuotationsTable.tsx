@@ -26,7 +26,9 @@ import {
   Send, 
   CheckCircle2, 
   XCircle,
-  FileDown
+  FileDown,
+  ArrowLeft,
+  RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -169,30 +171,55 @@ export function QuotationsTable({
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel>Acciones de Estado</DropdownMenuLabel>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Gestionar Estado</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       
+                      {/* Desde Borrador */}
                       {quotation.status === "Borrador" && (
-                        <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Enviada")} className="text-blue-600">
-                          <Send className="mr-2 h-4 w-4" /> Marcar como Enviada
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Enviada")} className="text-blue-600">
+                            <Send className="mr-2 h-4 w-4 text-blue-500" />
+                            Marcar como Enviada
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(quotation.id, "Rechazada")}>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Marcar como Rechazada
+                          </DropdownMenuItem>
+                        </>
                       )}
                       
+                      {/* Desde Enviada */}
                       {quotation.status === "Enviada" && (
                         <>
                           <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Aceptada")} className="text-emerald-600">
-                            <CheckCircle2 className="mr-2 h-4 w-4" /> Aceptar Cotización
+                            <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" />
+                            Aceptar Cotización
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Rechazada")} className="text-rose-600">
-                            <XCircle className="mr-2 h-4 w-4" /> Rechazar
+                          <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(quotation.id, "Rechazada")}>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Rechazar Cotización
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Borrador")}>
+                            <ArrowLeft className="mr-2 h-4 w-4 text-amber-500" />
+                            Volver a Borrador
                           </DropdownMenuItem>
                         </>
                       )}
 
-                      {["Aceptada", "Rechazada"].includes(quotation.status) && (
+                      {/* Desde Rechazada (Reabrir) */}
+                      {quotation.status === "Rechazada" && (
+                        <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Borrador")}>
+                          <RefreshCw className="mr-2 h-4 w-4 text-blue-500" />
+                          Reabrir a Borrador
+                        </DropdownMenuItem>
+                      )}
+
+                      {/* Desde Aceptada */}
+                      {quotation.status === "Aceptada" && (
                         <DropdownMenuItem disabled className="text-slate-400">
-                          Estado Finalizado
+                          Cotización Aceptada (Cerrada)
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
