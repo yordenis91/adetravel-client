@@ -27,6 +27,7 @@ import {
   CheckCircle2, 
   XCircle,
   FileDown,
+  Copy,
   ArrowLeft,
   RefreshCw
 } from "lucide-react";
@@ -43,6 +44,7 @@ interface QuotationsTableProps {
   onView: (quotation: any) => void;
   onStatusChange: (id: string, newStatus: string) => void;
   onPreviewPDF: (quotation: any) => void;
+  onDuplicate: (id: string) => void;
 }
 
 export function QuotationsTable({
@@ -54,6 +56,7 @@ export function QuotationsTable({
   onView,
   onStatusChange,
   onPreviewPDF,
+  onDuplicate,
 }: QuotationsTableProps) {
   
   const formatCurrency = (amount: number, currency: string) => {
@@ -171,58 +174,65 @@ export function QuotationsTable({
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Gestionar Estado</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Gestionar Estado</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
                       
-                      {/* Desde Borrador */}
-                      {quotation.status === "Borrador" && (
-                        <>
-                          <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Enviada")} className="text-blue-600">
-                            <Send className="mr-2 h-4 w-4 text-blue-500" />
-                            Marcar como Enviada
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(quotation.id, "Rechazada")}>
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Marcar como Rechazada
-                          </DropdownMenuItem>
-                        </>
-                      )}
+                        {/* Desde Borrador */}
+                        {quotation.status === "Borrador" && (
+                          <>
+                            <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Enviada")}>
+                              <Send className="mr-2 h-4 w-4 text-blue-500" /> 
+                              Marcar como Enviada
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(quotation.id, "Rechazada")}>
+                              <XCircle className="mr-2 h-4 w-4" /> 
+                              Marcar como Rechazada
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       
-                      {/* Desde Enviada */}
-                      {quotation.status === "Enviada" && (
-                        <>
-                          <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Aceptada")} className="text-emerald-600">
-                            <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" />
-                            Aceptar Cotización
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(quotation.id, "Rechazada")}>
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Rechazar Cotización
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                        {/* Desde Enviada */}
+                        {quotation.status === "Enviada" && (
+                          <>
+                            <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Aceptada")}>
+                              <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" /> 
+                              Aceptar Cotización
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(quotation.id, "Rechazada")}>
+                              <XCircle className="mr-2 h-4 w-4" /> 
+                              Rechazar Cotización
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Borrador")}>
+                              <ArrowLeft className="mr-2 h-4 w-4 text-amber-500" /> 
+                              Volver a Borrador
+                            </DropdownMenuItem>
+                          </>
+                        )}
+
+                        {/* Desde Fue Rechazada */}
+                        {quotation.status === "Rechazada" && (
                           <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Borrador")}>
-                            <ArrowLeft className="mr-2 h-4 w-4 text-amber-500" />
-                            Volver a Borrador
+                            <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> 
+                            Reabrir a Borrador
                           </DropdownMenuItem>
-                        </>
-                      )}
+                        )}
 
-                      {/* Desde Rechazada (Reabrir) */}
-                      {quotation.status === "Rechazada" && (
-                        <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Borrador")}>
-                          <RefreshCw className="mr-2 h-4 w-4 text-blue-500" />
-                          Reabrir a Borrador
-                        </DropdownMenuItem>
-                      )}
+                        {/* Desde Fue Aceptada */}
+                        {quotation.status === "Aceptada" && (
+                          <DropdownMenuItem disabled className="text-slate-400">
+                            Cotización Aceptada (Cerrada)
+                          </DropdownMenuItem>
+                        )}
 
-                      {/* Desde Aceptada */}
-                      {quotation.status === "Aceptada" && (
-                        <DropdownMenuItem disabled className="text-slate-400">
-                          Cotización Aceptada (Cerrada)
+                        {/* 🌟 ACCIONES GENERALES: Disponible para cualquier estado */}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onDuplicate(quotation.id)}>
+                          <Copy className="mr-2 h-4 w-4 text-slate-500" />
+                          Duplicar / Nueva Versión
                         </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
+                      </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               </TableCell>

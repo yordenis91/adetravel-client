@@ -87,6 +87,28 @@ export default function QuotationsPage() {
     },
   });
 
+  const duplicateQuotationMutation = useMutation({
+    mutationFn: (id: string) => api.post(`/quotations/${id}/duplicate`),
+    onSuccess: (response: any) => {
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      toast({ 
+        title: "Cotización duplicada", 
+        description: `Se ha creado con éxito la versión borrador: ${response?.data?.quotationNumber || ""}` 
+      });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "No se pudo duplicar la cotización.", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const handleDuplicate = (id: string) => {
+    duplicateQuotationMutation.mutate(id);
+  };
+
   const handleStatusChange = async (id: string, newStatus: string) => {
     updateStatusMutation.mutate({ id, status: newStatus });
 
@@ -226,6 +248,7 @@ export default function QuotationsPage() {
           onView={handleView}
           onStatusChange={handleStatusChange}
           onPreviewPDF={handlePreviewPDF}
+          onDuplicate={handleDuplicate}
         />
       </div>
 
