@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface RequestDetailSheetProps {
   open: boolean;
@@ -48,6 +49,8 @@ export function RequestDetailSheet({
 }: RequestDetailSheetProps) {
   if (!request) return null;
 
+  const [itemToConfirm, setItemToConfirm] = useState<string | null>(null);
+
   const client = clients.find(c => c.id === request.clientId);
   const clientName = client ? `${client.firstName} ${client.lastName}` : "Cargando...";
 
@@ -57,9 +60,7 @@ export function RequestDetailSheet({
 
   const handleStatusUpdate = (newStatus: string) => {
     if (newStatus === "Cancelada") {
-      if (window.confirm("¿Estás seguro de que deseas cancelar esta solicitud?")) {
-        onStatusChange(request.id, newStatus);
-      }
+      setItemToConfirm(request.id);
     } else {
       onStatusChange(request.id, newStatus);
     }
@@ -254,6 +255,20 @@ export function RequestDetailSheet({
             Cerrar
           </Button>
         </SheetFooter>
+        <AlertDialog open={!!itemToConfirm} onOpenChange={(open) => !open && setItemToConfirm(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+              <AlertDialogDescription>Esta acción cancelará la solicitud y no se puede deshacer.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { if (itemToConfirm) { onStatusChange(itemToConfirm, "Cancelada"); setItemToConfirm(null); } }}>
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   );

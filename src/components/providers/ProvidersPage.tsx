@@ -5,6 +5,7 @@ import { ProvidersTable } from "./ProvidersTable";
 import { ProviderFormDialog } from "./ProviderFormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   Plus, 
   Search, 
@@ -28,6 +29,7 @@ import {
 export default function ProvidersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<any>(null);
+  const [itemToConfirm, setItemToConfirm] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -77,9 +79,7 @@ export default function ProvidersPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm("¿Estás seguro de que deseas desactivar este proveedor?")) {
-      deactivateMutation.mutate(id);
-    }
+    setItemToConfirm(id);
   };
 
   return (
@@ -191,6 +191,20 @@ export default function ProvidersPage() {
         provider={selectedProvider}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["providers"] })}
       />
+      <AlertDialog open={!!itemToConfirm} onOpenChange={(open) => !open && setItemToConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>Esta acción desactivará al proveedor y no se podrá deshacer desde aquí.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (itemToConfirm) { deactivateMutation.mutate(itemToConfirm); setItemToConfirm(null); } }}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
