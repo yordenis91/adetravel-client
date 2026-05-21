@@ -59,7 +59,16 @@ export default function QuotationsPage() {
     queryFn: () => api.get('/email-templates?type=QUOTATION_SENT&isActive=true')
   });
 
-  const quotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
+  const formatStatus = (s?: string) => {
+    if (!s) return "Borrador";
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  };
+
+  const rawQuotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
+  const quotations = rawQuotations.map((q: any) => ({
+    ...q,
+    status: formatStatus(q.status)
+  }));
   const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
   const quotationTemplates = Array.isArray(quotationTemplatesResponseData) ? quotationTemplatesResponseData : (quotationTemplatesResponseData as any)?.data || [];
