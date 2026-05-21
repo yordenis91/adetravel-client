@@ -153,14 +153,14 @@ export function QuotationsTable({
                 <QuotationStatusBadge status={quotation.status} />
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex justify-end gap-1">
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => onPreviewPDF(quotation)} title="Ver/Descargar PDF">
                     <FileDown className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(quotation)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(quotation)} title="Vista Previa">
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={() => onEdit(quotation)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={() => onEdit(quotation)} title="Editar Cotización">
                     <Edit2 className="h-4 w-4" />
                   </Button>
                   <DropdownMenu>
