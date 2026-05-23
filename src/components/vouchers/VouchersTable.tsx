@@ -15,6 +15,7 @@ import {
   Calendar,
   MoreVertical,
   Printer,
+  Loader2,
   CheckCircle,
   FileEdit,
   XCircle
@@ -36,6 +37,7 @@ interface VouchersTableProps {
   clients: any[];
   requests: any[];
   isLoading: boolean;
+  processingId?: string | null;
   onEdit: (voucher: any) => void;
   onDelete: (id: string) => void;
   onPreviewPDF: (voucher: any) => void;
@@ -47,6 +49,7 @@ export function VouchersTable({
   clients, 
   requests, 
   isLoading, 
+  processingId,
   onEdit, 
   onDelete,
   onPreviewPDF,
@@ -153,52 +156,58 @@ export function VouchersTable({
                 <VoucherStatusBadge status={voucher.status} />
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-lg text-muted-foreground hover:text-navy hover:bg-navy/5"
-                    onClick={() => onPreviewPDF(voucher)}
-                    title="Ver PDF"
-                  >
-                    <Printer className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-navy hover:bg-navy/5">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      <DropdownMenuItem onClick={() => onEdit(voucher)} className="gap-2 cursor-pointer">
-                        <Edit2 className="w-4 h-4" /> Editar
-                      </DropdownMenuItem>
+                {processingId === voucher.id ? (
+                  <div className="flex justify-end items-center h-8 pr-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-navy" />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-end gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-lg text-muted-foreground hover:text-navy hover:bg-navy/5"
+                      onClick={() => onPreviewPDF(voucher)}
+                      title="Ver PDF"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-navy hover:bg-navy/5">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={() => onEdit(voucher)} className="gap-2 cursor-pointer">
+                          <Edit2 className="w-4 h-4" /> Editar
+                        </DropdownMenuItem>
 
-                      {voucher.status !== 'EMITIDO' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'EMITIDO')} className="gap-2 cursor-pointer text-emerald-600">
-                          <CheckCircle className="w-4 h-4" /> Emitir Voucher
-                        </DropdownMenuItem>
-                      )}
-                      {voucher.status !== 'BORRADOR' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'BORRADOR')} className="gap-2 cursor-pointer text-slate-500">
-                          <FileEdit className="w-4 h-4" /> Volver a Borrador
-                        </DropdownMenuItem>
-                      )}
-                      {voucher.status !== 'CANCELADO' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'CANCELADO')} className="gap-2 cursor-pointer text-destructive">
-                          <XCircle className="w-4 h-4" /> Cancelar Voucher
-                        </DropdownMenuItem>
-                      )}
+                        {voucher.status !== 'EMITIDO' && (
+                          <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'EMITIDO')} className="gap-2 cursor-pointer text-emerald-600">
+                            <CheckCircle className="w-4 h-4" /> Emitir Voucher
+                          </DropdownMenuItem>
+                        )}
+                        {voucher.status !== 'BORRADOR' && (
+                          <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'BORRADOR')} className="gap-2 cursor-pointer text-slate-500">
+                            <FileEdit className="w-4 h-4" /> Volver a Borrador
+                          </DropdownMenuItem>
+                        )}
+                        {voucher.status !== 'CANCELADO' && (
+                          <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'CANCELADO')} className="gap-2 cursor-pointer text-destructive">
+                            <XCircle className="w-4 h-4" /> Cancelar Voucher
+                          </DropdownMenuItem>
+                        )}
 
-                      <DropdownMenuItem onClick={() => onDelete(voucher.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-                        <Trash2 className="w-4 h-4" /> Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                        <DropdownMenuItem onClick={() => onDelete(voucher.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                          <Trash2 className="w-4 h-4" /> Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
               </TableCell>
             </TableRow>
           ))}

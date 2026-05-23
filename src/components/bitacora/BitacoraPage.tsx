@@ -12,16 +12,6 @@ import {
   Loader2,
   Clock,
 } from "lucide-react";
-
-interface ActivityLogItem {
-  id: string;
-  action: string;
-  description?: string;
-  entityType?: string;
-  entityLabel?: string;
-  createdAt?: string;
-  [key: string]: unknown;
-}
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -43,8 +33,7 @@ export default function BitacoraPage() {
     queryKey: ["activity-logs"],
     queryFn: async () => {
       const result = await api.get("/activity-logs?limit=200");
-      const logsArray = Array.isArray(result) ? result : (result as any)?.data || [];
-      return logsArray;
+      return Array.isArray(result) ? result : (result as any)?.data || [];
     }
   });
 
@@ -73,7 +62,7 @@ export default function BitacoraPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-playfair font-bold text-navy dark:text-white flex items-center gap-3">
           <History className="w-8 h-8 text-primary" />
@@ -85,7 +74,7 @@ export default function BitacoraPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-navy border-none text-white overflow-hidden relative">
+        <Card className="bg-navy border-none text-white overflow-hidden relative shadow-lg">
           <div className="absolute right-0 top-0 p-4 opacity-10">
             <History className="w-16 h-16" />
           </div>
@@ -96,39 +85,39 @@ export default function BitacoraPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-slate-100 overflow-hidden relative">
+        <Card className="bg-white dark:bg-navy-dark border-none shadow-md overflow-hidden relative">
           <div className="absolute right-0 top-0 p-4 opacity-5 text-navy">
             <Calendar className="w-16 h-16" />
           </div>
           <CardContent className="p-6">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Hoy</p>
-            <h3 className="text-3xl font-playfair font-bold text-navy">{stats.today}</h3>
-            <div className="flex items-center gap-1 text-[10px] text-emerald-600 mt-1">
+            <h3 className="text-3xl font-playfair font-bold text-navy dark:text-white">{stats.today}</h3>
+            <div className="flex items-center gap-1 text-[10px] text-emerald-600 mt-1 font-bold">
               <CheckCircle2 className="w-3 h-3" /> Eventos en las últimas 24h
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-slate-100 overflow-hidden relative">
+        <Card className="bg-white dark:bg-navy-dark border-none shadow-md overflow-hidden relative">
           <div className="absolute right-0 top-0 p-4 opacity-5 text-navy">
             <Clock className="w-16 h-16" />
           </div>
           <CardContent className="p-6">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Esta Semana</p>
-            <h3 className="text-3xl font-playfair font-bold text-navy">{stats.week}</h3>
-            <div className="flex items-center gap-1 text-[10px] text-amber-600 mt-1">
+            <h3 className="text-3xl font-playfair font-bold text-navy dark:text-white">{stats.week}</h3>
+            <div className="flex items-center gap-1 text-[10px] text-amber-600 mt-1 font-bold">
               <AlertCircle className="w-3 h-3" /> Actividad últimos 7 días
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="bg-white dark:bg-navy-dark border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8 pb-6 border-b border-slate-50 dark:border-slate-800">
+      <div className="bg-white dark:bg-navy-dark border-none rounded-2xl p-6 shadow-xl">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Buscar por descripción o etiqueta..." 
+              placeholder="Buscar por descripción, ID o etiqueta..." 
               className="pl-10 h-11 bg-slate-50 dark:bg-navy-light/50 border-none rounded-xl"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -159,7 +148,7 @@ export default function BitacoraPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            <p className="text-sm font-medium text-muted-foreground">Cargando bitácora...</p>
+            <p className="text-sm font-medium text-muted-foreground">Cargando bitácora de auditoría...</p>
           </div>
         ) : filteredLogs.length > 0 ? (
           <ScrollArea className="h-[600px] pr-6">

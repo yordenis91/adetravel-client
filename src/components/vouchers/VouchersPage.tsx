@@ -53,6 +53,8 @@ export default function VouchersPage() {
   const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
   const [pdfVoucher, setPdfVoucher] = useState<any>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
 
@@ -130,59 +132,23 @@ export default function VouchersPage() {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       api.patch(`/vouchers/${id}/status`, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vouchers"] });
-      toast({ title: "Estado actualizado", description: "El estado del voucher ha sido actualizado." });
+    onMutate: (variables) => {
+      setProcessingId(variables.id);
     },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["vouchers"] });
+      toast({ title: "Estado actualizado", description: `El voucher ha cambiado a ${variables.status}.` });
+    },
+    onError: () => {
+      toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el estado." });
+    },
+    onSettled: () => {
+      setProcessingId(null);
+    }
   });
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  const handleStatusChange = (id: string, newStatus: string) => {
     updateStatusMutation.mutate({ id, status: newStatus });
-    if (newStatus === 'EMITIDO') {
-      try {
-        const voucher = vouchers.find((v: any) => v.id === id);
-        const client = clients.find((c: any) => c.id === voucher?.clientId);
-        const provider = providers.find((p: any) => p.id === voucher?.providerId);
-        
-        if (client?.email && voucher) {
-          const activeTemplate = voucherTemplates[0];
-          let subject: string, body_html: string;
-
-          if (activeTemplate) {
-            const data: Record<string, string> = {
-              client_name: `${client.firstName} ${client.lastName}`,
-              voucher_number: voucher.voucherNumber || '',
-              service_name: voucher.serviceName || '',
-              service_type: voucher.serviceType || '',
-              destination: voucher.destination || '',
-              check_in: voucher.checkIn ? format(new Date(voucher.checkIn), "dd 'de' MMMM, yyyy", { locale: es }) : '',
-              check_out: voucher.checkOut ? format(new Date(voucher.checkOut), "dd 'de' MMMM, yyyy", { locale: es }) : '',
-              confirmation_code: voucher.confirmationCode || '',
-              passengers: (voucher.passengerNames || []).join(', '),
-              agency_name: 'ADE Travel',
-              agency_email: 'contacto@adetravel.cl',
-            };
-            subject = renderTemplate(activeTemplate.subject, data);
-            body_html = renderTemplate(activeTemplate.bodyHtml, data);
-          } else {
-            const result = buildVoucherEmail(voucher, client, provider);
-            subject = result.subject;
-            body_html = result.body_html;
-          }
-
-          await sendEmail({
-            to: client.email,
-            subject,
-            body_html,
-            from_name: 'ADE Travel',
-            from_local_part: 'vouchers'
-          });
-          toast({ title: "Voucher enviado", description: `Voucher enviado a ${client.email}` });
-        }
-      } catch (err) {
-        console.error('Error sending voucher email:', err);
-      }
-    }
   };
 
   const openEdit = (voucher: any) => {
@@ -336,6 +302,7 @@ export default function VouchersPage() {
             requests={requests}
             clients={clients}
             isLoading={isLoading}
+            processingId={processingId}
             onEdit={openEdit}
             onDelete={setDeleteId}
             onPreviewPDF={handlePreviewPDF}

@@ -80,7 +80,8 @@ export function TimelineItem({ log, isLast }: TimelineItemProps) {
   };
   const Icon = config.icon;
 
-  const createdAt = log.created_at ? new Date(log.created_at) : new Date();
+  // 🔥 CORRECCIÓN: Prisma envía 'createdAt', no 'created_at'
+  const createdAt = log.createdAt ? new Date(log.createdAt) : new Date();
 
   return (
     <div className="relative pl-8 pb-8 group last:pb-0">
