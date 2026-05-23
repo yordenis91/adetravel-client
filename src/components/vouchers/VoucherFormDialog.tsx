@@ -40,7 +40,6 @@ import {
   Hash
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -502,9 +501,9 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Estado del Voucher *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isEditing}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className={isEditing ? "bg-slate-100" : "bg-white"}>
                             <SelectValue placeholder="Seleccione estado" />
                           </SelectTrigger>
                         </FormControl>
@@ -514,6 +513,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                           <SelectItem value="CANCELADO">CANCELADO</SelectItem>
                         </SelectContent>
                       </Select>
+                      {isEditing && <p className="text-[10px] text-muted-foreground mt-1">Usa la tabla para cambiar el estado</p>}
                       <FormMessage />
                     </FormItem>
                   )}

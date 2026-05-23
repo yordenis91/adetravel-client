@@ -129,7 +129,7 @@ export default function VouchersPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
-      api.patch(`/vouchers/${id}`, { status }),
+      api.patch(`/vouchers/${id}/status`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vouchers"] });
       toast({ title: "Estado actualizado", description: "El estado del voucher ha sido actualizado." });
