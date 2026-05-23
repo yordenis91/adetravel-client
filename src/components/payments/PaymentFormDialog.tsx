@@ -44,7 +44,7 @@ import { format } from "date-fns";
 
 const formSchema = z.object({
   requestId: z.string().min(1, "La solicitud es requerida"),
-  quotationId: z.string().optional(),
+  quotationId: z.string().optional().nullable(),
   clientId: z.string().min(1, "El cliente es requerido"),
   paymentNumber: z.string(),
   amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
@@ -77,24 +77,34 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
   const queryClient = useQueryClient();
   const isEditing = !!payment;
 
-  const { data: requestsResponseData = [] } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'), // Cambiado de Request.list() a api.get para mantener consistencia con la otra página
+  const { data: paymentsResponse = [] } = useQuery({
+    queryKey: ["payments"],
+    queryFn: () => api.get('/payments'),
+    enabled: open,
   });
 
-  const { data: quotationsResponseData = [] } = useQuery({
+  const { data: requestsResponse = [] } = useQuery({
+    queryKey: ["requests"],
+    queryFn: () => api.get('/requests'),
+    enabled: open,
+  });
+
+  const { data: quotationsResponse = [] } = useQuery({
     queryKey: ["quotations"],
     queryFn: () => api.get('/quotations'),
+    enabled: open,
   });
 
-  const { data: clientsResponseData = [] } = useQuery({
+  const { data: clientsResponse = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
+    enabled: open,
   });
 
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const quotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+  const allPayments = Array.isArray(paymentsResponse) ? paymentsResponse : (paymentsResponse as any)?.data || [];
+  const requests = Array.isArray(requestsResponse) ? requestsResponse : (requestsResponse as any)?.data || [];
+  const quotations = Array.isArray(quotationsResponse) ? quotationsResponse : (quotationsResponse as any)?.data || [];
+  const clients = Array.isArray(clientsResponse) ? clientsResponse : (clientsResponse as any)?.data || [];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -117,41 +127,48 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
     if (payment) {
       form.reset({
         requestId: payment.requestId || "",
-        quotationId: payment.quotationId || "",
+        quotationId: payment.quotationId || "none",
         clientId: payment.clientId || "",
         paymentNumber: payment.paymentNumber || "",
         amount: payment.amount || 0,
         currency: payment.currency || "CLP",
-        paymentDate: payment.paymentDate || format(new Date(), "yyyy-MM-dd"),
+        paymentDate: payment.paymentDate ? payment.paymentDate.split("T")[0] : format(new Date(), "yyyy-MM-dd"),
         method: payment.method || "TRANSFERENCIA",
         status: payment.status || "COMPLETADO",
         reference: payment.reference || "",
         notes: payment.notes || "",
       });
-    } else {
+    } else if (open && allPayments) {
       const year = new Date().getFullYear();
       const month = String(new Date().getMonth() + 1).padStart(2, '0');
-      const random = Math.floor(1000 + Math.random() * 9000);
+      const nextNumber = (allPayments.length + 1).toString().padStart(4, '0');
+      
       form.reset({
         requestId: "",
         quotationId: "",
         clientId: "",
-        paymentNumber: `PAG-${year}-${month}-${random}`,
+        paymentNumber: `PAG-${year}-${month}-${nextNumber}`, // El backend igual lo recalcula seguro
         amount: 0,
         currency: "CLP",
         paymentDate: format(new Date(), "yyyy-MM-dd"),
         method: "TRANSFERENCIA",
-        status: "COMPLETADO",
+        status: "PENDIENTE",
         reference: "",
         notes: "",
       });
     }
-  }, [payment, open, form]);
+  }, [payment, open, allPayments, form]);
 
   const onSubmit = async (values: FormValues) => {
     try {
+      // Limpieza de payload para Prisma (UUID validación)
+      const payload: any = { ...values };
+      if (payload.quotationId === "none" || payload.quotationId === "") {
+        payload.quotationId = null;
+      }
+
       if (isEditing) {
-        await api.patch(`/payments/${payment.id}`, values);
+        await api.put(`/payments/${payment.id}`, payload);
         await logActivity({
           action: "PAGO_ACTUALIZADO",
           entityType: "Pago",
@@ -161,7 +178,8 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
         });
         toast({ title: "Pago actualizado", description: "El registro de pago se ha actualizado correctamente." });
       } else {
-        const newPayment = await api.post('/payments', values);
+        const res = await api.post('/payments', payload);
+        const newPayment = (res as any)?.data ?? res;
         await logActivity({
           action: "PAGO_REGISTRADO",
           entityType: "Pago",
@@ -178,26 +196,45 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo guardar el pago. Por favor, intente nuevamente.",
+        description: "No se pudo guardar el pago. Asegúrese de que los datos sean correctos.",
       });
     }
   };
 
   const selectedRequestId = form.watch("requestId");
+  
   useEffect(() => {
-    if (selectedRequestId) {
+    if (selectedRequestId && !isEditing) {
       const request = requests.find((r: any) => r.id === selectedRequestId);
       if (request) {
         form.setValue("clientId", request.clientId);
+        
+        // Auto-select accepted quotation (Soporta mayúsculas y capitalizado)
+        const acceptedQuotation = quotations.find(
+          (q: any) => q.requestId === selectedRequestId && (q.status === "Aceptada" || q.status === "ACEPTADA")
+        );
+        
+        if (acceptedQuotation) {
+          form.setValue("quotationId", acceptedQuotation.id);
+          form.setValue("amount", acceptedQuotation.total || 0);
+          form.setValue("currency", acceptedQuotation.currency || "CLP");
+          
+          toast({
+            title: "Cotización vinculada",
+            description: `Se seleccionó la cotización ${acceptedQuotation.quotationNumber} y se cargó el monto total.`,
+          });
+        } else {
+          form.setValue("quotationId", "none");
+        }
       }
     }
-  }, [selectedRequestId, requests, form]);
+  }, [selectedRequestId, requests, quotations, form, isEditing, toast]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-[600px] overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="text-2xl font-playfair font-bold">
+        <SheetHeader className="mb-6 mt-4">
+          <SheetTitle className="text-2xl font-playfair font-bold text-navy">
             {isEditing ? "Editar Pago" : "Registrar Nuevo Pago"}
           </SheetTitle>
           <SheetDescription>
@@ -208,8 +245,8 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-8">
             {/* Section 1: Vinculación */}
-            <div className="space-y-4 p-4 rounded-xl bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800/20">
-              <h3 className="text-sm font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
+            <div className="space-y-4 p-5 rounded-xl bg-blue-50/50 border border-blue-100">
+              <h3 className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
                 <FileText className="w-4 h-4" /> Vinculación de Solicitud
               </h3>
               
@@ -219,10 +256,10 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   name="requestId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Solicitud *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel className="text-xs font-bold text-navy">Solicitud *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isEditing}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-white">
                             <SelectValue placeholder="Seleccione solicitud" />
                           </SelectTrigger>
                         </FormControl>
@@ -242,61 +279,88 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                 <FormField
                   control={form.control}
                   name="quotationId"
+                  render={({ field }) => {
+                    const selectedQuo = quotations.find((q: any) => q.id === field.value);
+                    return (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold text-navy">Cotización (Opcional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "none"}>
+                          <FormControl>
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Seleccione cotización" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Ninguna</SelectItem>
+                            {quotations
+                              .filter((q: any) => q.requestId === selectedRequestId)
+                              .map((q: any) => (
+                                <SelectItem key={q.id} value={q.id}>
+                                  {q.quotationNumber} {["Aceptada", "ACEPTADA"].includes(q.status) ? "✓" : ""}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedQuo && (
+                          <div className="mt-1 flex items-center justify-between text-[10px] font-bold px-2 py-1 bg-white rounded-md border border-blue-100">
+                            <span className="text-blue-700">{selectedQuo.quotationNumber}</span>
+                            <span className="text-emerald-600">
+                              {new Intl.NumberFormat("es-CL", { style: "currency", currency: selectedQuo.currency || "CLP" }).format(selectedQuo.total || 0)}
+                            </span>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="clientId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cotización (Opcional)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel className="text-xs font-bold text-navy">Cliente</FormLabel>
+                      <Select disabled value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccione cotización" />
+                          <SelectTrigger className="bg-slate-100">
+                            <SelectValue placeholder="Automático" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="none">Ninguna</SelectItem>
-                          {quotations
-                            .filter((q: any) => q.requestId === selectedRequestId)
-                            .map((q: any) => (
-                              <SelectItem key={q.id} value={q.id}>
-                                {q.quotationNumber}
-                              </SelectItem>
-                            ))}
+                          {clients.map((client: any) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.firstName} {client.lastName}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="clientId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cliente</FormLabel>
-                    <Select disabled value={field.value}>
+                <FormField
+                  control={form.control}
+                  name="paymentNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold text-navy">N° de Pago</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="bg-muted">
-                          <SelectValue placeholder="El cliente se asignará automáticamente" />
-                        </SelectTrigger>
+                        <Input {...field} disabled className="bg-slate-100 font-mono text-xs" />
                       </FormControl>
-                      <SelectContent>
-                        {clients.map((client: any) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.firstName} {client.lastName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* Section 2: Monto y Método */}
-            <div className="space-y-4 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-800/20">
-              <h3 className="text-sm font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+            <div className="space-y-4 p-5 rounded-xl bg-emerald-50/50 border border-emerald-100">
+              <h3 className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2">
                 <Banknote className="w-4 h-4" /> Monto y Método
               </h3>
               
@@ -306,13 +370,13 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Monto *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Monto *</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">
                             {form.watch("currency") === "CLP" ? "$" : "US$"}
                           </span>
-                          <Input type="number" className="pl-10 text-lg font-bold" {...field} />
+                          <Input type="number" className="pl-10 text-lg font-bold bg-white" {...field} />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -325,10 +389,10 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   name="currency"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Moneda *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Moneda *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-white">
                             <SelectValue placeholder="Seleccione moneda" />
                           </SelectTrigger>
                         </FormControl>
@@ -349,9 +413,9 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   name="paymentDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fecha de Pago *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Fecha de Pago *</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} className="bg-white" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -363,10 +427,10 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   name="method"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Método de Pago *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Método de Pago *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-white">
                             <SelectValue placeholder="Seleccione método" />
                           </SelectTrigger>
                         </FormControl>
@@ -392,8 +456,8 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
             </div>
 
             {/* Section 3: Estado y Referencia */}
-            <div className="space-y-4 p-4 rounded-xl bg-amber-50/50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-800/20">
-              <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-2">
+            <div className="space-y-4 p-5 rounded-xl bg-amber-50/50 border border-amber-100">
+              <h3 className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
                 <Globe className="w-4 h-4" /> Estado y Referencia
               </h3>
               
@@ -403,10 +467,14 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Estado *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel className="text-xs font-bold text-navy">Estado *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={isEditing} // 🛡️ Bloqueamos el cambio de estado en edición directa
+                      >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className={isEditing ? "bg-slate-100" : "bg-white"}>
                             <SelectValue placeholder="Seleccione estado" />
                           </SelectTrigger>
                         </FormControl>
@@ -416,6 +484,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                           <SelectItem value="CANCELADO">CANCELADO</SelectItem>
                         </SelectContent>
                       </Select>
+                      {isEditing && <p className="text-[10px] text-muted-foreground">Usa la tabla para cambiar el estado</p>}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -426,9 +495,9 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   name="reference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Referencia / N° Transacción</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Ref / Transacción</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ej: Transf #123456" {...field} />
+                        <Input placeholder="Ej: Transf #123456" {...field} className="bg-white" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -441,11 +510,11 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notas adicionales</FormLabel>
+                    <FormLabel className="text-xs font-bold text-navy">Notas adicionales</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Observaciones internas sobre el pago..." 
-                        className="resize-none"
+                        className="resize-none bg-white min-h-[80px]"
                         {...field} 
                       />
                     </FormControl>
@@ -455,7 +524,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
               />
             </div>
 
-            <SheetFooter className="pt-4">
+            <SheetFooter className="pt-2">
               <Button 
                 type="submit" 
                 className="w-full bg-navy hover:bg-navy-light text-white font-bold h-12"

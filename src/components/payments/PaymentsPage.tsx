@@ -128,7 +128,7 @@ export default function PaymentsPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
-      api.patch(`/payments/${id}`, { status }),
+      api.patch(`/payments/${id}/status`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast({ title: "Estado actualizado", description: "El estado del pago ha sido actualizado." });
