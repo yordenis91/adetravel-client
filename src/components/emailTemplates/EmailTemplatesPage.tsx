@@ -2,55 +2,23 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { 
-  Plus, 
-  Mail, 
-  Search, 
-  Filter, 
-  Edit2, 
-  Trash2, 
-  Eye, 
-  Copy,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  FileText,
-  Calculator,
-  CheckCircle,
-  Ticket,
-  ExternalLink
+  Plus, Mail, Search, Edit2, Trash2, CheckCircle2, XCircle, FileText, Calculator, CheckCircle, Ticket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle 
 } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsList, 
-  TabsTrigger, 
-  TabsContent 
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { TEMPLATE_TYPES } from "@/lib/templateVariables";
 import TemplateFormDialog from "./TemplateFormDialog";
-
 import { cn } from "@/lib/utils";
 
 export default function EmailTemplatesPage() {
@@ -68,9 +36,10 @@ export default function EmailTemplatesPage() {
 
   const templates = Array.isArray(templatesResponseData) ? templatesResponseData : (templatesResponseData as any)?.data || [];
 
+  // 🔥 CORREGIDO: Apunta al endpoint de toggle del backend
   const toggleActiveMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => 
-      api.patch(`/email-templates/${id}`, { isActive }),
+      api.patch(`/email-templates/${id}/toggle`, { isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["emailTemplates"] });
       toast.success("Estado actualizado");
@@ -102,7 +71,7 @@ export default function EmailTemplatesPage() {
       case 'green': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'purple': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'amber': return 'bg-amber-100 text-amber-700 border-amber-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
@@ -136,7 +105,7 @@ export default function EmailTemplatesPage() {
   }
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 pb-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-playfair font-bold text-navy flex items-center gap-3">
@@ -196,7 +165,7 @@ export default function EmailTemplatesPage() {
           {filteredTemplates.map((template: any) => {
             const Icon = getIcon(template.type);
             return (
-              <Card key={template.id} className="group hover:shadow-xl hover:border-primary/50 transition-all duration-300 overflow-hidden border-navy/10 flex flex-col">
+              <Card key={template.id} className="group hover:shadow-xl hover:border-primary/50 transition-all duration-300 overflow-hidden border-navy/10 flex flex-col bg-white">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className={cn(
@@ -235,7 +204,7 @@ export default function EmailTemplatesPage() {
                       {TEMPLATE_TYPES.find(t => t.value === template.type)?.label}
                     </Badge>
                     {template.isActive ? (
-                      <Badge className="bg-emerald-500 text-[10px] flex items-center gap-1">
+                      <Badge className="bg-emerald-500 text-[10px] flex items-center gap-1 border-none text-white hover:bg-emerald-600">
                         <CheckCircle2 className="w-3 h-3" /> En uso
                       </Badge>
                     ) : (

@@ -12,19 +12,19 @@ export function UserRoleBadge({ role, type, className }: UserRoleBadgeProps) {
   if (!role) return null;
 
   if (type === 'system') {
-    const isError = role.toLowerCase() === 'administrator';
+    const isAdmin = role.toUpperCase() === 'ADMINISTRADOR';
     return (
       <Badge 
         variant="outline" 
         className={cn(
           "font-semibold uppercase text-[10px] tracking-wider px-2 py-0.5",
-          isError 
+          isAdmin 
             ? "bg-navy text-white border-navy" 
             : "bg-slate-100 text-slate-600 border-slate-200",
           className
         )}
       >
-        {role === 'administrator' ? 'Administrador' : 'Usuario'}
+        {isAdmin ? 'Administrador' : 'Usuario'}
       </Badge>
     );
   }

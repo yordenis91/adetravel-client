@@ -18,8 +18,6 @@ import {
   Card, 
   CardContent, 
   CardHeader, 
-  CardTitle,
-  CardDescription 
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -59,40 +57,38 @@ const AGENCY_ROLES = [
 
 export default function UsuariosPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [copied, setCopied] = useState(false);
   const queryClient = useQueryClient();
 
+  // 1. Obtener lista de usuarios
   const { data: responseData = [], isLoading } = useQuery({
     queryKey: ['users'],
-    queryFn: () => api.get('/users')
+    queryFn: () => api.get('/users?limit=100')
+  });
+
+  // 2. Obtener estadísticas reales del backend
+  const { data: statsData } = useQuery({
+    queryKey: ['users', 'stats'],
+    queryFn: () => api.get('/users/stats')
   });
 
   const users = Array.isArray(responseData) ? responseData : (responseData as any)?.data || [];
+  const backendStats = (statsData as any)?.data || statsData || { total: 0, administradores: 0, equipoOperativo: 0 };
 
-  useEffect(() => {
-    async function loadMe() {
-      try {
-        const me = await User.me();
-        setCurrentUser(me);
-      } catch (error) {
-        console.error("Error loading current user", error);
-      }
-    }
-    loadMe();
-  }, []);
-
+  // 3. Mutación segura para cambiar roles
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, agencyRole }: { userId: string, agencyRole: string }) => {
-      return await User.update(userId, { agencyRole });
+      return await api.patch(`/users/${userId}`, { agencyRole });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users', 'stats'] });
       toast.success("Rol de agencia actualizado correctamente");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error);
-      toast.error("Error al actualizar el rol");
+      const errorMsg = error.response?.data?.message || "No tienes permisos para realizar esta acción.";
+      toast.error(errorMsg);
     }
   });
 
@@ -105,15 +101,9 @@ export default function UsuariosPage() {
   };
 
   const filteredUsers = (users as any[]).filter(user => 
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const stats = {
-    total: users.length,
-    admins: (users as any[]).filter(u => u.role === 'administrator').length,
-    agents: (users as any[]).filter(u => u.agencyRole && u.agencyRole !== 'ASISTENTE').length
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -133,7 +123,7 @@ export default function UsuariosPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Usuarios</p>
-                <h3 className="text-2xl font-bold text-navy">{stats.total}</h3>
+                <h3 className="text-2xl font-bold text-navy">{backendStats.total}</h3>
               </div>
             </div>
           </CardContent>
@@ -146,7 +136,7 @@ export default function UsuariosPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Administradores</p>
-                <h3 className="text-2xl font-bold text-navy">{stats.admins}</h3>
+                <h3 className="text-2xl font-bold text-navy">{backendStats.administradores}</h3>
               </div>
             </div>
           </CardContent>
@@ -159,7 +149,7 @@ export default function UsuariosPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Equipo Operativo</p>
-                <h3 className="text-2xl font-bold text-navy">{stats.agents}</h3>
+                <h3 className="text-2xl font-bold text-navy">{backendStats.equipoOperativo}</h3>
               </div>
             </div>
           </CardContent>
@@ -208,21 +198,18 @@ export default function UsuariosPage() {
                 ) : filteredUsers.map((user) => (
                   <TableRow 
                     key={user.id} 
-                    className={`hover:bg-slate-50/50 transition-colors border-b border-slate-50 ${currentUser?.id === user.id ? 'bg-gold/5 border-l-4 border-l-gold' : ''}`}
+                    className={`hover:bg-slate-50/50 transition-colors border-b border-slate-50`}
                   >
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10 border border-slate-200 shadow-sm">
                           <AvatarFallback className="bg-navy text-white font-bold">
-                            {user.full_name?.split(' ').map((n: any) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                            {user.fullName?.split(' ').map((n: any) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
                           <span className="font-bold text-navy flex items-center gap-2">
-                            {user.full_name}
-                            {currentUser?.id === user.id && (
-                              <span className="bg-gold text-[10px] text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter">Tú</span>
-                            )}
+                            {user.fullName}
                           </span>
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Mail className="w-3 h-3" /> {user.email}
@@ -241,7 +228,7 @@ export default function UsuariosPage() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="text-xs">El rol del sistema es administrado por la plataforma Buildy.</p>
+                              <p className="text-xs">El rol del sistema define si es un usuario normal o un súper-administrador.</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -268,7 +255,7 @@ export default function UsuariosPage() {
                     <TableCell>
                       <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {user.created_at ? format(new Date(user.created_at), "d 'de' MMM, yyyy", { locale: es }) : 'N/A'}
+                        {user.createdAt ? format(new Date(user.createdAt), "d 'de' MMM, yyyy", { locale: es }) : 'N/A'}
                       </span>
                     </TableCell>
                     <TableCell className="px-6 text-right">
