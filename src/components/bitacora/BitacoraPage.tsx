@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { TimelineItem } from "./TimelineItem";
@@ -23,43 +23,38 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { isToday, isWithinInterval, subDays, startOfDay } from "date-fns";
 
 export default function BitacoraPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const { data: logsResponseData = [], isLoading } = useQuery<any[]>({
-    queryKey: ["activity-logs"],
-    queryFn: async () => {
-      const result = await api.get("/activity-logs?limit=200");
-      return Array.isArray(result) ? result : (result as any)?.data || [];
+  // 🔥 Efecto Debounce: Espera 500ms después de que el usuario deja de escribir para buscar
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // 1. Obtener estadísticas globales REALES desde el backend
+  const { data: statsResponse } = useQuery({
+    queryKey: ["activity-logs-stats"],
+    queryFn: () => api.get("/activity-logs/stats?days=7")
+  });
+  
+  const stats = (statsResponse as any)?.data || statsResponse || { total: 0, today: 0, recent: 0 };
+
+  // 2. Obtener logs delegando el filtro y la búsqueda a la Base de Datos
+  const { data: logsResponse, isLoading } = useQuery({
+    queryKey: ["activity-logs", filterType, debouncedSearch],
+    queryFn: () => {
+      const params = new URLSearchParams({ limit: "100" });
+      if (filterType !== "all") params.append("entityType", filterType);
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      return api.get(`/activity-logs?${params.toString()}`);
     }
   });
 
-  const logs = Array.isArray(logsResponseData) ? logsResponseData : (logsResponseData as any)?.data || [];
-
-  const filteredLogs = logs.filter((log) => {
-    const matchesType = filterType === "all" || log.entityType === filterType;
-    const matchesSearch = 
-      log.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.entityLabel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.action?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesType && matchesSearch;
-  });
-
-  const stats = {
-    total: logs.length,
-    today: logs.filter((l) => l.createdAt && isToday(new Date(l.createdAt))).length,
-    week: logs.filter((l) => {
-      if (!l.createdAt) return false;
-      const date = new Date(l.createdAt);
-      return isWithinInterval(date, {
-        start: startOfDay(subDays(new Date(), 7)),
-        end: new Date(),
-      });
-    }).length,
-  };
+  const logs = Array.isArray(logsResponse) ? logsResponse : (logsResponse as any)?.data || [];
 
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-500">
@@ -73,6 +68,7 @@ export default function BitacoraPage() {
         </p>
       </div>
 
+      {/* Tarjetas de Estadísticas Reales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-navy border-none text-white overflow-hidden relative shadow-lg">
           <div className="absolute right-0 top-0 p-4 opacity-10">
@@ -81,7 +77,7 @@ export default function BitacoraPage() {
           <CardContent className="p-6">
             <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Total Eventos</p>
             <h3 className="text-3xl font-playfair font-bold">{stats.total}</h3>
-            <p className="text-[10px] text-white/50 mt-1">Registrados en el sistema</p>
+            <p className="text-[10px] text-white/50 mt-1">Registrados en el sistema histórico</p>
           </CardContent>
         </Card>
 
@@ -103,10 +99,11 @@ export default function BitacoraPage() {
             <Clock className="w-16 h-16" />
           </div>
           <CardContent className="p-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Esta Semana</p>
-            <h3 className="text-3xl font-playfair font-bold text-navy dark:text-white">{stats.week}</h3>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Últimos 7 Días</p>
+            {/* El endpoint del backend devuelve 'recent' basado en los días solicitados */}
+            <h3 className="text-3xl font-playfair font-bold text-navy dark:text-white">{stats.recent || stats.week || 0}</h3>
             <div className="flex items-center gap-1 text-[10px] text-amber-600 mt-1 font-bold">
-              <AlertCircle className="w-3 h-3" /> Actividad últimos 7 días
+              <AlertCircle className="w-3 h-3" /> Actividad de la semana
             </div>
           </CardContent>
         </Card>
@@ -140,6 +137,8 @@ export default function BitacoraPage() {
                 <SelectItem value="Cotización">Cotizaciones</SelectItem>
                 <SelectItem value="Pago">Pagos</SelectItem>
                 <SelectItem value="Voucher">Vouchers</SelectItem>
+                <SelectItem value="EmailTemplate">Plantillas Email</SelectItem>
+                <SelectItem value="User">Usuarios</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -148,16 +147,16 @@ export default function BitacoraPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            <p className="text-sm font-medium text-muted-foreground">Cargando bitácora de auditoría...</p>
+            <p className="text-sm font-medium text-muted-foreground">Consultando base de datos...</p>
           </div>
-        ) : filteredLogs.length > 0 ? (
+        ) : logs.length > 0 ? (
           <ScrollArea className="h-[600px] pr-6">
             <div className="max-w-4xl mx-auto py-4">
-              {filteredLogs.map((log: any, index: number) => (
+              {logs.map((log: any, index: number) => (
                 <TimelineItem 
                   key={log.id} 
                   log={log} 
-                  isLast={index === filteredLogs.length - 1} 
+                  isLast={index === logs.length - 1} 
                 />
               ))}
             </div>
@@ -168,9 +167,9 @@ export default function BitacoraPage() {
               <History className="w-10 h-10 text-slate-200" />
             </div>
             <div className="space-y-2 max-w-xs">
-              <h3 className="text-lg font-playfair font-bold text-navy dark:text-white">Sin actividad registrada</h3>
+              <h3 className="text-lg font-playfair font-bold text-navy dark:text-white">Sin resultados</h3>
               <p className="text-sm text-muted-foreground">
-                No hay eventos que coincidan con los filtros actuales o aún no se han realizado acciones en el sistema.
+                No se encontró ninguna actividad que coincida con tu búsqueda en la base de datos.
               </p>
             </div>
             {(filterType !== "all" || searchTerm) && (

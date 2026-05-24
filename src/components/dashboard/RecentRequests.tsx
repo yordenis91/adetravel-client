@@ -16,23 +16,24 @@ import { Link } from "react-router-dom";
 import { FileText, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// 🔥 CORRECCIÓN: Nombres de estados actualizados a MAYÚSCULAS para coincidir con el backend Zod
 const statusConfig: Record<string, { label: string; color: string }> = {
-  "Recepcionada": { label: "Recepcionada", color: "bg-blue-100 text-blue-700 hover:bg-blue-100/80" },
-  "Cotizada": { label: "Cotizada", color: "bg-amber-100 text-amber-700 hover:bg-amber-100/80" },
-  "Confirmada": { label: "Confirmada", color: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80" },
-  "Cancelada": { label: "Cancelada", color: "bg-rose-100 text-rose-700 hover:bg-rose-100/80" },
-  "Vendida": { label: "Vendida", color: "bg-purple-100 text-purple-700 hover:bg-purple-100/80" },
+  "RECEPCIONADA": { label: "Recepcionada", color: "bg-blue-100 text-blue-700 hover:bg-blue-100/80" },
+  "COTIZADA": { label: "Cotizada", color: "bg-amber-100 text-amber-700 hover:bg-amber-100/80" },
+  "CONFIRMADA": { label: "Confirmada", color: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80" },
+  "CANCELADA": { label: "Cancelada", color: "bg-rose-100 text-rose-700 hover:bg-rose-100/80" },
+  "VENDIDA": { label: "Vendida", color: "bg-purple-100 text-purple-700 hover:bg-purple-100/80" },
 };
 
 export function RecentRequests() {
   const { data: responseData, isLoading } = useQuery({
     queryKey: ["recent-requests"],
-    queryFn: () => api.get('/requests?sortBy=-created_at&limit=5'),
+    queryFn: () => api.get('/requests?limit=5'),
   });
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 bg-white p-6 rounded-2xl shadow-sm">
         {[1, 2, 3, 4, 5].map((i) => (
           <Skeleton key={i} className="h-12 w-full rounded-lg" />
         ))}
@@ -40,13 +41,12 @@ export function RecentRequests() {
     );
   }
 
-  // CORRECCIÓN: sendList del backend envuelve el array en un objeto. Extraemos la propiedad data de forma segura.
   const requests = Array.isArray(responseData)
     ? responseData
     : (responseData as any)?.data || [];
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm">
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 h-full">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-playfair font-bold text-navy flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary" />
@@ -64,8 +64,8 @@ export function RecentRequests() {
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
             <FileText className="w-6 h-6 text-muted-foreground/30" />
           </div>
-          <p className="text-sm font-medium text-muted-foreground">No hay solicitudes recientes</p>
-          <Button variant="link" size="sm" asChild>
+          <p className="text-sm font-medium text-muted-foreground mb-4">No hay solicitudes recientes</p>
+          <Button variant="outline" size="sm" asChild className="border-navy text-navy">
             <Link to="/solicitudes">Crear nueva solicitud</Link>
           </Button>
         </div>
@@ -100,12 +100,12 @@ export function RecentRequests() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={cn("text-[10px] font-bold border-none", statusConfig[req.status]?.color || "bg-slate-100")}>
-                    {req.status || "Pendiente"}
+                  <Badge variant="outline" className={cn("text-[10px] font-bold border-none", statusConfig[req.status]?.color || "bg-slate-100 text-slate-600")}>
+                    {statusConfig[req.status]?.label || req.status || "Pendiente"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right text-xs text-muted-foreground">
-                  {req.created_at ? new Date(req.created_at).toLocaleDateString("es-CL") : "-"}
+                <TableCell className="text-right text-xs font-medium text-muted-foreground">
+                  {req.createdAt ? new Date(req.createdAt).toLocaleDateString("es-CL") : "-"}
                 </TableCell>
               </TableRow>
             ))}

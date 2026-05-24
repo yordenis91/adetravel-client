@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -80,6 +80,33 @@ const iconMap: Record<string, any> = {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const [me, setMe] = useState<any>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const scrollToActive = () => {
+      if (navRef.current) {
+        // Try to find by data-nav-path first as per plan
+        let activeItem = navRef.current.querySelector(`[data-nav-path="${location.pathname}"]`);
+        
+        // Fallback to .active class if not found (handles dashboard/root cases)
+        if (!activeItem) {
+          activeItem = navRef.current.querySelector(".sidebar-nav-item.active");
+        }
+
+        if (activeItem) {
+          activeItem.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }
+    };
+
+    // Use requestAnimationFrame to ensure the DOM has rendered the new state
+    const rafId = requestAnimationFrame(() => {
+      // Small delay sometimes needed for scrollArea-like components or complex transitions
+      setTimeout(scrollToActive, 100);
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [location.pathname]);
 
   useEffect(() => {
     async function loadMe() {
@@ -108,7 +135,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </h1>
         </div>
 
-        <nav className="space-y-8 overflow-y-auto max-h-[calc(100vh-200px)] hide-scrollbar">
+        <nav ref={navRef} className="space-y-8 overflow-y-auto max-h-[calc(100vh-200px)] hide-scrollbar">
           {navSections.map((section) => (
             <div key={section.title}>
               <h2 className="text-[10px] uppercase tracking-widest text-sidebar-foreground/40 font-bold mb-4 px-4">
@@ -123,6 +150,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <Link
                       key={item.name}
                       to={item.path}
+                      data-nav-path={item.path}
                       onClick={onClose}
                       className={cn(
                         "sidebar-nav-item",

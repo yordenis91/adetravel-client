@@ -45,7 +45,7 @@ export default function ConfirmacionesPage() {
   const quotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
 
   const confirmedRequests = useMemo(() => {
-    return requests.filter((r: any) => r.status === "Confirmada" || r.status === "Vendida");
+    return requests.filter((r: any) => r.status === "CONFIRMADA" || r.status === "VENDIDA");
   }, [requests]);
 
   const filteredRequests = useMemo(() => {
@@ -63,8 +63,8 @@ export default function ConfirmacionesPage() {
   }, [confirmedRequests, clients, searchTerm, activeTab]);
 
   const stats = useMemo(() => {
-    const totalConfirmadas = confirmedRequests.filter((r: any) => r.status === "Confirmada").length;
-    const totalVendidas = confirmedRequests.filter((r: any) => r.status === "Vendida").length;
+    const totalConfirmadas = confirmedRequests.filter((r: any) => r.status === "CONFIRMADA").length;
+    const totalVendidas = confirmedRequests.filter((r: any) => r.status === "VENDIDA").length;
     
     const confirmedRequestIds = confirmedRequests.map((r: any) => r.id);
     const completedPayments = payments.filter((p: any) => 
@@ -155,8 +155,8 @@ export default function ConfirmacionesPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
           <TabsList className="bg-white border border-gray-100 p-1">
             <TabsTrigger value="Todas" className="text-xs uppercase tracking-widest font-bold px-4 py-2">Todas</TabsTrigger>
-            <TabsTrigger value="Confirmada" className="text-xs uppercase tracking-widest font-bold px-4 py-2">Confirmadas</TabsTrigger>
-            <TabsTrigger value="Vendida" className="text-xs uppercase tracking-widest font-bold px-4 py-2">Vendidas</TabsTrigger>
+            <TabsTrigger value="CONFIRMADA" className="text-xs uppercase tracking-widest font-bold px-4 py-2">Confirmadas</TabsTrigger>
+            <TabsTrigger value="VENDIDA" className="text-xs uppercase tracking-widest font-bold px-4 py-2">Vendidas</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -188,7 +188,7 @@ export default function ConfirmacionesPage() {
           client={clients.find((c: any) => c.id === selectedRequest.clientId)}
           payments={payments.filter((p: any) => p.requestId === selectedRequest.id)}
           vouchers={vouchers.filter((v: any) => v.requestId === selectedRequest.id)}
-          quotation={quotations.find((q: any) => q.requestId === selectedRequest.id && q.status === "Aceptada")}
+          quotation={quotations.find((q: any) => q.requestId === selectedRequest.id && q.status === "ACEPTADA")}
           open={!!selectedRequest}
           onOpenChange={(open) => !open && setSelectedRequest(null)}
         />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useRequests, useChangeRequestStatus } from "@/hooks/useRequests";
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
 
 export default function RequestsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -27,6 +28,15 @@ export default function RequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setIsFormOpen(true);
+      searchParams.delete("action");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();

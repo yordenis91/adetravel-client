@@ -41,7 +41,7 @@ export function ConfirmacionDetailSheet({
   const queryClient = useQueryClient();
 
   const updateStatusMutation = useMutation({
-    mutationFn: (newStatus: string) => Request.update(request.id, { status: newStatus }),
+    mutationFn: (newStatus: string) => api.patch(`/requests/${request.id}`, { status: newStatus }),
     onSuccess: (_, newStatus) => {
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast.success(`Solicitud marcada como ${newStatus}`);
@@ -227,21 +227,21 @@ export function ConfirmacionDetailSheet({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cerrar
           </Button>
-          {request.status === "Confirmada" && (
+          {request.status === "CONFIRMADA" && (
             <Button 
               className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
-              onClick={() => updateStatusMutation.mutate("Vendida")}
+              onClick={() => updateStatusMutation.mutate("VENDIDA")}
               disabled={updateStatusMutation.isPending}
             >
               <CheckCircle2 className="w-4 h-4" />
               Marcar como Vendida
             </Button>
           )}
-          {request.status !== "Cancelada" && (
+          {request.status !== "CANCELADA" && (
              <Button 
               variant="destructive"
               className="gap-2"
-              onClick={() => updateStatusMutation.mutate("Cancelada")}
+              onClick={() => updateStatusMutation.mutate("CANCELADA")}
               disabled={updateStatusMutation.isPending}
             >
               <X className="w-4 h-4" />

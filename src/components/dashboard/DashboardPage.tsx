@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { StatsCard } from "./StatsCard";
@@ -11,63 +11,49 @@ import {
   PlusCircle,
   Briefcase,
   UserPlus,
-  HelpCircle
+  HelpCircle,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 export default function DashboardPage() {
-  // CORRECCIÓN: Manejo seguro con try/catch y extracción del total/array paginado
-  const { data: clientCount = 0 } = useQuery({
-    queryKey: ["client-count"],
-    queryFn: async () => {
-      try {
-        const clients = await api.get('/clients');
-        if (!clients) return 0;
-        // Si el backend usa sendList, vendrá en .total o .data.length. Si viene como array directo, usa .length
-        return clients.total ?? (Array.isArray(clients) ? clients.length : clients?.data?.length || 0);
-      } catch (error) {
-        console.error("Error al cargar contador de clientes:", error);
-        return 0; // Evita retornar undefined
-      }
-    }
+  // 🔥 Una SOLA petición ultra-rápida que trae todos los KPIs pre-calculados
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: () => api.get('/reports')
   });
 
-  // CORRECCIÓN: Manejo seguro para peticiones de solicitudes activas
-  const { data: activeRequests = 0 } = useQuery({
-    queryKey: ["active-requests-count"],
-    queryFn: async () => {
-      try {
-        const requests = await api.get('/requests?status=RECEPCIONADA');
-        if (!requests) return 0;
-        return requests.total ?? (Array.isArray(requests) ? requests.length : requests?.data?.length || 0);
-      } catch (error) {
-        console.error("Error al cargar solicitudes activas:", error);
-        return 0;
-      }
-    }
-  });
+  const reportData = (response as any)?.data || {
+    summary: { totalClients: 0, totalRequests: 0, formattedRevenue: "$0" },
+    requestsByStatus: []
+  };
 
-  // CORRECCIÓN: Manejo seguro para peticiones de viajes confirmados
-  const { data: confirmedThisMonth = 0 } = useQuery({
-    queryKey: ["confirmed-requests-count"],
-    queryFn: async () => {
-      try {
-        const requests = await api.get('/requests?status=CONFIRMADA');
-        if (!requests) return 0;
-        return requests.total ?? (Array.isArray(requests) ? requests.length : requests?.data?.length || 0);
-      } catch (error) {
-        console.error("Error al cargar viajes confirmados:", error);
-        return 0;
-      }
-    }
-  });
+  // Extraemos las métricas exactas buscando en el arreglo de estados del backend
+  const activeRequests = useMemo(() => {
+    const req = reportData.requestsByStatus.find((r: any) => r.status === "RECEPCIONADA");
+    return req ? req.count : 0;
+  }, [reportData.requestsByStatus]);
+
+  const confirmedRequests = useMemo(() => {
+    const req = reportData.requestsByStatus.find((r: any) => r.status === "CONFIRMADA");
+    return req ? req.count : 0;
+  }, [reportData.requestsByStatus]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-muted-foreground animate-pulse font-medium">Cargando tu panel de control...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-playfair font-bold text-navy mb-1">Buenos días, Admin</h1>
+          <h1 className="text-3xl font-playfair font-bold text-navy mb-1">Buenos días</h1>
           <p className="text-muted-foreground text-sm">
             Esto es lo que está pasando hoy, {new Date().toLocaleDateString("es-CL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
           </p>
@@ -83,7 +69,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard 
           title="Total Clientes" 
-          value={clientCount} 
+          value={reportData.summary.totalClients} 
           subtitle="Titulares registrados"
           icon={<Users className="w-6 h-6" />}
           trend="up"
@@ -103,8 +89,8 @@ export default function DashboardPage() {
         />
         <StatsCard 
           title="Viajes Confirmados" 
-          value={confirmedThisMonth} 
-          subtitle="Para este mes"
+          value={confirmedRequests} 
+          subtitle="Listos para operar"
           icon={<PlaneTakeoff className="w-6 h-6" />}
           trend="up"
           trendValue="+5"
@@ -112,13 +98,13 @@ export default function DashboardPage() {
           delay={0.3}
         />
         <StatsCard 
-          title="Ingresos Estimados" 
-          value="$12.4M" 
-          subtitle="Proyección mensual"
+          title="Ingresos Reales" 
+          value={reportData.summary.formattedRevenue} 
+          subtitle="Pagos completados en CLP"
           icon={<DollarSign className="w-6 h-6" />}
-          trend="down"
-          trendValue="-2%"
-          color="red"
+          trend="up"
+          trendValue="estable"
+          color="navy"
           delay={0.4}
         />
       </div>
@@ -133,46 +119,53 @@ export default function DashboardPage() {
             <div className="relative z-10">
               <h3 className="text-lg font-playfair font-bold mb-4">Acciones Rápidas</h3>
               <div className="grid grid-cols-1 gap-3">
-                <Button variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
-                  <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-110 duration-300">
-                    <PlusCircle className="w-4 h-4 text-navy" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">Nueva Solicitud</span>
+                <Button asChild variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
+                  <Link to="/solicitudes?action=new">
+                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-110 duration-300">
+                      <PlusCircle className="w-4 h-4 text-navy" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider">Nueva Solicitud</span>
+                  </Link>
                 </Button>
-                <Button variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-400 flex items-center justify-center group-hover:scale-110 duration-300">
-                    <UserPlus className="w-4 h-4 text-navy" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">Nuevo Cliente</span>
+
+                <Button asChild variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
+                  <Link to="/clientes?action=new">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-400 flex items-center justify-center group-hover:scale-110 duration-300">
+                      <UserPlus className="w-4 h-4 text-navy" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider">Nuevo Cliente</span>
+                  </Link>
                 </Button>
-                <Button variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
-                  <div className="w-8 h-8 rounded-lg bg-blue-400 flex items-center justify-center group-hover:scale-110 duration-300">
-                    <Briefcase className="w-4 h-4 text-navy" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">Nuevo Proveedor</span>
+
+                <Button asChild variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
+                  <Link to="/proveedores?action=new">
+                    <div className="w-8 h-8 rounded-lg bg-blue-400 flex items-center justify-center group-hover:scale-110 duration-300">
+                      <Briefcase className="w-4 h-4 text-navy" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider">Nuevo Proveedor</span>
+                  </Link>
                 </Button>
               </div>
             </div>
-            {/* Abstract decorative elements */}
             <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-primary/20 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Avisos Pendientes</h3>
             <div className="space-y-4">
               <div className="p-3 border border-amber-100 bg-amber-50/50 rounded-xl flex gap-3">
                 <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                 <div>
                   <p className="text-xs font-bold text-navy">Pagos por Vencer</p>
-                  <p className="text-[10px] text-muted-foreground">3 reservas necesitan confirmación de pago hoy.</p>
+                  <p className="text-[10px] text-muted-foreground">Revisa los pagos en estado pendiente.</p>
                 </div>
               </div>
               <div className="p-3 border border-blue-100 bg-blue-50/50 rounded-xl flex gap-3">
                 <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-navy">Vouchers Listos</p>
-                  <p className="text-[10px] text-muted-foreground">Familia González viaja mañana. Vouchers generados.</p>
+                  <p className="text-xs font-bold text-navy">Vouchers Borradores</p>
+                  <p className="text-[10px] text-muted-foreground">Tienes vouchers sin emitir en la tabla.</p>
                 </div>
               </div>
             </div>
