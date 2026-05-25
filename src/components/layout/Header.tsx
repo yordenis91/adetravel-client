@@ -1,7 +1,6 @@
 import React from "react";
-import { Bell, Search, User, Menu } from "lucide-react";
+import { Bell, Search, Menu, LogOut, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,8 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { superdevClient } from "@/lib/superdev/client";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 interface HeaderProps {
   title: string;
@@ -19,6 +19,22 @@ interface HeaderProps {
 }
 
 export function Header({ title, onMobileMenuOpen }: HeaderProps) {
+  // Obtenemos el usuario real (React Query usa la caché, por lo que es instantáneo)
+  const { data: user } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => api.get("/auth/me")
+  });
+
+  const handleLogout = () => {
+    // Cierre de sesión nativo JWT
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
+
+  const initials = user?.fullName 
+    ? user.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() 
+    : 'AD';
+
   return (
     <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-40">
       <div className="flex items-center gap-4">
@@ -29,11 +45,12 @@ export function Header({ title, onMobileMenuOpen }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-6">
+        {/* Buscador Global (Visual) */}
         <div className="hidden md:flex items-center bg-muted rounded-full px-3 py-1.5 gap-2 w-64 border border-transparent focus-within:border-primary/30 transition-all">
           <Search className="w-4 h-4 text-muted-foreground" />
           <input 
             type="text" 
-            placeholder="Buscar..." 
+            placeholder="Buscar en ADE Travel..." 
             className="bg-transparent border-none outline-none text-xs w-full placeholder:text-muted-foreground"
           />
         </div>
@@ -41,6 +58,7 @@ export function Header({ title, onMobileMenuOpen }: HeaderProps) {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-navy">
             <Bell className="w-5 h-5" />
+            {/* Indicador de notificaciones */}
             <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
           </Button>
 
@@ -48,27 +66,36 @@ export function Header({ title, onMobileMenuOpen }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full ml-2">
                 <Avatar className="h-8 w-8 border border-gray-100">
-                  <AvatarImage src="" alt="User" />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">AD</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin ADE</p>
-                  <p className="text-xs leading-none text-muted-foreground">admin@adetravel.cl</p>
+                  <p className="text-sm font-medium leading-none text-navy font-bold">
+                    {user?.fullName || "Cargando..."}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email || ""}
+                  </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Mi Perfil</DropdownMenuItem>
-              <DropdownMenuItem>Configuración</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer gap-2">
+                <User className="w-4 h-4" /> Mi Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer gap-2">
+                <Settings className="w-4 h-4" /> Configuración
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="text-destructive focus:text-destructive"
-                onClick={() => superdevClient.auth.logout()}
+                className="text-destructive focus:text-destructive cursor-pointer gap-2 font-medium"
+                onClick={handleLogout}
               >
-                Cerrar Sesión
+                <LogOut className="w-4 h-4" /> Cerrar Sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

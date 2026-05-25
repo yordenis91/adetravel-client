@@ -1,12 +1,13 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Settings, Building2, Mail, FileText, Monitor } from "lucide-react";
+import { Settings, Building2, Mail, FileText, Monitor, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { SystemConfig } from "@/lib/api";
 import AgencyTab from "./AgencyTab";
 import EmailTab from "./EmailTab";
 import DocumentsTab from "./DocumentsTab";
 import SystemTab from "./SystemTab";
+import ExchangeTab from "./ExchangeTab";
 
 export default function SettingsPage() {
   const { data: configs, isLoading } = useQuery({
@@ -61,6 +62,13 @@ export default function SettingsPage() {
             Documentos
           </TabsTrigger>
           <TabsTrigger 
+          value="divisas" 
+            className="data-[state=active]:bg-white data-[state=active]:text-navy data-[state=active]:shadow-sm transition-all flex items-center gap-2 px-6 py-2"
+          >
+            <TrendingUp className="w-4 h-4" />
+            Divisas
+          </TabsTrigger>
+          <TabsTrigger 
             value="sistema" 
             className="data-[state=active]:bg-white data-[state=active]:text-navy data-[state=active]:shadow-sm transition-all flex items-center gap-2 px-6 py-2"
           >
@@ -78,6 +86,9 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="documentos" className="outline-none">
             <DocumentsTab config={config} configId={configId} />
+            </TabsContent>
+          <TabsContent value="divisas" className="outline-none">
+            <ExchangeTab config={config} configId={configId} />
           </TabsContent>
           <TabsContent value="sistema" className="outline-none">
             <SystemTab config={config} configId={configId} />

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { StatsCard } from "./StatsCard";
 import { RecentRequests } from "./RecentRequests";
+import { ExchangeRatesWidget } from "./ExchangeRatesWidget";
 import { 
   Users, 
   ClipboardCheck, 
@@ -23,6 +24,28 @@ export default function DashboardPage() {
     queryKey: ["dashboard-stats"],
     queryFn: () => api.get('/reports')
   });
+
+  // 🔥 NUEVO: Obtener la configuración del sistema para las Tasas de Cambio
+  const { data: configData } = useQuery({
+    queryKey: ["system-config"],
+    queryFn: () => api.get('/system-config')
+  });
+
+  // Extraer y parsear las tasas de forma segura
+ // 2. Parseamos la información de forma segura
+  const exchangeRates = useMemo(() => {
+    const config = (configData as any)?.data || configData || {};
+    
+    // Si viene vacío o nulo (como estaba pasando por Zod), retornamos array vacío
+    if (!config.exchangeRates) return [];
+    
+    try {
+      return JSON.parse(config.exchangeRates);
+    } catch (e) {
+      console.error("Error parseando tasas de cambio", e);
+      return [];
+    }
+  }, [configData]);
 
   const reportData = (response as any)?.data || {
     summary: { totalClients: 0, totalRequests: 0, formattedRevenue: "$0" },
@@ -170,6 +193,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+           <ExchangeRatesWidget exchangeRates={exchangeRates} />
         </div>
       </div>
     </div>

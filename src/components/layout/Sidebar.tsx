@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { 
   LayoutDashboard, 
   Users, 
@@ -18,7 +19,6 @@ import {
   Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { superdevClient } from "@/lib/superdev/client";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
@@ -79,7 +79,10 @@ const iconMap: Record<string, any> = {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const [me, setMe] = useState<any>(null);
+  const { data: me } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => api.get("/auth/me")
+  });
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -108,17 +111,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     return () => cancelAnimationFrame(rafId);
   }, [location.pathname]);
 
-  useEffect(() => {
-    async function loadMe() {
-      try {
-        const user = await api.get('/auth/me');
-        setMe(user);
-      } catch (error) {
-        console.error("Error loading user info for sidebar", error);
-      }
-    }
-    loadMe();
-  }, []);
+  // User is loaded via react-query (shared cache with Header)
   
   return (
     <aside className={cn(
@@ -172,12 +165,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="mt-auto p-6 border-t border-sidebar-border bg-navy-dark/50">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary text-[10px] font-bold">
-            {me?.full_name ? me.full_name.split(' ').map((n: any) => n[0]).join('').slice(0, 2).toUpperCase() : 'AD'}
+            {me?.fullName ? me.fullName.split(' ').map((n: any) => n[0]).join('').slice(0, 2).toUpperCase() : 'AD'}
           </div>
           <div className="flex flex-col overflow-hidden">
-            <span className="text-xs font-semibold truncate">{me?.full_name || 'Admin ADE'}</span>
+            <span className="text-xs font-semibold truncate">{me?.fullName || 'Admin ADE'}</span>
             <span className="text-[10px] text-sidebar-foreground/50 truncate">
-              {me?.role === 'administrator' ? 'Administrador' : 'Agente'}
+              {me?.role === 'ADMINISTRADOR' ? 'Administrador' : 'Agente'}
             </span>
           </div>
         </div>
@@ -187,7 +180,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
           onClick={() => {
             if (onClose) onClose();
-            superdevClient.auth.logout();
+            localStorage.removeItem("token");
+            window.location.href = "/login";
           }}
         >
           <LogOut className="w-4 h-4" />

@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -24,10 +25,11 @@ interface ClientsTableProps {
   isLoading: boolean;
   onEdit: (client: any) => void;
   onDelete: (id: string) => void;
-  onView: (client: any) => void;
+ // onView: (client: any) => void;
 }
 
-export function ClientsTable({ clients, isLoading, onEdit, onDelete, onView}: ClientsTableProps) {
+export function ClientsTable({ clients, isLoading, onEdit, onDelete}: ClientsTableProps) {
+   const navigate = useNavigate();
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -118,11 +120,11 @@ export function ClientsTable({ clients, isLoading, onEdit, onDelete, onView}: Cl
               <TableCell className="text-right pr-6">
                 <div className="flex justify-end gap-1">
                   <Button 
-                  variant="ghost"
-                   size="icon"
-                   className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5"
-                   onClick={() => onView(client)}
-                   >
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5"
+                    onClick={() => navigate(`/clientes/${client.id}/timeline`)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                   <Button 

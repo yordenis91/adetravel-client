@@ -9,6 +9,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
+import ClientTimeline from "@/pages/ClientTimeline";
 import Providers from "./pages/Providers";
 import Requests from "./pages/Requests";
 import Quotations from "./pages/Quotations";
@@ -57,6 +58,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Clients />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/clientes/:clientId/timeline"
+                element={
+                  <ProtectedRoute>
+                    <ClientTimeline />
                   </ProtectedRoute>
                 }
               />
