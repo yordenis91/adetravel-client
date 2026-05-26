@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { StatsCard } from "./StatsCard";
 import { RecentRequests } from "./RecentRequests";
 import { ExchangeRatesWidget } from "./ExchangeRatesWidget";
+import { BirthdayReminder } from "./BirthdayReminder";
 import { 
   Users, 
   ClipboardCheck, 
@@ -194,6 +195,11 @@ export default function DashboardPage() {
             </div>
           </div>
            <ExchangeRatesWidget exchangeRates={exchangeRates} />
+           <BirthdayReminder />
+
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            {/* ... tus avisos pendientes ... */}
+          </div>
         </div>
       </div>
     </div>
