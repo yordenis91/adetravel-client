@@ -13,9 +13,12 @@ export function BirthdayReminder() {
   const [isSending, setIsSending] = useState(false);
 
   // Cargamos los clientes (idealmente tu endpoint soporta paginación o trae todos los activos)
-  const { data: clientsData, isLoading } = useQuery({
+  const { data: clientsData, isLoading, isError, error } = useQuery({
     queryKey: ["clients"],
-    queryFn: () => api.get('/clients')
+    queryFn: () => api.get('/clients'),
+    onError: (err) => {
+      console.error("Error loading clients for BirthdayReminder:", err);
+    }
   });
 
   const birthdayClients = useMemo(() => {
@@ -63,6 +66,17 @@ export function BirthdayReminder() {
   };
 
   if (isLoading) return null;
+
+  if (isError) {
+    return (
+      <Card className="border-slate-100 bg-rose-50/40">
+        <CardContent className="p-4 flex items-center gap-3 text-rose-700">
+          <Send className="w-5 h-5 text-rose-700/80" />
+          <p className="text-xs font-medium">No se pudieron cargar los clientes. Verifica permisos o conexión al servidor.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <AnimatePresence>
