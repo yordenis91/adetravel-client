@@ -24,16 +24,24 @@ export function BirthdayReminder() {
   const birthdayClients = useMemo(() => {
     const clients = (clientsData as any)?.data || clientsData || [];
     const today = new Date();
-    const currentMonth = today.getMonth();
+    // getMonth() devuelve 0-11, así que le sumamos 1 para compararlo fácil con "05" (Mayo)
+    const currentMonth = today.getMonth() + 1; 
     const currentDay = today.getDate();
     const currentYear = today.getFullYear();
 
     return clients.filter((client: any) => {
       if (!client.birthDate || !client.email) return false;
       
-      const bDate = new Date(client.birthDate);
-      // Validar si es el mismo mes y día
-      const isBirthdayToday = bDate.getMonth() === currentMonth && bDate.getDate() === currentDay;
+      // 🔥 LA SOLUCIÓN: Separar el string "YYYY-MM-DD" manualmente
+      const dateParts = client.birthDate.split('-');
+      if (dateParts.length !== 3) return false;
+
+      const birthMonth = parseInt(dateParts[1], 10);
+      const birthDay = parseInt(dateParts[2], 10);
+
+      // Validar si es el mismo mes y día (ignoramos las zonas horarias)
+      const isBirthdayToday = (birthMonth === currentMonth) && (birthDay === currentDay);
+      
       // Validar que no se le haya enviado este año
       const notSentThisYear = client.lastBirthdayEmailYear !== currentYear;
 
