@@ -5,18 +5,22 @@ import { StatsCard } from "./StatsCard";
 import { RecentRequests } from "./RecentRequests";
 import { ExchangeRatesWidget } from "./ExchangeRatesWidget";
 import { BirthdayReminder } from "./BirthdayReminder";
-import { 
-  Users, 
-  ClipboardCheck, 
-  PlaneTakeoff, 
+import {
+  Users,
+  ClipboardCheck,
+  PlaneTakeoff,
   DollarSign,
   PlusCircle,
   Briefcase,
   UserPlus,
   HelpCircle,
-  Loader2
+  Loader2,
+  Sun,
+  CloudSun,
+  Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 export default function DashboardPage() {
@@ -33,13 +37,13 @@ export default function DashboardPage() {
   });
 
   // Extraer y parsear las tasas de forma segura
- // 2. Parseamos la información de forma segura
+  // 2. Parseamos la información de forma segura
   const exchangeRates = useMemo(() => {
     const config = (configData as any)?.data || configData || {};
-    
+
     // Si viene vacío o nulo (como estaba pasando por Zod), retornamos array vacío
     if (!config.exchangeRates) return [];
-    
+
     try {
       return JSON.parse(config.exchangeRates);
     } catch (e) {
@@ -47,6 +51,11 @@ export default function DashboardPage() {
       return [];
     }
   }, [configData]);
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
+  const GreetingIcon = hour < 12 ? Sun : hour < 19 ? CloudSun : Moon;
+  const iconColor = hour < 12 ? "text-amber-500" : hour < 19 ? "text-orange-400" : "text-indigo-400";
 
   const reportData = (response as any)?.data || {
     summary: { totalClients: 0, totalRequests: 0, formattedRevenue: "$0" },
@@ -77,7 +86,16 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-playfair font-bold text-navy mb-1">Buenos días</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <motion.div
+              initial={{ scale: 0, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            >
+              <GreetingIcon className={`w-8 h-8 ${iconColor}`} />
+            </motion.div>
+            <h1 className="text-3xl font-playfair font-bold text-navy">{greeting}, Admin</h1>
+          </div>
           <p className="text-muted-foreground text-sm">
             Esto es lo que está pasando hoy, {new Date().toLocaleDateString("es-CL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
           </p>
@@ -91,9 +109,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard 
-          title="Total Clientes" 
-          value={reportData.summary.totalClients} 
+        <StatsCard
+          title="Total Clientes"
+          value={reportData.summary.totalClients}
           subtitle="Titulares registrados"
           icon={<Users className="w-6 h-6" />}
           trend="up"
@@ -101,9 +119,9 @@ export default function DashboardPage() {
           color="blue"
           delay={0.1}
         />
-        <StatsCard 
-          title="Solicitudes Activas" 
-          value={activeRequests} 
+        <StatsCard
+          title="Solicitudes Activas"
+          value={activeRequests}
           subtitle="En proceso de cotización"
           icon={<ClipboardCheck className="w-6 h-6" />}
           trend="neutral"
@@ -111,9 +129,9 @@ export default function DashboardPage() {
           color="gold"
           delay={0.2}
         />
-        <StatsCard 
-          title="Viajes Confirmados" 
-          value={confirmedRequests} 
+        <StatsCard
+          title="Viajes Confirmados"
+          value={confirmedRequests}
           subtitle="Listos para operar"
           icon={<PlaneTakeoff className="w-6 h-6" />}
           trend="up"
@@ -121,9 +139,9 @@ export default function DashboardPage() {
           color="green"
           delay={0.3}
         />
-        <StatsCard 
-          title="Ingresos Reales" 
-          value={reportData.summary.formattedRevenue} 
+        <StatsCard
+          title="Ingresos Reales"
+          value={reportData.summary.formattedRevenue}
           subtitle="Pagos completados en CLP"
           icon={<DollarSign className="w-6 h-6" />}
           trend="up"
@@ -137,7 +155,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
           <RecentRequests />
         </div>
-        
+
         <div className="space-y-6">
           <div className="bg-navy rounded-2xl p-6 text-white shadow-lg overflow-hidden relative">
             <div className="relative z-10">
@@ -194,8 +212,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-           <ExchangeRatesWidget exchangeRates={exchangeRates} />
-           <BirthdayReminder />
+          <ExchangeRatesWidget exchangeRates={exchangeRates} />
+          <BirthdayReminder />
 
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             {/* ... tus avisos pendientes ... */}
