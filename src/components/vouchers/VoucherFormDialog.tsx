@@ -40,6 +40,7 @@ import {
   Hash
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
