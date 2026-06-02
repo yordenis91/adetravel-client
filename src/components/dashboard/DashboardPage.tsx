@@ -5,6 +5,7 @@ import { StatsCard } from "./StatsCard";
 import { RecentRequests } from "./RecentRequests";
 import { ExchangeRatesWidget } from "./ExchangeRatesWidget";
 import { BirthdayReminder } from "./BirthdayReminder";
+import { PendingAlerts } from "./PendingAlerts";
 import {
   Users,
   ClipboardCheck,
@@ -72,6 +73,9 @@ export default function DashboardPage() {
     const req = reportData.requestsByStatus.find((r: any) => r.status === "CONFIRMADA");
     return req ? req.count : 0;
   }, [reportData.requestsByStatus]);
+
+
+
 
   if (isLoading) {
     return (
@@ -193,25 +197,7 @@ export default function DashboardPage() {
             <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Avisos Pendientes</h3>
-            <div className="space-y-4">
-              <div className="p-3 border border-amber-100 bg-amber-50/50 rounded-xl flex gap-3">
-                <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-navy">Pagos por Vencer</p>
-                  <p className="text-[10px] text-muted-foreground">Revisa los pagos en estado pendiente.</p>
-                </div>
-              </div>
-              <div className="p-3 border border-blue-100 bg-blue-50/50 rounded-xl flex gap-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-navy">Vouchers Borradores</p>
-                  <p className="text-[10px] text-muted-foreground">Tienes vouchers sin emitir en la tabla.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PendingAlerts />
           <ExchangeRatesWidget exchangeRates={exchangeRates} />
           <BirthdayReminder />
 
