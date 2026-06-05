@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { exportToCsv } from "@/lib/exportCsv";
 import { useSearchParams } from "react-router-dom";
 
 
@@ -30,6 +31,9 @@ export default function ClientsPage() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedPreviewClient, setSelectedPreviewClient] = useState<any>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // 🔥 NUEVO: Estado para manejar los checkboxes seleccionados
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -82,13 +86,65 @@ export default function ClientsPage() {
   };
 
   const handleDelete = (id: string) => {
-    // Controlado por estado: abrimos el AlertDialog y guardamos el id
     setItemToConfirm(id);
   };
 
   const handleView = (client: any) => {
     setSelectedPreviewClient(client);
     setIsPreviewOpen(true);
+  };
+
+  // Clear selection when tab or filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeTab, searchTerm]);
+
+  // 🔥 NUEVO: Lógica de Selección
+  const handleSelectOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredClients.length) {
+      setSelectedIds(new Set()); // Deseleccionar todos
+    } else {
+      setSelectedIds(new Set(filteredClients.map((c: any) => c.id))); // Seleccionar todos los filtrados
+    }
+  };
+
+  // 🔥 NUEVO: Lógica de Exportación Dinámica
+  const handleExport = () => {
+    // Si hay seleccionados, exportamos esos. Si no, exportamos todos los que estén en pantalla.
+    const dataToExport = selectedIds.size > 0 
+      ? filteredClients.filter((c: any) => selectedIds.has(c.id))
+      : filteredClients;
+
+    if (dataToExport.length === 0) {
+      toast({ title: "Sin datos", description: "No hay clientes para exportar.", variant: "destructive" });
+      return;
+    }
+
+    // Aplanamos la data para que el CSV quede bonito y legible
+    const csvFormattedData = dataToExport.map((c: any) => ({
+      Nombre: c.firstName,
+      Apellido: c.lastName,
+      RUT: c.rut || "N/A",
+      Pasaporte: c.passportNumber || "N/A",
+      Email: c.email || "N/A",
+      Telefono: c.phone || "N/A",
+      Nacionalidad: c.nationality || "N/A",
+      Fuente: c.referralSource || "Directo",
+      Estado: c.isActive ? "Activo" : "Inactivo"
+    }));
+
+    exportToCsv('clientes_adetravel', csvFormattedData);
+
+    toast({ title: "Exportación exitosa", description: `Se exportaron ${csvFormattedData.length} clientes.` });
   };
 
   return (
@@ -99,9 +155,14 @@ export default function ClientsPage() {
           <p className="text-muted-foreground text-sm">Gestiona la base de datos de titulares y viajeros.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 bg-white text-xs font-bold uppercase tracking-wider">
+          {/* 🔥 Se le agregó el evento onClick */}
+          <Button 
+            variant="outline" 
+            onClick={handleExport}
+            className="gap-2 bg-white text-xs font-bold uppercase tracking-wider"
+          >
             <Download className="w-4 h-4" />
-            Exportar
+            Exportar {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
           </Button>
           <Button onClick={handleAdd} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" />
@@ -166,12 +227,15 @@ export default function ClientsPage() {
           </div>
         </div>
 
+        {/* 🔥 SE PASAN LOS PROPS FALTANTES A LA TABLA */}
         <ClientsTable 
           clients={filteredClients} 
           isLoading={isLoading} 
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onView={handleView}
+          selectedIds={selectedIds}
+          onSelectOne={handleSelectOne}
+          onSelectAll={handleSelectAll}
         />
       </div>
 

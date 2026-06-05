@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Edit, 
   Trash2, 
@@ -34,6 +35,9 @@ interface ProvidersTableProps {
   isLoading: boolean;
   onEdit: (provider: any) => void;
   onDelete: (id: string) => void;
+  selectedIds?: Set<string>;
+  onSelectOne?: (id: string) => void;
+  onSelectAll?: () => void;
 }
 
 const businessTypeLabels: Record<string, string> = {
@@ -71,7 +75,7 @@ const paymentMethodLabels: Record<string, string> = {
   CHECK: "Cheque",
 };
 
-export function ProvidersTable({ providers, isLoading, onEdit, onDelete }: ProvidersTableProps) {
+export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selectedIds = new Set<string>(), onSelectOne, onSelectAll }: ProvidersTableProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -96,11 +100,25 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete }: Provi
     );
   }
 
+  const isAllSelected = providers.length > 0 && selectedIds.size === providers.length;
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < providers.length;
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow className="hover:bg-transparent border-gray-100">
+            <TableHead className="w-10 px-4 py-4">
+              <Checkbox
+                checked={isAllSelected}
+                onCheckedChange={onSelectAll}
+                className={cn(
+                  "rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary",
+                  isSomeSelected && "data-[state=unchecked]:bg-slate-100 data-[state=unchecked]:border-slate-300"
+                )}
+                data-state={isAllSelected ? "checked" : (isSomeSelected ? "indeterminate" : "unchecked")}
+              />
+            </TableHead>
             <TableHead className="text-[10px] uppercase font-bold tracking-widest px-6 py-4">Proveedor</TableHead>
             <TableHead className="text-[10px] uppercase font-bold tracking-widest py-4">Tipo</TableHead>
             <TableHead className="text-[10px] uppercase font-bold tracking-widest py-4">Contacto</TableHead>
@@ -113,6 +131,13 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete }: Provi
         <TableBody>
           {providers.map((provider) => (
             <TableRow key={provider.id} className="group hover:bg-muted/30 transition-colors border-gray-50">
+              <TableCell className="px-4 py-4">
+                <Checkbox
+                  checked={selectedIds.has(provider.id)}
+                  onCheckedChange={() => onSelectOne && onSelectOne(provider.id)}
+                  className="rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+              </TableCell>
               <TableCell className="px-6 py-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all duration-300">

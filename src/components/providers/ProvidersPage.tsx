@@ -19,6 +19,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
+import { exportToCsv } from "@/lib/exportCsv";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,8 @@ export default function ProvidersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  // Selección de filas para exportar
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -78,6 +81,55 @@ export default function ProvidersPage() {
     }
   });
 
+  // Clear selection when tab or filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeTab, typeFilter, searchTerm]);
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredProviders.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredProviders.map((p: any) => p.id)));
+    }
+  };
+
+  const handleExport = () => {
+    const dataToExport = selectedIds.size > 0 ? filteredProviders.filter((p: any) => selectedIds.has(p.id)) : filteredProviders;
+    if (dataToExport.length === 0) {
+      toast({ title: "Sin datos", description: "No hay proveedores para exportar.", variant: "destructive" });
+      return;
+    }
+
+    const csvFormattedData = dataToExport.map((p: any) => ({
+      Nombre: p.name ?? '',
+      Fantasia: p.fantasyName ?? '',
+      RUT: p.rut ?? 'N/A',
+      Email: p.email ?? 'N/A',
+      Telefono: p.phone ?? 'N/A',
+      Ciudad: p.city ?? '',
+      Pais: p.country ?? '',
+      Tipo: p.businessType ?? '',
+      MetodoPago: p.paymentMethod ?? '',
+      Estado: p.isActive ? 'Activo' : 'Inactivo'
+    }));
+
+    // console.debug('Exportando proveedores. filtered:', filteredProviders.length, 'selected:', selectedIds.size);
+    // console.debug('csvFormattedData length:', csvFormattedData.length);
+
+    exportToCsv('proveedores_adetravel', csvFormattedData);
+    toast({ title: "Exportación exitosa", description: `Se exportaron ${csvFormattedData.length} proveedores.` });
+  };
+
   const handleEdit = (provider: any) => {
     setSelectedProvider(provider);
     setIsFormOpen(true);
@@ -100,9 +152,9 @@ export default function ProvidersPage() {
           <p className="text-muted-foreground text-sm">Gestiona la red de proveedores de servicios turísticos.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 bg-white text-xs font-bold uppercase tracking-wider">
+          <Button variant="outline" onClick={handleExport} className="gap-2 bg-white text-xs font-bold uppercase tracking-wider">
             <Download className="w-4 h-4" />
-            Exportar
+            Exportar {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
           </Button>
           <Button onClick={handleAdd} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" />
@@ -192,6 +244,9 @@ export default function ProvidersPage() {
           isLoading={isLoading} 
           onEdit={handleEdit}
           onDelete={handleDelete}
+          selectedIds={selectedIds}
+          onSelectOne={handleSelectOne}
+          onSelectAll={handleSelectAll}
         />
       </div>
 

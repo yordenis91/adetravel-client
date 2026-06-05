@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ClientsTableProps {
   clients: any[];
@@ -26,9 +27,15 @@ interface ClientsTableProps {
   onEdit: (client: any) => void;
   onDelete: (id: string) => void;
  // onView: (client: any) => void;
+   selectedIds: Set<string>;
+  onSelectOne: (id: string) => void;
+  onSelectAll: () => void;
 }
 
-export function ClientsTable({ clients, isLoading, onEdit, onDelete}: ClientsTableProps) {
+export function ClientsTable({ clients, isLoading, onEdit, onDelete,
+  selectedIds,
+  onSelectOne,
+  onSelectAll}: ClientsTableProps) {
    const navigate = useNavigate();
   if (isLoading) {
     return (
@@ -54,11 +61,26 @@ export function ClientsTable({ clients, isLoading, onEdit, onDelete}: ClientsTab
     );
   }
 
+  const isAllSelected = clients.length > 0 && selectedIds.size === clients.length;
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < clients.length;
+
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow className="hover:bg-transparent border-gray-100">
+            <TableHead className="w-10 px-4 py-4">
+              <Checkbox 
+                checked={isAllSelected}
+                onCheckedChange={onSelectAll}
+                className={cn(
+                  "rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary",
+                  isSomeSelected && "data-[state=unchecked]:bg-slate-100 data-[state=unchecked]:border-slate-300"
+                )}
+                data-state={isAllSelected ? "checked" : (isSomeSelected ? "indeterminate" : "unchecked")}
+              />
+            </TableHead>
             <TableHead className="text-[10px] uppercase font-bold tracking-widest px-6 py-4">Cliente</TableHead>
             <TableHead className="text-[10px] uppercase font-bold tracking-widest py-4">ID / RUT</TableHead>
             <TableHead className="text-[10px] uppercase font-bold tracking-widest py-4">Contacto</TableHead>
@@ -70,6 +92,13 @@ export function ClientsTable({ clients, isLoading, onEdit, onDelete}: ClientsTab
         <TableBody>
           {clients.map((client) => (
             <TableRow key={client.id} className="group hover:bg-muted/30 transition-colors border-gray-50">
+              <TableCell className="px-4 py-4">
+                <Checkbox 
+                  checked={selectedIds.has(client.id)}
+                  onCheckedChange={() => onSelectOne(client.id)}
+                  className="rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+              </TableCell>
               <TableCell className="px-6 py-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all duration-300">
