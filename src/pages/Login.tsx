@@ -44,7 +44,9 @@ export default function Login() {
 
   useEffect(() => {
     // Si ya está logueado, lo expulsamos del login automáticamente
-    if (isAuthenticated) {
+    const token = localStorage.getItem("ade_token");
+    // Evitar rebotes: sólo redirigir si el contexto está autenticado y el token existe en localStorage
+    if (isAuthenticated && token) {
       navigate("/dashboard", { replace: true });
     }
   }, [navigate, isAuthenticated]);

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { auth, AuthUser } from "@/lib/auth";
 
 interface AuthContextType {
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const savedToken = localStorage.getItem(TOKEN_KEY);
@@ -66,9 +68,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function logout() {
+    // 1) remove token from storage
     auth.logout();
+
+    // 2) reset local React state immediately
     setToken(null);
     setUser(null);
+    setIsLoading(false);
+
+    // 3) clear/react-query cache to avoid stale authenticated data
+    try {
+      queryClient.cancelQueries();
+      queryClient.clear();
+    } catch (e) {
+      // noop - safe best-effort
+    }
   }
 
   return (

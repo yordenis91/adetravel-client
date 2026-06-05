@@ -12,23 +12,30 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { GlobalSearch } from "@/components/dashboard/GlobalSearch";
+// 🔥 1. Importamos tu hook de autenticación
+import { useAuth } from "@/context/AuthContext";
 
 interface HeaderProps {
-  title: string;
+  title: string;  
   onMobileMenuOpen?: () => void;
 }
 
 export function Header({ title, onMobileMenuOpen }: HeaderProps) {
-  // Obtenemos el usuario real (React Query usa la caché, por lo que es instantáneo)
+  // 🔥 2. Extraemos la función logout del contexto
+  const { logout } = useAuth();
+  
   const { data: user } = useQuery({
     queryKey: ["current-user"],
     queryFn: () => api.get("/auth/me")
   });
 
   const handleLogout = () => {
-    // Cierre de sesión nativo JWT
-    localStorage.removeItem("token");
-    window.location.href = "/login";
+    // 🔥 3. Usamos el método oficial (esto borra el 'ade_token' y limpia los estados)
+    logout();
+    
+    // Opcionalmente puedes forzar la redirección si tu AuthContext no lo hace por ti:
+    window.location.href = "/auth/login"; 
   };
 
   const initials = user?.fullName 
@@ -46,13 +53,9 @@ export function Header({ title, onMobileMenuOpen }: HeaderProps) {
 
       <div className="flex items-center gap-6">
         {/* Buscador Global (Visual) */}
-        <div className="hidden md:flex items-center bg-muted rounded-full px-3 py-1.5 gap-2 w-64 border border-transparent focus-within:border-primary/30 transition-all">
-          <Search className="w-4 h-4 text-muted-foreground" />
-          <input 
-            type="text" 
-            placeholder="Buscar en ADE Travel..." 
-            className="bg-transparent border-none outline-none text-xs w-full placeholder:text-muted-foreground"
-          />
+        {/* <div className="hidden md:flex items-center bg-muted rounded-full px-3 py-1.5 gap-2 w-64 border border-transparent focus-within:border-primary/30 transition-all"> */}
+        <div className="hidden md:flex items-center w-64 z-50 relative">
+          <GlobalSearch />
         </div>
 
         <div className="flex items-center gap-2">
