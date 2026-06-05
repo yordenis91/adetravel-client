@@ -150,7 +150,7 @@ export default function DashboardPage() {
           icon={<DollarSign className="w-6 h-6" />}
           trend="up"
           trendValue="estable"
-          color="navy"
+          color="red"
           delay={0.4}
         />
       </div>
