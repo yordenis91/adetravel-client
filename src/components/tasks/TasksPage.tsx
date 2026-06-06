@@ -32,7 +32,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { format, isToday, isPast, parseISO, isTomorrow } from "date-fns";
+import { format, isToday, isPast, parseISO, isTomorrow, subDays } from "date-fns";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { es } from "date-fns/locale";
 import { TaskFormDialog } from "./TaskFormDialog";
 import { toast } from "sonner";
@@ -54,23 +55,17 @@ export default function TasksPage() {
 
   const PRIORITY_WEIGHT: Record<string, number> = { ALTA: 1, MEDIA: 2, BAJA: 3 };
 
-  const filteredTasks = allTasks.filter((task: any) => {
-    const matchesSearch =
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.description?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (task.relatedEntityLabel?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+  // baseFilteredTasks: apply only search + sorting (used by Kanban)
+  const baseFilteredTasks = allTasks
+    .filter((task: any) => {
+      const matchesSearch =
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (task.description?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (task.relatedEntityLabel?.toLowerCase() || "").includes(searchQuery.toLowerCase());
 
-    if (!matchesSearch) return false;
-
-    const taskDate = parseISO(task.dueDate);
-    const isVencida = task.status === "PENDIENTE" && isPast(taskDate) && !isToday(taskDate);
-
-    if (activeTab === "pendientes") return task.status === "PENDIENTE" && !isVencida;
-    if (activeTab === "completadas") return task.status === "COMPLETADA";
-    if (activeTab === "vencidas") return isVencida;
-
-    return true;
-  }).sort((a: any, b: any) => {
+      return matchesSearch;
+    })
+    .sort((a: any, b: any) => {
     if (sortBy === "priority") {
       const pa = PRIORITY_WEIGHT[a.priority] ?? 99;
       const pb = PRIORITY_WEIGHT[b.priority] ?? 99;
@@ -88,6 +83,18 @@ export default function TasksPage() {
     return ta - tb;
   });
 
+  // tabFilteredTasks: apply activeTab filter on top of baseFilteredTasks (used by List view)
+  const tabFilteredTasks = baseFilteredTasks.filter((task: any) => {
+    const taskDate = parseISO(task.dueDate);
+    const isVencida = task.status === "PENDIENTE" && isPast(taskDate) && !isToday(taskDate);
+
+    if (activeTab === "pendientes") return task.status === "PENDIENTE" && !isVencida;
+    if (activeTab === "completadas") return task.status === "COMPLETADA";
+    if (activeTab === "vencidas") return isVencida;
+
+    return true;
+  });
+
   const pendingCount = allTasks.filter((t: any) => {
     const d = parseISO(t.dueDate);
     return t.status === "PENDIENTE" && (!isPast(d) || isToday(d));
@@ -99,6 +106,32 @@ export default function TasksPage() {
     const d = parseISO(t.dueDate);
     return t.status === "PENDIENTE" && isPast(d) && !isToday(d);
   }).length;
+
+  const onDragEnd = async (result: any) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId) return;
+
+    try {
+      const taskId = draggableId;
+      let body: any = {};
+
+      if (destination.droppableId === "completadas") {
+        body = { status: "COMPLETADA" };
+      } else if (destination.droppableId === "pendientes") {
+        body = { status: "PENDIENTE", dueDate: format(new Date(), "yyyy-MM-dd") };
+      } else if (destination.droppableId === "vencidas") {
+        body = { status: "PENDIENTE", dueDate: format(subDays(new Date(), 1), "yyyy-MM-dd") };
+      }
+
+      await api.patch(`/tasks/${taskId}`, body);
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Tarea actualizada");
+    } catch (err) {
+      console.error("Error updating task on drag:", err);
+      toast.error("No se pudo mover la tarea");
+    }
+  };
 
   const toggleStatus = async (task: any) => {
     try {
@@ -214,7 +247,7 @@ export default function TasksPage() {
             <div key={i} className="h-20 bg-white rounded-xl animate-pulse" />
           ))}
         </div>
-      ) : filteredTasks.length === 0 ? (
+      ) : (viewMode === "list" ? tabFilteredTasks.length === 0 : baseFilteredTasks.length === 0) ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
             <ClipboardList className="w-8 h-8 text-slate-300" />
@@ -234,7 +267,7 @@ export default function TasksPage() {
       ) : viewMode === "list" ? (
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
-            {filteredTasks.map((task: any) => (
+            {tabFilteredTasks.map((task: any) => (
               <motion.div
                 key={task.id}
                 layout
@@ -300,32 +333,37 @@ export default function TasksPage() {
           </AnimatePresence>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <KanbanColumn
-            title="Pendientes"
-            icon={<Clock className="w-4 h-4 text-blue-500" />}
-            tasks={filteredTasks.filter(t => t.status === "PENDIENTE" && (!isPast(parseISO(t.dueDate)) || isToday(parseISO(t.dueDate))))}
-            onEdit={openEdit}
-            onToggle={toggleStatus}
-            color="blue"
-          />
-          <KanbanColumn
-            title="Completadas"
-            icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-            tasks={filteredTasks.filter(t => t.status === "COMPLETADA")}
-            onEdit={openEdit}
-            onToggle={toggleStatus}
-            color="emerald"
-          />
-          <KanbanColumn
-            title="Vencidas"
-            icon={<AlertCircle className="w-4 h-4 text-rose-500" />}
-            tasks={filteredTasks.filter(t => t.status === "PENDIENTE" && isPast(parseISO(t.dueDate)) && !isToday(parseISO(t.dueDate)))}
-            onEdit={openEdit}
-            onToggle={toggleStatus}
-            color="rose"
-          />
-        </div>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <KanbanColumn
+              droppableId="pendientes"
+              title="Pendientes"
+              icon={<Clock className="w-4 h-4 text-blue-500" />}
+              tasks={baseFilteredTasks.filter(t => t.status === "PENDIENTE" && (!isPast(parseISO(t.dueDate)) || isToday(parseISO(t.dueDate))))}
+              onEdit={openEdit}
+              onToggle={toggleStatus}
+              color="blue"
+            />
+            <KanbanColumn
+              droppableId="completadas"
+              title="Completadas"
+              icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+              tasks={baseFilteredTasks.filter(t => t.status === "COMPLETADA")}
+              onEdit={openEdit}
+              onToggle={toggleStatus}
+              color="emerald"
+            />
+            <KanbanColumn
+              droppableId="vencidas"
+              title="Vencidas"
+              icon={<AlertCircle className="w-4 h-4 text-rose-500" />}
+              tasks={baseFilteredTasks.filter(t => t.status === "PENDIENTE" && isPast(parseISO(t.dueDate)) && !isToday(parseISO(t.dueDate)))}
+              onEdit={openEdit}
+              onToggle={toggleStatus}
+              color="rose"
+            />
+          </div>
+        </DragDropContext>
       )}
 
       <TaskFormDialog
@@ -337,7 +375,7 @@ export default function TasksPage() {
   );
 }
 
-function KanbanColumn({ title, icon, tasks, onEdit, onToggle, color }: any) {
+function KanbanColumn({ title, icon, tasks, onEdit, onToggle, color, droppableId }: any) {
   const bgColors: any = {
     blue: "bg-blue-50/50",
     emerald: "bg-emerald-50/50",
@@ -361,48 +399,56 @@ function KanbanColumn({ title, icon, tasks, onEdit, onToggle, color }: any) {
           {tasks.length}
         </span>
       </div>
-      <div className="space-y-3 min-h-[100px]">
-        {tasks.map((task: any) => (
-          <motion.div
-            key={task.id}
-            layout
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow group relative cursor-pointer"
-            onClick={() => onEdit(task)}
-          >
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <p className={cn(
-                "text-sm font-semibold text-navy leading-tight",
-                task.status === "COMPLETADA" && "line-through text-muted-foreground"
-              )}>
-                {task.title}
-              </p>
-              <div onClick={(e) => e.stopPropagation()}>
-                <Checkbox
-                  checked={task.status === "COMPLETADA"}
-                  onCheckedChange={() => onToggle(task)}
-                  className="rounded-full"
-                />
-              </div>
-            </div>
-            {task.description && (
-              <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2">
-                {task.description}
-              </p>
-            )}
-            <div className="flex flex-wrap items-center gap-2 mt-auto">
-              <DueDateBadge dueDate={task.dueDate} status={task.status} />
-              <PriorityBadge priority={task.priority} />
-            </div>
-          </motion.div>
-        ))}
-        {tasks.length === 0 && (
+      <Droppable droppableId={droppableId}>
+        {(provided: any) => (
+          <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-3 min-h-[100px]">
+            {tasks.map((task: any, index: number) => (
+              <Draggable key={task.id} draggableId={String(task.id)} index={index}>
+                {(providedDr: any) => (
+                  <div
+                    ref={providedDr.innerRef}
+                    {...providedDr.draggableProps}
+                    {...providedDr.dragHandleProps}
+                    className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow group relative cursor-pointer"
+                    onClick={() => onEdit(task)}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className={cn(
+                        "text-sm font-semibold text-navy leading-tight",
+                        task.status === "COMPLETADA" && "line-through text-muted-foreground"
+                      )}>
+                        {task.title}
+                      </p>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={task.status === "COMPLETADA"}
+                          onCheckedChange={() => onToggle(task)}
+                          className="rounded-full"
+                        />
+                      </div>
+                    </div>
+                    {task.description && (
+                      <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2">
+                        {task.description}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 mt-auto">
+                      <DueDateBadge dueDate={task.dueDate} status={task.status} />
+                      <PriorityBadge priority={task.priority} />
+                    </div>
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+      {tasks.length === 0 && (
           <div className="flex items-center justify-center py-10 border-2 border-dashed border-slate-200/50 rounded-xl">
             <p className="text-[10px] font-medium text-slate-400">Sin tareas</p>
           </div>
         )}
-      </div>
     </div>
   );
 }

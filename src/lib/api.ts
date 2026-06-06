@@ -1,4 +1,13 @@
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+// Detectamos si estamos en producción (Vite inyecta esta variable automáticamente)
+const isProd = import.meta.env.PROD;
+
+// En producción, si no hay variable, usamos '/api' (asumiendo que frontend y backend comparten dominio)
+// En desarrollo local, usamos localhost.
+const BASE = import.meta.env.VITE_API_URL || (isProd ? "/api" : "http://localhost:3000/api");
+
+if (isProd && !import.meta.env.VITE_API_URL) {
+  console.warn("⚠️ ALERTA ENTERPRISE: VITE_API_URL no está definido en el build de producción. Usando fallback '/api'.");
+}
 
 type RequestMethod = "POST" | "PATCH" | "DELETE" | "PUT";
 
