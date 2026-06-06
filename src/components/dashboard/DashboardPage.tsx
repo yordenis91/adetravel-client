@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import * as Sentry from "@sentry/react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { StatsCard } from "./StatsCard";
@@ -105,7 +106,7 @@ export default function DashboardPage() {
             Esto es lo que está pasando hoy, {new Date().toLocaleDateString("es-CL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Button variant="outline" size="sm" className="bg-white border-gray-200 text-xs font-bold gap-2">
             <HelpCircle className="w-4 h-4 text-primary" />
             Centro de Ayuda

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import * as Sentry from "@sentry/react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
@@ -27,6 +28,7 @@ import Tasks from "./pages/Tasks";
 import NotFound from "./pages/NotFound";
 //import { BrandingBadge } from "./components/BrandingBadge";
 
+
 // 🔥 Configuración nivel Enterprise
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +40,31 @@ const queryClient = new QueryClient({
   },
 });
 
+// 🔥 1. Creamos una pantalla elegante para cuando algo explote
+const FallbackError = ({ error, resetError }: any) => (
+  <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
+    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+      {/* Icono de advertencia rápido */}
+      <span className="text-2xl font-bold">!</span>
+    </div>
+    <h2 className="text-2xl font-playfair font-bold text-navy mb-2">Ups, algo salió mal</h2>
+    <p className="text-muted-foreground max-w-md mb-6">
+      Hemos detectado un error inesperado y nuestro equipo técnico ya ha sido notificado automáticamente.
+    </p>
+    <button 
+      onClick={resetError} 
+      className="bg-navy hover:bg-navy-light text-white font-bold py-2 px-6 rounded-xl transition-all"
+    >
+      Intentar recargar la página
+    </button>
+    <p className="text-xs text-slate-400 mt-8 font-mono">
+      Error ID: {error?.message || "Desconocido"}
+    </p>
+  </div>
+);
+
 const App = () => (
+  <Sentry.ErrorBoundary fallback={FallbackError} showDialog={false}>
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -167,7 +193,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route path="/tareas" element={<Tasks />} />
+              <Route 
+                  path="/tareas" 
+                  element={
+                    <ProtectedRoute>
+                      <Tasks />
+                    </ProtectedRoute>
+                  } 
+                />
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -177,6 +210,7 @@ const App = () => (
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>
+  </Sentry.ErrorBoundary>
 );
 
 export default App;
