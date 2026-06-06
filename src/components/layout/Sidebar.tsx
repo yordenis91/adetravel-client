@@ -16,7 +16,8 @@ import {
   ChevronRight,
   UserCog,
   Settings,
-  Mail
+  Mail,
+  ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -32,6 +33,7 @@ const navSections = [
     title: "Principal",
     items: [
       { name: "Panel Principal", icon: LayoutDashboard, path: "/dashboard" },
+      { name: "Tareas", icon: ClipboardList, path: "/tareas" },
     ]
   },
   {
@@ -75,6 +77,7 @@ const iconMap: Record<string, any> = {
   "Solicitudes": FileText,
   "Usuarios": UserCog,
   "Configuración": Settings,
+  "Tareas": ClipboardList,
 };
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -181,7 +184,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           onClick={() => {
             if (onClose) onClose();
             localStorage.removeItem("token");
-            window.location.href = "/login";
+            window.location.href = "/auth/login";
           }}
         >
           <LogOut className="w-4 h-4" />

@@ -23,10 +23,20 @@ import Configuracion from "./pages/Configuracion";
 import EmailTemplates from "./pages/EmailTemplates";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Tasks from "./pages/Tasks";
 import NotFound from "./pages/NotFound";
-import { BrandingBadge } from "./components/BrandingBadge";
+//import { BrandingBadge } from "./components/BrandingBadge";
 
-const queryClient = new QueryClient();
+// 🔥 Configuración nivel Enterprise
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // Los datos se consideran frescos por 5 minutos (evita peticiones dobles)
+      retry: 1, // Si falla la red, intenta 1 sola vez más antes de mostrar error
+      refetchOnWindowFocus: false, // No recargar la base de datos solo porque el usuario cambió de pestaña
+    },
+  },
+});
 
 const App = () => (
   <HelmetProvider>
@@ -157,12 +167,13 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route path="/tareas" element={<Tasks />} />
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>
-        <BrandingBadge />
+        {/* <BrandingBadge /> */}
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>

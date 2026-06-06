@@ -6,6 +6,7 @@ import { RecentRequests } from "./RecentRequests";
 import { ExchangeRatesWidget } from "./ExchangeRatesWidget";
 import { BirthdayReminder } from "./BirthdayReminder";
 import { PendingAlerts } from "./PendingAlerts";
+import { TasksWidget } from "@/components/tasks/TasksWidget";
 import {
   Users,
   ClipboardCheck,
@@ -198,6 +199,7 @@ export default function DashboardPage() {
           </div>
 
           <PendingAlerts />
+          <TasksWidget />
           <ExchangeRatesWidget exchangeRates={exchangeRates} />
           <BirthdayReminder />
 

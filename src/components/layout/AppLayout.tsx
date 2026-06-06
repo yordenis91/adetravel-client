@@ -20,12 +20,20 @@ const pageTitles: Record<string, string> = {
   "/vouchers": "Generación de Vouchers",
   "/reportes": "Reportes y Estadísticas",
   "/bitacora": "Bitácora de Operaciones",
+  "/tareas": "Gestión de Tareas",
 };
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const title = pageTitles[location.pathname] || "ADE Travel";
+  
+  const getPageTitle = (pathname: string) => {
+    if (pageTitles[pathname]) return pageTitles[pathname];
+    if (pathname.startsWith("/clientes/")) return "Historial del Cliente";
+    return "ADE Travel";
+  };
+
+  const title = getPageTitle(location.pathname);
 
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
