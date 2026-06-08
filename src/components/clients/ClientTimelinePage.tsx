@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { 
   ArrowLeft, Calendar, FileText, CreditCard, Ticket, ClipboardList, 
-  AlertTriangle, User, Plus, ChevronRight, TrendingUp, Clock, DollarSign, Briefcase, Eye, ExternalLink, X
+  AlertTriangle, User, Plus, ChevronRight, TrendingUp, Clock, DollarSign, Briefcase, Eye, ExternalLink, X, CheckSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import { format, isAfter, subDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
 
-type EventType = "solicitud" | "cotizacion" | "pago" | "voucher" | "bitacora";
+type EventType = "solicitud" | "cotizacion" | "pago" | "voucher" | "bitacora" | "tarea";
 
 interface TimelineEvent {
   id: string;
@@ -77,7 +77,13 @@ export default function ClientTimelinePage() {
     enabled: !!clientId
   });
 
-  const isLoading = isClientLoading || isRequestsLoading || isQuotationsLoading || isPaymentsLoading || isVouchersLoading || isLogsLoading;
+  const { data: tasksData = [], isLoading: isTasksLoading } = useQuery({
+    queryKey: ["client-tasks", clientId],
+    queryFn: () => api.get(`/tasks?relatedEntityId=${clientId}&relatedEntityType=CLIENTE`),
+    enabled: !!clientId
+  });
+
+  const isLoading = isClientLoading || isRequestsLoading || isQuotationsLoading || isPaymentsLoading || isVouchersLoading || isLogsLoading || isTasksLoading;
 
   const client = (clientData as any)?.data || clientData;
   const requests = Array.isArray(requestsData) ? requestsData : (requestsData as any)?.data || [];
@@ -85,6 +91,7 @@ export default function ClientTimelinePage() {
   const payments = Array.isArray(paymentsData) ? paymentsData : (paymentsData as any)?.data || [];
   const vouchers = Array.isArray(vouchersData) ? vouchersData : (vouchersData as any)?.data || [];
   const logs = Array.isArray(logsData) ? logsData : (logsData as any)?.data || [];
+  const tasks = Array.isArray(tasksData) ? tasksData : (tasksData as any)?.data || [];
 
   const safeParseDate = (dateString: string | undefined) => {
     if (!dateString) return new Date();
@@ -130,6 +137,24 @@ export default function ClientTimelinePage() {
       });
     });
 
+    // Integrar Tareas del Cliente
+    tasks.forEach((t: any) => {
+      const status = (t.status || '').toString().toUpperCase();
+      const isCompleted = status.includes('COMPLET') || status === 'COMPLETED';
+      allEvents.push({
+        id: t.id,
+        type: "tarea",
+        date: safeParseDate(t.dueDate || t.createdAt),
+        title: t.title || 'Tarea',
+        subtitle: t.dueDate ? format(parseISO(t.dueDate), 'dd MMM yyyy', { locale: es }) : undefined,
+        description: t.notes || t.description,
+        status: t.status,
+        color: isCompleted ? "emerald" : "gold",
+        icon: <CheckSquare className="w-4 h-4" />,
+        originalData: t
+      });
+    });
+
     logs.forEach((l: any) => {
       allEvents.push({
         id: l.id, type: "bitacora", date: safeParseDate(l.createdAt),
@@ -139,7 +164,7 @@ export default function ClientTimelinePage() {
     });
 
     return allEvents.sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [requests, quotations, payments, vouchers, logs, isLoading]);
+  }, [requests, quotations, payments, vouchers, logs, tasks, isLoading]);
 
   // 🔥 Filtro Dinámico
   const filteredEvents = useMemo(() => {
@@ -276,6 +301,7 @@ export default function ClientTimelinePage() {
               <SelectItem value="cotizacion">Solo Cotizaciones</SelectItem>
               <SelectItem value="pago">Solo Pagos</SelectItem>
               <SelectItem value="voucher">Solo Vouchers</SelectItem>
+              <SelectItem value="tarea">Solo Tareas</SelectItem>
               <SelectItem value="bitacora">Solo Bitácora</SelectItem>
             </SelectContent>
           </Select>
@@ -417,8 +443,8 @@ function getStatusColor(status: string) {
   if (s === "COTIZADA" || s === "ENVIADA") return "bg-sky-100 text-sky-700 border-sky-200";
   if (s === "CONFIRMADA") return "bg-blue-100 text-blue-700 border-blue-200";
   if (s === "VENDIDA") return "bg-amber-100 text-amber-700 border-amber-200";
-  if (s === "ACEPTADA" || s === "COMPLETADO") return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  if (s === "PENDIENTE") return "bg-amber-100 text-amber-700 border-amber-200";
+  if (s === "ACEPTADA" || s === "COMPLETADO" || s === "COMPLETED") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  if (s === "PENDIENTE" || s === "PENDING") return "bg-amber-100 text-amber-700 border-amber-200";
   if (s === "CANCELADA" || s === "RECHAZADA" || s === "CANCELADO") return "bg-rose-100 text-rose-700 border-rose-200";
   return "bg-slate-50 text-slate-500 border-slate-100";
 }
@@ -485,6 +511,15 @@ function renderEventDetails(event: TimelineEvent) {
           <DetailRow label="Realizado por" value={data.performedBy || "Sistema"} />
           <DetailRow label="Módulo Afectado" value={data.entityType} />
           <DetailRow label="Descripción del Evento" value={data.description} fullWidth />
+        </>
+      );
+    case "tarea":
+      return (
+        <>
+          <DetailRow label="Estado" value={data.status ? (data.status.toString().toUpperCase() === 'COMPLETED' || data.status.toString().toUpperCase() === 'COMPLETADO' ? 'Completada' : data.status) : 'Pendiente'} />
+          <DetailRow label="Asignada a" value={data.assignedTo || data.owner || '—'} />
+          <DetailRow label="Vencimiento" value={data.dueDate ? format(parseISO(data.dueDate), 'dd MMM yyyy', { locale: es }) : 'Sin fecha'} />
+          <DetailRow label="Notas" value={data.notes || data.description} fullWidth />
         </>
       );
     default:
