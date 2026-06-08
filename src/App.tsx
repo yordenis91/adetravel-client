@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,25 +8,30 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
-import Clients from "./pages/Clients";
-import ClientTimeline from "@/pages/ClientTimeline";
-import Providers from "./pages/Providers";
-import Requests from "./pages/Requests";
-import Quotations from "./pages/Quotations";
-import Confirmaciones from "./pages/Confirmaciones";
-import Payments from "./pages/Payments";
-import Vouchers from "./pages/Vouchers";
-import Reportes from "./pages/Reportes";
-import Bitacora from "./pages/Bitacora";
-import Usuarios from "./pages/Usuarios";
-import Configuracion from "./pages/Configuracion";
-import EmailTemplates from "./pages/EmailTemplates";
+import { Loader2 } from "lucide-react";
+
+// 1. PRIMERO: Todas las importaciones estáticas (Rutas públicas)
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Tasks from "./pages/Tasks";
 import NotFound from "./pages/NotFound";
 //import { BrandingBadge } from "./components/BrandingBadge";
+
+// 2. DESPUÉS: Todas las importaciones dinámicas (Rutas protegidas - Code Splitting)
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Clients = React.lazy(() => import("./pages/Clients"));
+const ClientTimeline = React.lazy(() => import("@/pages/ClientTimeline"));
+const Providers = React.lazy(() => import("./pages/Providers"));
+const Requests = React.lazy(() => import("./pages/Requests"));
+const Quotations = React.lazy(() => import("./pages/Quotations"));
+const Confirmaciones = React.lazy(() => import("./pages/Confirmaciones"));
+const Payments = React.lazy(() => import("./pages/Payments"));
+const Vouchers = React.lazy(() => import("./pages/Vouchers"));
+const Reportes = React.lazy(() => import("./pages/Reportes"));
+const Bitacora = React.lazy(() => import("./pages/Bitacora"));
+const Usuarios = React.lazy(() => import("./pages/Usuarios"));
+const Configuracion = React.lazy(() => import("./pages/Configuracion"));
+const EmailTemplates = React.lazy(() => import("./pages/EmailTemplates"));
+const Tasks = React.lazy(() => import("./pages/Tasks")); // 🔥 Corregido: Ahora Tasks también es Lazy
 
 
 // 🔥 Configuración nivel Enterprise
@@ -63,6 +68,12 @@ const FallbackError = ({ error, resetError }: any) => (
   </div>
 );
 
+const PageLoader = () => (
+  <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+    <Loader2 className="w-10 h-10 text-primary animate-spin" />
+    <p className="text-muted-foreground animate-pulse font-medium">Cargando módulo...</p>
+  </div>
+);
 const App = () => (
   <Sentry.ErrorBoundary fallback={FallbackError} showDialog={false}>
   <HelmetProvider>
@@ -72,7 +83,8 @@ const App = () => (
         <Sonner />
         <AuthProvider>
           <BrowserRouter>
-            <Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
               {/* Redirección de raíz a dashboard */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               
@@ -203,7 +215,8 @@ const App = () => (
                 />
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </AuthProvider>
         {/* <BrandingBadge /> */}
