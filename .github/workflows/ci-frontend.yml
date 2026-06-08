@@ -28,3 +28,9 @@ jobs:
           VITE_API_URL: "http://localhost:3000/api"
           VITE_SENTRY_DSN: "[https://dummy@sentry.io/0](https://dummy@sentry.io/0)"
         run: npm run build
+      
+      - name: 🚀 Notificar a EasyPanel (despliegue FrontEnd)
+        if: success()
+        run: |
+          curl -X POST "http://49.13.19.148:3000/api/deploy/84658667fbbbfedc72b29a441d8690b78afc71392db5c567"
+
