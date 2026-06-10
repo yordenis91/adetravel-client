@@ -1,5 +1,5 @@
 import React from "react";
-import { Bell, Search, Menu, LogOut, Settings, User } from "lucide-react";
+import { Menu, LogOut, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import { GlobalSearch } from "@/components/dashboard/GlobalSearch";
 // 🔥 1. Importamos tu hook de autenticación
 import { useAuth } from "@/context/AuthContext";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 interface HeaderProps {
   title: string;  
@@ -59,11 +60,7 @@ export function Header({ title, onMobileMenuOpen }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-navy">
-            <Bell className="w-5 h-5" />
-            {/* Indicador de notificaciones */}
-            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
-          </Button>
+          <NotificationBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

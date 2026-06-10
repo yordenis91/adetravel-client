@@ -28,6 +28,7 @@ const Payments = React.lazy(() => import("./pages/Payments"));
 const Vouchers = React.lazy(() => import("./pages/Vouchers"));
 const Reportes = React.lazy(() => import("./pages/Reportes"));
 const Bitacora = React.lazy(() => import("./pages/Bitacora"));
+const Notifications = React.lazy(() => import("./pages/Notifications"));
 const Usuarios = React.lazy(() => import("./pages/Usuarios"));
 const Configuracion = React.lazy(() => import("./pages/Configuracion"));
 const EmailTemplates = React.lazy(() => import("./pages/EmailTemplates"));
@@ -178,6 +179,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Bitacora />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute>
+                    <Notifications />
                   </ProtectedRoute>
                 }
               />
