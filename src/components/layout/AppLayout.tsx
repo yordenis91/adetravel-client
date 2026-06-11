@@ -1,12 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, Outlet } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-}
+interface AppLayoutProps {}
 
 const pageTitles: Record<string, string> = {
   "/": "Panel Principal",
@@ -23,7 +22,7 @@ const pageTitles: Record<string, string> = {
   "/tareas": "Gestión de Tareas",
 };
 
-export default function AppLayout({ children }: AppLayoutProps) {
+export default function AppLayout(_: AppLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   
@@ -51,7 +50,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              {children}
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                    <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                    <p className="text-muted-foreground animate-pulse font-medium">Cargando módulo...</p>
+                  </div>
+                }
+              >
+                <Outlet />
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </main>

@@ -1,13 +1,6 @@
 import React from "react";
-import AppLayout from "@/components/layout/AppLayout";
 import EmailTemplatesPage from "@/components/emailTemplates/EmailTemplatesPage";
 
-const EmailTemplates = () => {
-  return (
-    <AppLayout>
-      <EmailTemplatesPage />
-    </AppLayout>
-  );
-};
+const EmailTemplates = () => <EmailTemplatesPage />;
 
 export default EmailTemplates;

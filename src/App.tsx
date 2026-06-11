@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import AppLayout from "./components/layout/AppLayout";
 //import { BrandingBadge } from "./components/BrandingBadge";
 
 // 2. DESPUÉS: Todas las importaciones dinámicas (Rutas protegidas - Code Splitting)
@@ -84,8 +85,7 @@ const App = () => (
         <Sonner />
         <AuthProvider>
           <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
+            <Routes>
               {/* Redirección de raíz a dashboard */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               
@@ -93,139 +93,52 @@ const App = () => (
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
               
-              {/* Rutas protegidas */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/clientes"
-                element={
-                  <ProtectedRoute>
-                    <Clients />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/clientes/:clientId/timeline"
-                element={
-                  <ProtectedRoute>
-                    <ClientTimeline />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/proveedores"
-                element={
-                  <ProtectedRoute>
-                    <Providers />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/solicitudes"
-                element={
-                  <ProtectedRoute>
-                    <Requests />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/cotizaciones"
-                element={
-                  <ProtectedRoute>
-                    <Quotations />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/confirmaciones"
-                element={
-                  <ProtectedRoute>
-                    <Confirmaciones />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/pagos"
-                element={
-                  <ProtectedRoute>
-                    <Payments />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/vouchers"
-                element={
-                  <ProtectedRoute>
-                    <Vouchers />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/reportes"
-                element={
-                  <ProtectedRoute>
-                    <Reportes />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/bitacora"
-                element={
-                  <ProtectedRoute>
-                    <Bitacora />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/notifications"
-                element={
-                  <ProtectedRoute>
-                    <Notifications />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/usuarios"
-                element={
-                  <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
-                    <Usuarios />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/configuracion"
-                element={
-                  <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
-                    <Configuracion />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/plantillas-email"
-                element={
-                  <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
-                    <EmailTemplates />
-                  </ProtectedRoute>
-                }
-              />
-              <Route 
-                  path="/tareas" 
+              {/* RUTAS PROTEGIDAS ANIDADAS EN EL LAYOUT */}
+              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/clientes" element={<Clients />} />
+                <Route path="/clientes/:clientId/timeline" element={<ClientTimeline />} />
+                <Route path="/proveedores" element={<Providers />} />
+                <Route path="/solicitudes" element={<Requests />} />
+                <Route path="/cotizaciones" element={<Quotations />} />
+                <Route path="/confirmaciones" element={<Confirmaciones />} />
+                <Route path="/pagos" element={<Payments />} />
+                <Route path="/vouchers" element={<Vouchers />} />
+                <Route path="/reportes" element={<Reportes />} />
+                <Route path="/bitacora" element={<Bitacora />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/tareas" element={<Tasks />} />
+                
+                {/* 🔥 Rutas de Administración Protegidas por Rol */}
+                <Route 
+                  path="/usuarios" 
                   element={
-                    <ProtectedRoute>
-                      <Tasks />
+                    <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                      <Usuarios />
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+                  path="/configuracion" 
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                      <Configuracion />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/plantillas-email" 
+                  element={
+                    <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                      <EmailTemplates />
+                    </ProtectedRoute>
+                  } 
+                />
+              </Route>
+              
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            </Routes>
           </BrowserRouter>
         </AuthProvider>
         {/* <BrandingBadge /> */}
