@@ -48,7 +48,7 @@ const queryClient = new QueryClient({
 });
 
 // 🔥 1. Creamos una pantalla elegante para cuando algo explote
-const FallbackError = ({ error, resetError }: any) => (
+const FallbackError = ({ error, resetError }: { error: unknown; componentStack: string; eventId: string; resetError: () => void }) => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
     <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
       {/* Icono de advertencia rápido */}
@@ -65,7 +65,7 @@ const FallbackError = ({ error, resetError }: any) => (
       Intentar recargar la página
     </button>
     <p className="text-xs text-slate-400 mt-8 font-mono">
-      Error ID: {error?.message || "Desconocido"}
+      Error ID: {error instanceof Error ? error.message : "Desconocido"}
     </p>
   </div>
 );

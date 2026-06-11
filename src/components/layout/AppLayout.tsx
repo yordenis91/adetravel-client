@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-interface AppLayoutProps {}
-
 const pageTitles: Record<string, string> = {
   "/": "Panel Principal",
   "/dashboard": "Panel Principal",
@@ -22,7 +20,7 @@ const pageTitles: Record<string, string> = {
   "/tareas": "Gestión de Tareas",
 };
 
-export default function AppLayout(_: AppLayoutProps) {
+export default function AppLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   
