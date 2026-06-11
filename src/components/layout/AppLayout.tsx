@@ -1,7 +1,6 @@
 import React, { useState, Suspense } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -39,27 +38,19 @@ export default function AppLayout() {
       <div className="lg:pl-64 flex flex-col min-h-screen">
         <Header title={title} onMobileMenuOpen={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         
-        <main className="flex-1 p-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                    <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                    <p className="text-muted-foreground animate-pulse font-medium">Cargando módulo...</p>
-                  </div>
-                }
-              >
-                <Outlet />
-              </Suspense>
-            </motion.div>
-          </AnimatePresence>
+        <main className="flex-1 p-8 flex flex-col relative overflow-hidden">
+          <Suspense 
+            fallback={
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                <p className="text-muted-foreground animate-pulse font-medium">Cargando módulo...</p>
+              </div>
+            }
+          >
+            <div className="flex-1 overflow-y-auto">
+              <Outlet />
+            </div>
+          </Suspense>
         </main>
 
         <footer className="px-8 py-6 border-t border-gray-100 text-center">
