@@ -22,6 +22,7 @@ const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Clients = React.lazy(() => import("./pages/Clients"));
 const ClientTimeline = React.lazy(() => import("@/pages/ClientTimeline"));
 const Providers = React.lazy(() => import("./pages/Providers"));
+const ProviderDetails = React.lazy(() => import("./pages/ProviderDetailsPage"));
 const Requests = React.lazy(() => import("./pages/Requests"));
 const Quotations = React.lazy(() => import("./pages/Quotations"));
 const Confirmaciones = React.lazy(() => import("./pages/Confirmaciones"));
@@ -99,6 +100,7 @@ const App = () => (
                 <Route path="/clientes" element={<Clients />} />
                 <Route path="/clientes/:clientId/timeline" element={<ClientTimeline />} />
                 <Route path="/proveedores" element={<Providers />} />
+                <Route path="/proveedores/:providerId" element={<ProviderDetails />} />
                 <Route path="/solicitudes" element={<Requests />} />
                 <Route path="/cotizaciones" element={<Quotations />} />
                 <Route path="/confirmaciones" element={<Confirmaciones />} />

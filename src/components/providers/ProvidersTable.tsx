@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -76,6 +77,7 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selectedIds = new Set<string>(), onSelectOne, onSelectAll }: ProvidersTableProps) {
+  const navigate = useNavigate();
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -200,7 +202,12 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
               </TableCell>
               <TableCell className="text-right pr-6">
                 <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5"
+                    onClick={() => navigate(`/proveedores/${provider.id}`)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                   <Button 

@@ -28,3 +28,5 @@ coverage/
 # Ignore design document attachments
 Flujo generar las interfaces de login y registro con el mismo diseño y paleta de colores..docx
 
+insert-providers.sh
+providers-seed.json
