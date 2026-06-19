@@ -32,8 +32,7 @@ const navSections = [
   {
     title: "Principal",
     items: [
-      { name: "Panel Principal", icon: LayoutDashboard, path: "/dashboard" },
-      { name: "Tareas", icon: ClipboardList, path: "/tareas" },
+      { name: "Panel Principal", icon: LayoutDashboard, path: "/dashboard" },      
     ]
   },
   {
@@ -42,6 +41,7 @@ const navSections = [
       { name: "Clientes", icon: Users, path: "/clientes" },
       { name: "Proveedores", icon: Building2, path: "/proveedores" },
       { name: "Solicitudes", icon: FileText, path: "/solicitudes" },
+      { name: "Tareas", icon: ClipboardList, path: "/tareas" },
     ]
   },
   {
