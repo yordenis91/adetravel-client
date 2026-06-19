@@ -13,18 +13,21 @@ import {
   Trash2, 
   MapPin, 
   Calendar,
-  MoreVertical,
+  MoreHorizontal,
   Printer,
   Loader2,
   CheckCircle,
   FileEdit,
-  XCircle
+  XCircle,
+  Ticket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,33 +58,10 @@ export function VouchersTable({
   onPreviewPDF,
   onStatusChange
 }: VouchersTableProps) {
-  if (isLoading) {
-    return (
-      <div className="p-8 space-y-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-xl" />
-        ))}
-      </div>
-    );
-  }
-
-  if (vouchers.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-          <Calendar className="w-10 h-10 text-muted-foreground/40" />
-        </div>
-        <h3 className="text-xl font-playfair font-bold text-navy">No se encontraron vouchers</h3>
-        <p className="text-muted-foreground max-w-xs mx-auto mt-2">
-          No hay registros que coincidan con su búsqueda o filtros actuales.
-        </p>
-      </div>
-    );
-  }
-
-  const getClientName = (clientId: string) => {
+  
+  const getClientDetails = (clientId: string) => {
     const client = clients.find((c) => c.id === clientId);
-    return client ? `${client.firstName} ${client.lastName}` : "Cliente no encontrado";
+    return client ? { name: `${client.firstName} ${client.lastName}`, id: client.id } : { name: "Cliente no encontrado", id: null };
   };
 
   const getRequestNumber = (requestId: string) => {
@@ -98,119 +78,155 @@ export function VouchersTable({
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (vouchers.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4">
+          <Ticket className="w-8 h-8 text-slate-300" />
+        </div>
+        <h3 className="text-lg font-playfair font-bold text-navy">Sin vouchers registrados</h3>
+        <p className="text-sm text-muted-foreground max-w-xs text-center mt-1">
+          No se encontraron comprobantes que coincidan con la búsqueda.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-hidden rounded-xl border border-slate-100 bg-white">
       <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent border-b-muted/50">
-            <TableHead className="w-[150px] font-bold text-navy uppercase tracking-wider text-[11px]">N° Voucher</TableHead>
-            <TableHead className="font-bold text-navy uppercase tracking-wider text-[11px]">Cliente / Solicitud</TableHead>
-            <TableHead className="font-bold text-navy uppercase tracking-wider text-[11px]">Servicio</TableHead>
-            <TableHead className="font-bold text-navy uppercase tracking-wider text-[11px]">Destino</TableHead>
-            <TableHead className="font-bold text-navy uppercase tracking-wider text-[11px]">Fechas</TableHead>
-            <TableHead className="font-bold text-navy uppercase tracking-wider text-[11px]">Estado</TableHead>
-            <TableHead className="text-right font-bold text-navy uppercase tracking-wider text-[11px]">Acciones</TableHead>
+        <TableHeader className="bg-slate-50/50">
+          <TableRow>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">N° Voucher</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Cliente / Solicitud</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Servicio</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Destino</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Fechas</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Estado</TableHead>
+            <TableHead className="text-right text-xs font-bold uppercase tracking-wider">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {vouchers.map((voucher) => (
-            <TableRow key={voucher.id} className="group hover:bg-muted/30 transition-colors">
-              <TableCell className="font-medium">
-                <span className="text-xs font-bold text-navy bg-navy/5 px-2 py-1 rounded">
-                  {voucher.voucherNumber}
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-bold text-sm text-navy">{getClientName(voucher.clientId)}</span>
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter italic">
-                    REF: {getRequestNumber(voucher.requestId)}
+          {vouchers.map((voucher) => {
+            const clientDetails = getClientDetails(voucher.clientId);
+            
+            return (
+              <TableRow key={voucher.id} className="group hover:bg-slate-50/50 transition-colors">
+                <TableCell>
+                  <span className="font-mono text-xs font-bold text-primary bg-primary/5 px-2 py-1 rounded-md border border-primary/10">
+                    {voucher.voucherNumber}
                   </span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-bold text-[11px] text-primary uppercase tracking-wider">{voucher.serviceType}</span>
-                  <span className="text-sm font-medium text-navy">{voucher.serviceName}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-sm font-medium">{voucher.destination}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold">
-                    <span className="text-muted-foreground w-6">IN:</span>
-                    <span>{formatDate(voucher.checkIn)}</span>
+                </TableCell>
+                <TableCell>
+                  <p className="text-sm font-bold text-navy">{clientDetails.name}</p>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-tight">
+                    <span>ID: {clientDetails.id?.substring(0, 8) ?? 'N/A'}</span>
+                    <span>•</span>
+                    <span className="font-medium">REF: {getRequestNumber(voucher.requestId)}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold">
-                    <span className="text-muted-foreground w-6">OUT:</span>
-                    <span>{formatDate(voucher.checkOut)}</span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[10px] text-blue-600 uppercase tracking-wider bg-blue-50 w-max px-1.5 py-0.5 rounded">
+                      {voucher.serviceType}
+                    </span>
+                    <span className="text-xs font-medium text-navy mt-1">{voucher.serviceName}</span>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <VoucherStatusBadge status={voucher.status} />
-              </TableCell>
-              <TableCell className="text-right">
-                {processingId === voucher.id ? (
-                  <div className="flex justify-end items-center h-8 pr-4">
-                    <Loader2 className="w-5 h-5 animate-spin text-navy" />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs font-medium">{voucher.destination}</span>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-end gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-lg text-muted-foreground hover:text-navy hover:bg-navy/5"
-                      onClick={() => onPreviewPDF(voucher)}
-                      title="Ver PDF"
-                    >
-                      <Printer className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-navy hover:bg-navy/5">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => onEdit(voucher)} className="gap-2 cursor-pointer">
-                          <Edit2 className="w-4 h-4" /> Editar
-                        </DropdownMenuItem>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-[9px] uppercase bg-slate-100 px-1 rounded text-slate-500">IN</span>
+                      <span>{formatDate(voucher.checkIn)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-[9px] uppercase bg-slate-100 px-1 rounded text-slate-500">OUT</span>
+                      <span>{formatDate(voucher.checkOut)}</span>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <VoucherStatusBadge status={voucher.status} />
+                </TableCell>
+                <TableCell className="text-right">
+                  {processingId === voucher.id ? (
+                    <div className="flex justify-end items-center h-8 pr-4">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-end gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                        onClick={() => onPreviewPDF(voucher)}
+                        title="Ver PDF"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Vista Previa">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+                            Gestionar Voucher
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuItem onClick={() => onEdit(voucher)} className="cursor-pointer">
+                            <Edit2 className="mr-2 h-4 w-4 text-blue-500" /> Editar datos
+                          </DropdownMenuItem>
 
-                        {voucher.status !== 'EMITIDO' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'EMITIDO')} className="gap-2 cursor-pointer text-emerald-600">
-                            <CheckCircle className="w-4 h-4" /> Emitir Voucher
+                          {voucher.status !== 'EMITIDO' && (
+                            <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'EMITIDO')} className="cursor-pointer text-emerald-600">
+                              <CheckCircle className="mr-2 h-4 w-4" /> Emitir Voucher
+                            </DropdownMenuItem>
+                          )}
+                          {voucher.status !== 'BORRADOR' && (
+                            <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'BORRADOR')} className="cursor-pointer text-amber-600">
+                              <FileEdit className="mr-2 h-4 w-4" /> Volver a Borrador
+                            </DropdownMenuItem>
+                          )}
+                          {voucher.status !== 'CANCELADO' && (
+                            <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'CANCELADO')} className="cursor-pointer text-destructive">
+                              <XCircle className="mr-2 h-4 w-4" /> Cancelar Voucher
+                            </DropdownMenuItem>
+                          )}
+                          
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onDelete(voucher.id)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Eliminar registro
                           </DropdownMenuItem>
-                        )}
-                        {voucher.status !== 'BORRADOR' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'BORRADOR')} className="gap-2 cursor-pointer text-slate-500">
-                            <FileEdit className="w-4 h-4" /> Volver a Borrador
-                          </DropdownMenuItem>
-                        )}
-                        {voucher.status !== 'CANCELADO' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(voucher.id, 'CANCELADO')} className="gap-2 cursor-pointer text-destructive">
-                            <XCircle className="w-4 h-4" /> Cancelar Voucher
-                          </DropdownMenuItem>
-                        )}
-
-                        <DropdownMenuItem onClick={() => onDelete(voucher.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-                          <Trash2 className="w-4 h-4" /> Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

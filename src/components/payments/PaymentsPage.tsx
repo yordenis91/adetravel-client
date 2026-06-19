@@ -7,7 +7,7 @@ import {
   CheckCircle, 
   XCircle,
   Filter,
-  ArrowRight
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-} from "@/components/ui/card";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -77,7 +71,7 @@ export default function PaymentsPage() {
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
   const paymentTemplates = Array.isArray(paymentTemplatesResponseData) ? paymentTemplatesResponseData : (paymentTemplatesResponseData as any)?.data || [];
 
- const isLoading = isPaymentsLoading || isRequestsLoading || isClientsLoading;
+  const isLoading = isPaymentsLoading || isRequestsLoading || isClientsLoading;
 
   const filteredPayments = useMemo(() => {
     return payments.filter((payment: any) => {
@@ -215,132 +209,102 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-playfair font-bold text-navy dark:text-white">Pagos</h1>
-          <p className="text-muted-foreground mt-1 text-lg">
+          <h1 className="text-3xl font-playfair font-bold text-navy mb-1">Pagos</h1>
+          <p className="text-muted-foreground text-sm">
             Gestión y seguimiento de recaudaciones por servicios de viaje.
           </p>
         </div>
-        <Button 
-          onClick={openCreate}
-          className="bg-primary hover:bg-primary/90 text-navy font-bold gap-2 px-6 h-12 rounded-xl shadow-lg shadow-primary/20"
-        >
-          <Plus className="w-5 h-5" />
-          Registrar Pago
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={openCreate} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
+            <Plus className="w-4 h-4" /> Registrar Pago
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-none shadow-md bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold uppercase tracking-wider opacity-80 flex items-center gap-2">
-              <DollarSign className="w-4 h-4" /> Recaudado (Total)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col">
-              <span className="text-2xl font-bold">{formatCurrency(stats.totalRecaudadoCLP, "CLP")}</span>
-              <span className="text-sm font-medium opacity-90">{formatCurrency(stats.totalRecaudadoUSD, "USD")}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-md bg-white dark:bg-navy-dark">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-500" /> Pendientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold">{stats.pendientes}</span>
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                <ArrowRight className="w-5 h-5 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-md bg-white dark:bg-navy-dark">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-500" /> Completados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold">{stats.completados}</span>
-              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-md bg-white dark:bg-navy-dark">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <XCircle className="w-4 h-4 text-rose-500" /> Cancelados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold">{stats.cancelados}</span>
-              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-rose-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Card */}
-      <Card className="border-none shadow-xl overflow-hidden bg-white/70 dark:bg-navy-dark/40 backdrop-blur-sm">
-        <CardHeader className="border-b bg-muted/30 pb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <Tabs defaultValue="all" className="w-full md:w-auto" onValueChange={setStatusTab}>
-              <TabsList className="bg-muted/50 p-1 rounded-xl">
-                <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-navy data-[state=active]:shadow-sm">Todos</TabsTrigger>
-                <TabsTrigger value="PENDIENTE" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-navy data-[state=active]:shadow-sm">Pendientes</TabsTrigger>
-                <TabsTrigger value="COMPLETADO" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-navy data-[state=active]:shadow-sm">Completados</TabsTrigger>
-                <TabsTrigger value="CANCELADO" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-navy data-[state=active]:shadow-sm">Cancelados</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            <div className="flex items-center gap-2">
-              <div className="relative w-full md:w-[300px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Buscar por N°, ref o cliente..." 
-                  className="pl-10 h-10 rounded-xl border-muted-foreground/10 focus:ring-primary/20"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl">
-                <Filter className="w-4 h-4" />
-              </Button>
-            </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col justify-center shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <DollarSign className="w-4 h-4 text-emerald-500" />
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Recaudado</p>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <PaymentsTable 
-            payments={filteredPayments}
-            requests={requests}
-            clients={clients}
-            isLoading={isLoading}
-            onEdit={openEdit}
-            onDelete={setDeleteId}
-            onStatusChange={handleStatusChange}
-          />
-        </CardContent>
-      </Card>
+          <div>
+            <p className="text-xl font-playfair font-bold text-navy">{formatCurrency(stats.totalRecaudadoCLP, "CLP")}</p>
+            <p className="text-xs text-muted-foreground font-medium">{formatCurrency(stats.totalRecaudadoUSD, "USD")}</p>
+          </div>
+        </div>
 
-      {/* Dialogs */}
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Pendientes</p>
+            <p className="text-xl font-playfair font-bold text-navy">{stats.pendientes}</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+            <CheckCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Completados</p>
+            <p className="text-xl font-playfair font-bold text-navy">{stats.completados}</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500">
+            <XCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cancelados</p>
+            <p className="text-xl font-playfair font-bold text-navy">{stats.cancelados}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <Tabs value={statusTab} onValueChange={setStatusTab} className="w-full lg:w-auto overflow-x-auto">
+            <TabsList className="bg-muted/50 p-1 h-auto flex-wrap sm:flex-nowrap">
+              <TabsTrigger value="all" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Todos</TabsTrigger>
+              <TabsTrigger value="PENDIENTE" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Pendientes</TabsTrigger>
+              <TabsTrigger value="COMPLETADO" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Completados</TabsTrigger>
+              <TabsTrigger value="CANCELADO" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Cancelados</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="flex items-center gap-2 flex-1 md:max-w-sm">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar N°, ref o cliente..." 
+                className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm h-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
+              <Filter className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        <PaymentsTable 
+          payments={filteredPayments}
+          requests={requests}
+          clients={clients}
+          isLoading={isLoading}
+          onEdit={openEdit}
+          onDelete={setDeleteId}
+          onStatusChange={handleStatusChange}
+        />
+      </div>
+
       <PaymentFormDialog 
         open={isFormOpen}
         onOpenChange={setIsFormOpen}

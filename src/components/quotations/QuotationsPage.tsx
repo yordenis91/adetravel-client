@@ -5,7 +5,6 @@ import { QuotationsTable } from "./QuotationsTable";
 import { QuotationFormDialog } from "./QuotationFormDialog";
 import { QuotationDetailSheet } from "./QuotationDetailSheet";
 import { QuotationPDFPreview } from "./QuotationPDFPreview";
-import { StatsCard } from "../dashboard/StatsCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -191,50 +190,85 @@ export default function QuotationsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-playfair font-bold text-navy mb-2">Cotizaciones</h1>
-          <p className="text-muted-foreground flex items-center gap-2">
+          <h1 className="text-3xl font-playfair font-bold text-navy mb-1">Cotizaciones</h1>
+          <p className="text-muted-foreground text-sm">
             Gestiona propuestas formales y haz seguimiento de ventas.
           </p>
         </div>
-        <Button onClick={() => { setSelectedQuotation(null); setIsFormOpen(true); }} className="bg-navy hover:bg-navy-light text-white font-bold px-6 h-12 rounded-xl shadow-lg shadow-navy/20 transition-all hover:scale-105">
-          <Plus className="mr-2 h-5 w-5" /> Nueva Cotización
-        </Button>
+        <div className="flex gap-2">
+          
+          <Button onClick={() => { setSelectedQuotation(null); setIsFormOpen(true); }} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
+            <Plus className="w-4 h-4" /> Nueva Cotización
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Total" value={stats.total} icon={<ReceiptText className="w-5 h-5" />} color="blue" />
-        <StatsCard title="Borradores" value={stats.borrador} icon={<Clock className="w-5 h-5" />} color="blue" />
-        <StatsCard title="Enviadas" value={stats.enviadas} icon={<Send className="w-5 h-5" />} color="blue" />
-        <StatsCard title="Aceptadas" value={stats.aceptadas} icon={<CheckCircle2 className="w-5 h-5" />} color="green" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+            <ReceiptText className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total</p>
+            <p className="text-xl font-playfair font-bold text-navy">{stats.total}</p>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Borradores</p>
+            <p className="text-xl font-playfair font-bold text-navy">{stats.borrador}</p>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+            <Send className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Enviadas</p>
+            <p className="text-xl font-playfair font-bold text-navy">{stats.enviadas}</p>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Aceptadas</p>
+            <p className="text-xl font-playfair font-bold text-navy">{stats.aceptadas}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-          <Tabs value={statusTab} onValueChange={setStatusTab} className="w-full md:w-auto">
-            <TabsList className="bg-slate-100/50 p-1">
-              <TabsTrigger value="Todas" className="rounded-lg px-4">Todas</TabsTrigger>
-              <TabsTrigger value="Borrador" className="rounded-lg px-4">Borrador</TabsTrigger>
-              <TabsTrigger value="Enviada" className="rounded-lg px-4">Enviadas</TabsTrigger>
-              <TabsTrigger value="Aceptada" className="rounded-lg px-4">Aceptadas</TabsTrigger>
-              <TabsTrigger value="Rechazada" className="rounded-lg px-4">Rechazadas</TabsTrigger>
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <Tabs value={statusTab} onValueChange={setStatusTab} className="w-full lg:w-auto overflow-x-auto">
+            <TabsList className="bg-muted/50 p-1 h-auto flex-wrap sm:flex-nowrap">
+              <TabsTrigger value="Todas" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Todas</TabsTrigger>
+              <TabsTrigger value="Borrador" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Borrador</TabsTrigger>
+              <TabsTrigger value="Enviada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Enviadas</TabsTrigger>
+              <TabsTrigger value="Aceptada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Aceptadas</TabsTrigger>
+              <TabsTrigger value="Rechazada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Rechazadas</TabsTrigger>
             </TabsList>
           </Tabs>
 
-          <div className="flex items-center gap-2 w-full md:w-[400px]">
+          <div className="flex items-center gap-2 flex-1 md:max-w-sm">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
                 placeholder="Buscar por N° o Cliente..." 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 bg-slate-50 border-transparent focus:bg-white transition-all h-11 rounded-xl"
+                className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm h-10"
               />
             </div>
-            <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-slate-100">
-              <Filter className="h-4 w-4" />
+            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
+              <Filter className="w-4 h-4" />
             </Button>
           </div>
         </div>

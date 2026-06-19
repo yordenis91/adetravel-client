@@ -71,12 +71,12 @@ export function RecentRequests() {
         </div>
       ) : (
         <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-gray-100">
-              <TableHead className="text-[10px] uppercase font-bold tracking-widest">ID</TableHead>
-              <TableHead className="text-[10px] uppercase font-bold tracking-widest">Servicios</TableHead>
-              <TableHead className="text-[10px] uppercase font-bold tracking-widest">Estado</TableHead>
-              <TableHead className="text-[10px] uppercase font-bold tracking-widest text-right">Fecha</TableHead>
+          <TableHeader className="bg-slate-50/50 border-b border-gray-100">
+            <TableRow className="hover:bg-transparent border-none">
+              <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600">ID</TableHead>
+              <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600">Servicios</TableHead>
+              <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600">Estado</TableHead>
+              <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600 text-right">Fecha</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

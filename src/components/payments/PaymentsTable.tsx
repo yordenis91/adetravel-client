@@ -16,10 +16,10 @@ import {
   FileText, 
   Globe,
   Calendar,
-  MoreVertical,
+  MoreHorizontal,
   ExternalLink,
-  CheckCircle,
-  Clock,
+  CheckCircle2,
+  ArrowRight,
   XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -99,29 +98,31 @@ export function PaymentsTable({
 
   if (payments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-white/50 dark:bg-navy-dark/20 rounded-2xl border border-dashed border-muted-foreground/20">
-        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-          <Banknote className="w-8 h-8 text-muted-foreground/40" />
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4">
+          <Banknote className="w-8 h-8 text-slate-300" />
         </div>
-        <h3 className="text-lg font-bold font-playfair">No hay pagos registrados</h3>
-        <p className="text-sm text-muted-foreground">Comienza registrando el primer pago recibido.</p>
+        <h3 className="text-lg font-playfair font-bold text-navy">Sin pagos registrados</h3>
+        <p className="text-sm text-muted-foreground max-w-xs text-center mt-1">
+          No se encontraron pagos que coincidan con la búsqueda.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-100 bg-white">
       <Table>
-        <TableHeader className="bg-muted/50">
+        <TableHeader className="bg-slate-50/50">
           <TableRow>
-            <TableHead className="font-bold">N° Pago</TableHead>
-            <TableHead className="font-bold">Cliente</TableHead>
-            <TableHead className="font-bold">Solicitud</TableHead>
-            <TableHead className="font-bold">Fecha</TableHead>
-            <TableHead className="font-bold">Monto</TableHead>
-            <TableHead className="font-bold">Método</TableHead>
-            <TableHead className="font-bold">Estado</TableHead>
-            <TableHead className="text-right font-bold">Acciones</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">N° Pago</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Cliente</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Solicitud</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Fecha</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Monto</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Método</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Estado</TableHead>
+            <TableHead className="text-right text-xs font-bold uppercase tracking-wider">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -131,10 +132,10 @@ export function PaymentsTable({
             const MethodIcon = methodIcons[payment.method] || Banknote;
 
             return (
-              <TableRow key={payment.id} className="hover:bg-muted/20 transition-colors group">
+              <TableRow key={payment.id} className="group hover:bg-slate-50/50 transition-colors">
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-bold text-sm text-navy dark:text-white">
+                    <span className="font-mono text-xs font-bold text-primary">
                       {payment.paymentNumber}
                     </span>
                     {payment.reference && (
@@ -145,47 +146,39 @@ export function PaymentsTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                      {client?.firstName?.charAt(0)}{client?.lastName?.charAt(0)}
-                    </div>
-                    <span className="text-sm font-medium">
-                      {client ? `${client.firstName} ${client.lastName}` : "Cliente no encontrado"}
-                    </span>
-                  </div>
+                  <p className="text-sm font-bold text-navy">
+                    {client ? `${client.firstName} ${client.lastName}` : "Cliente no encontrado"}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-tight">
+                    ID: {client?.id?.substring(0, 8) ?? 'N/A'}
+                  </p>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-primary">
-                      {request?.requestNumber || "S/N"}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground italic">
-                      {request?.destinationCity || "Sin destino"}
+                    <span className="font-mono text-xs text-muted-foreground font-medium">
+                      {request?.requestNumber || "---"}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Calendar className="w-3 h-3" />
-                    {payment.paymentDate 
-                      ? format(new Date(payment.paymentDate), "dd MMM, yyyy", { locale: es })
-                      : "S/F"}
+                    <span className="text-xs">
+                      {payment.paymentDate 
+                        ? format(new Date(payment.paymentDate), "dd MMM, yyyy", { locale: es })
+                        : "---"}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className={cn(
-                    "font-bold text-sm",
-                    payment.status === "COMPLETADO" ? "text-emerald-600 dark:text-emerald-400" :
-                    payment.status === "PENDIENTE" ? "text-amber-600 dark:text-amber-400" :
-                    "text-slate-500"
-                  )}>
+                  <p className="text-xs font-bold text-navy">
                     {formatCurrency(payment.amount, payment.currency)}
-                  </span>
+                  </p>
                 </TableCell>
                 <TableCell>
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50 border border-muted-foreground/10">
-                    <MethodIcon className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-[10px] font-medium text-muted-foreground">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 border border-slate-100">
+                    <MethodIcon className="w-3 h-3 text-slate-500" />
+                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
                       {methodLabels[payment.method] || payment.method}
                     </span>
                   </div>
@@ -194,54 +187,54 @@ export function PaymentsTable({
                   <PaymentStatusBadge status={payment.status} />
                 </TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold">
-                        Opciones de Pago
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => onEdit(payment)} className="gap-2 cursor-pointer">
-                        <Edit className="w-4 h-4 text-blue-500" />
-                        <span>Editar registro</span>
-                      </DropdownMenuItem>
-                      
-                      {payment.status !== 'COMPLETADO' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(payment.id, 'COMPLETADO')} className="gap-2 cursor-pointer text-emerald-600">
-                          <CheckCircle className="w-4 h-4" /> Marcar como Completado
-                        </DropdownMenuItem>
-                      )}
-                      {payment.status !== 'PENDIENTE' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(payment.id, 'PENDIENTE')} className="gap-2 cursor-pointer text-amber-600">
-                          <Clock className="w-4 h-4" /> Marcar como Pendiente
-                        </DropdownMenuItem>
-                      )}
-                      {payment.status !== 'CANCELADO' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(payment.id, 'CANCELADO')} className="gap-2 cursor-pointer text-destructive">
-                          <XCircle className="w-4 h-4" /> Cancelar pago
-                        </DropdownMenuItem>
-                      )}
+                  <div className="flex items-center justify-end gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(payment)} title="Editar Pago">
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+                          Gestionar Estado
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        
+                        {payment.status !== 'COMPLETADO' && (
+                          <DropdownMenuItem onClick={() => onStatusChange(payment.id, 'COMPLETADO')} className="cursor-pointer">
+                            <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" /> Marcar Completado
+                          </DropdownMenuItem>
+                        )}
+                        {payment.status !== 'PENDIENTE' && (
+                          <DropdownMenuItem onClick={() => onStatusChange(payment.id, 'PENDIENTE')} className="cursor-pointer">
+                            <ArrowRight className="mr-2 h-4 w-4 text-amber-500" /> Marcar Pendiente
+                          </DropdownMenuItem>
+                        )}
+                        {payment.status !== 'CANCELADO' && (
+                          <DropdownMenuItem onClick={() => onStatusChange(payment.id, 'CANCELADO')} className="cursor-pointer text-destructive">
+                            <XCircle className="mr-2 h-4 w-4" /> Cancelar pago
+                          </DropdownMenuItem>
+                        )}
 
-                      {payment.requestId && (
-                        <DropdownMenuItem className="gap-2 cursor-pointer">
-                          <ExternalLink className="w-4 h-4 text-primary" />
-                          <span>Ver solicitud</span>
+                        {payment.requestId && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer text-blue-600">
+                              <ExternalLink className="mr-2 h-4 w-4" /> Ver solicitud
+                            </DropdownMenuItem>
+                          </>
+                        )}
+
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onDelete(payment.id)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" /> Eliminar registro
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={() => onDelete(payment.id)} 
-                        className="gap-2 text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Eliminar registro</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             );
