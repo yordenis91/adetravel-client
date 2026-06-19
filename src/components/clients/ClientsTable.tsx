@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Eye, MoreVertical, Phone, Mail } from "lucide-react";
+import { Edit, Trash2, Eye, MoreVertical, Phone, Mail, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,7 @@ interface ClientsTableProps {
   clients: any[];
   isLoading: boolean;
   onEdit: (client: any) => void;
+  onToggleActive: (id: string) => void;
   onDelete: (id: string) => void;
  // onView: (client: any) => void;
    selectedIds: Set<string>;
@@ -32,7 +33,7 @@ interface ClientsTableProps {
   onSelectAll: () => void;
 }
 
-export function ClientsTable({ clients, isLoading, onEdit, onDelete,
+export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDelete,
   selectedIds,
   onSelectOne,
   onSelectAll}: ClientsTableProps) {
@@ -171,13 +172,26 @@ export function ClientsTable({ clients, isLoading, onEdit, onDelete,
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
+                        className={cn(
+                          client.isActive ? "text-destructive focus:text-destructive focus:bg-destructive/5" : "focus:bg-muted/5"
+                        )}
+                        onClick={() => onToggleActive(client.id)}
+                      >
+                        {client.isActive ? (
+                          <Trash2 className="w-4 h-4 mr-2" />
+                        ) : (
+                          <Check className="w-4 h-4 mr-2" />
+                        )}
+                        {client.isActive ? "Desactivar Cliente" : "Activar Cliente"}
+                      </DropdownMenuItem>
+                     {/*  <DropdownMenuItem
                         className="text-destructive focus:text-destructive focus:bg-destructive/5"
                         onClick={() => onDelete(client.id)}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
-                        Desactivar Cliente
-                      </DropdownMenuItem>
+                        Eliminar Cliente
+                      </DropdownMenuItem> */}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

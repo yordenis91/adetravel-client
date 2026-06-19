@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ClientsTable } from "./ClientsTable";
 import { ClientFormDialog } from "./ClientFormDialog";
@@ -20,12 +20,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { exportToCsv } from "@/lib/exportCsv";
 import { useSearchParams } from "react-router-dom";
+import { useToggleClientStatus } from "@/hooks/useClients";
 
 
 export default function ClientsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [itemToConfirm, setItemToConfirm] = useState<string | null>(null);
+  const [actionType, setActionType] = useState<'toggle' | 'delete' | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -67,13 +69,16 @@ export default function ClientsPage() {
     );
   });
 
-  const deactivateMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/clients/${id}`, { isActive: false }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
-      toast({ title: "Cliente desactivado", description: "El estado del cliente ha sido actualizado." });
+  const toggleClientStatusMutation = useToggleClientStatus();
+
+  // Observer para mensaje de toast después de toggle
+  useEffect(() => {
+    if (toggleClientStatusMutation.isSuccess) {
+      const client = filteredClients.find(c => c.id === itemToConfirm);
+      const statusText = client?.isActive ? "activado" : "desactivado";
+      toast({ title: `Cliente ${statusText}`, description: "El estado del cliente ha sido actualizado." });
     }
-  });
+  }, [toggleClientStatusMutation.isSuccess]);
 
   const handleEdit = (client: any) => {
     setSelectedClient(client);
@@ -85,8 +90,14 @@ export default function ClientsPage() {
     setIsFormOpen(true);
   };
 
+  const handleToggleActive = (id: string) => {
+    setItemToConfirm(id);
+    setActionType('toggle');
+  };
+
   const handleDelete = (id: string) => {
     setItemToConfirm(id);
+    setActionType('delete');
   };
 
   const handleView = (client: any) => {
@@ -232,6 +243,7 @@ export default function ClientsPage() {
           clients={filteredClients} 
           isLoading={isLoading} 
           onEdit={handleEdit}
+          onToggleActive={handleToggleActive}
           onDelete={handleDelete}
           selectedIds={selectedIds}
           onSelectOne={handleSelectOne}
@@ -252,15 +264,35 @@ export default function ClientsPage() {
         client={selectedPreviewClient}
       />
 
-      <AlertDialog open={!!itemToConfirm} onOpenChange={(open) => !open && setItemToConfirm(null)}>
+      <AlertDialog open={!!itemToConfirm} onOpenChange={(open) => { if (!open) { setItemToConfirm(null); setActionType(null); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción desactivará al cliente y no se podrá deshacer desde aquí.</AlertDialogDescription>
+            <AlertDialogDescription>
+              {actionType === 'toggle'
+                ? (itemToConfirm && filteredClients.find(c => c.id === itemToConfirm)?.isActive 
+                    ? "Se desactivará al cliente." 
+                    : "Se activará al cliente.")
+                : "Se eliminará el cliente de la tabla permanentemente."}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (itemToConfirm) { deactivateMutation.mutate(itemToConfirm); setItemToConfirm(null); } }}>
+            <AlertDialogAction onClick={() => { 
+              if (itemToConfirm) { 
+                if (actionType === 'toggle') {
+                  const client = filteredClients.find(c => c.id === itemToConfirm);
+                  if (client) {
+                    toggleClientStatusMutation.mutate({ id: itemToConfirm, isActive: client.isActive });
+                  }
+                } else if (actionType === 'delete') {
+                  // TODO: Implementar soft delete cuando se defina el endpoint
+                  console.log('Soft delete para cliente:', itemToConfirm);
+                }
+                setItemToConfirm(null); 
+                setActionType(null);
+              } 
+            }}>
               Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>

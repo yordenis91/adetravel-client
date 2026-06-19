@@ -79,7 +79,8 @@ export function useToggleClientStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => api.patch(`/clients/${id}/toggle-active`, {}),
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => 
+      api.patch(`/clients/${id}`, { isActive: !isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
