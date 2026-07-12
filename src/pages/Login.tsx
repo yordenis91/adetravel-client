@@ -137,7 +137,7 @@ export default function Login() {
                   type="email"
                   autoComplete="email"
                   placeholder="nombre@adetravel.cl"
-                  className="h-12 bg-slate-50 border-slate-200 focus-visible:ring-primary focus-visible:border-primary transition-all text-base"
+                  className="h-12 bg-slate-50 border-slate-200 outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary focus-visible:ring-offset-0 transition-colors text-base"
                   disabled={loading}
                   {...register("email")}
                 />
@@ -159,7 +159,7 @@ export default function Login() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className="h-12 bg-slate-50 border-slate-200 focus-visible:ring-primary focus-visible:border-primary transition-all font-mono text-base pr-10"
+                    className="h-12 bg-slate-50 border-slate-200 outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary focus-visible:ring-offset-0 transition-colors font-mono text-base pr-10"
                     disabled={loading}
                     {...register("password")}
                   />

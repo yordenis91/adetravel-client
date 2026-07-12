@@ -13,6 +13,8 @@ import { Loader2 } from "lucide-react";
 // 1. PRIMERO: Todas las importaciones estáticas (Rutas públicas)
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/layout/AppLayout";
 //import { BrandingBadge } from "./components/BrandingBadge";
@@ -93,6 +95,8 @@ const App = () => (
               {/* Rutas públicas */}
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/reset-password/:token" element={<ResetPassword />} />
               
               {/* RUTAS PROTEGIDAS ANIDADAS EN EL LAYOUT */}
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
