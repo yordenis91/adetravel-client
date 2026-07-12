@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock, Eye, EyeOff } from "lucide-react";
 
 // 🛡️ Validación estricta y segura
 const loginSchema = z.object({
@@ -28,7 +28,9 @@ type LoginValues = z.infer<typeof loginSchema>;
 export default function Login() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
+
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -59,8 +61,8 @@ export default function Login() {
       navigate("/dashboard", { replace: true });
     } catch (error: any) {
       // 🔒 Seguridad: Mensaje genérico para evitar filtración de usuarios
-      toast.error("Credenciales inválidas", { 
-        description: "El correo o la contraseña no son correctos. Intenta nuevamente." 
+      toast.error("Credenciales inválidas", {
+        description: "El correo o la contraseña no son correctos. Intenta nuevamente."
       });
     } finally {
       setLoading(false);
@@ -68,13 +70,20 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1128] text-slate-100 flex items-center justify-center p-4 sm:p-8 selection:bg-gold/30">
-      <div className="w-full max-w-5xl grid gap-8 rounded-[2rem] border border-white/10 bg-navy/80 p-6 sm:p-10 shadow-2xl backdrop-blur-xl md:grid-cols-[1.2fr_1fr]">
-        
+    <div className="min-h-screen bg-[#0A1128] text-slate-100 flex items-center justify-center p-4 sm:p-6 selection:bg-gold/30">
+
+      <div className="w-full max-w-md md:max-w-5xl md:grid gap-8 md:grid-cols-[1.2fr_1fr] md:rounded-[2rem] md:border md:border-white/10 md:bg-navy/80 md:p-8 lg:p-10 md:shadow-2xl md:backdrop-blur-xl md:min-h-[500px]">
+
         {/* Panel Izquierdo: Branding corporativo */}
-        <div className="flex flex-col justify-center gap-8 text-white p-4">
+        <div className="hidden md:flex flex-col justify-center gap-10 text-white p-4">
           <div className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-gold">ADE Travel</p>
+
+            {/* Logo para la vista PC/Desktop */}
+            <img
+              src="/cropped-logo-png-2.png"
+              alt="ADE Travel Logo"
+              className="h-16 w-auto object-contain"
+            />
             <h1 className="text-4xl sm:text-5xl font-playfair font-bold leading-tight">
               Accede a tu panel administrativo
             </h1>
@@ -83,63 +92,94 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="space-y-4 rounded-3xl bg-white/5 p-6 text-sm text-slate-300 ring-1 ring-white/10 backdrop-blur-sm">
-            <div>
-              <p className="font-bold text-white text-base mb-1">¿Nuevo en ADE Travel?</p>
-              <p className="text-slate-400">Regístrate con un usuario autorizado para comenzar a trabajar en la plataforma.</p>
+          <div className="rounded-2xl bg-white/5 p-5 border border-white/10 backdrop-blur-sm max-w-md">
+            <div className="flex items-start gap-4">
+              <div className="bg-gold/20 p-2 rounded-lg text-gold mt-0.5">
+                <Lock size={20} />
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm mb-1">Acceso Exclusivo</p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Esta plataforma no admite registro público. Si eres parte del equipo y necesitas acceso, por favor contacta al administrador de la agencia para recibir tu invitación.
+                </p>
+              </div>
             </div>
-            <Button asChild variant="outline" className="bg-gold border-none text-navy font-bold hover:bg-gold-light transition-colors">
-              <Link to="/auth/register">Crear cuenta corporativa</Link>
-            </Button>
           </div>
         </div>
 
         {/* Panel Derecho: Formulario funcional */}
-        <Card className="bg-white text-slate-900 shadow-xl border-0 flex flex-col justify-center p-2 sm:p-6 rounded-3xl">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-3xl font-playfair font-bold text-navy">Iniciar sesión</CardTitle>
-            <CardDescription className="text-slate-500">
+        <Card className="bg-white text-slate-900 shadow-2xl md:shadow-xl border-0 flex flex-col justify-center p-6 sm:p-8 rounded-[2rem] w-full">
+          <CardHeader className="pb-6 px-0 pt-0 text-center md:text-left">
+
+            {/* Branding exclusivo para móvil con Logo */}
+            <div className="md:hidden mb-6 flex justify-center">
+              <img
+                src="/cropped-logo-png-2.png"
+                alt="ADE Travel Logo"
+                className="h-14 w-auto object-contain drop-shadow-sm"
+              />
+            </div>
+
+            <CardTitle className="text-2xl sm:text-3xl font-playfair font-bold text-navy">
+              Iniciar sesión
+            </CardTitle>
+            <CardDescription className="text-slate-500 text-sm mt-1">
               Introduce tu correo y contraseña para continuar.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+
+          <CardContent className="px-0 pb-0 text-left">
             <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-2">
-                <Label htmlFor="email" className="font-semibold text-navy">Correo electrónico</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
+                <Label htmlFor="email" className="font-semibold text-navy text-sm">Correo electrónico</Label>
+                <Input
+                  id="email"
+                  type="email"
                   autoComplete="email"
-                  placeholder="nombre@adetravel.cl" 
-                  className="h-12 bg-slate-50 border-slate-200 focus-visible:ring-primary focus-visible:border-primary transition-all"
+                  placeholder="nombre@adetravel.cl"
+                  className="h-12 bg-slate-50 border-slate-200 focus-visible:ring-primary focus-visible:border-primary transition-all text-base"
                   disabled={loading}
-                  {...register("email")} 
+                  {...register("email")}
                 />
                 {errors.email && <p className="text-xs font-medium text-destructive">{errors.email.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="font-semibold text-navy">Contraseña</Label>
+                  <Label htmlFor="password" className="font-semibold text-navy text-sm">Contraseña</Label>
                   <Link to="/auth/forgot-password" className="text-xs font-semibold text-primary hover:text-navy transition-colors">
                     ¿Olvidaste tu contraseña?
                   </Link>
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  autoComplete="current-password"
-                  placeholder="••••••••" 
-                  className="h-12 bg-slate-50 border-slate-200 focus-visible:ring-primary focus-visible:border-primary transition-all font-mono"
-                  disabled={loading}
-                  {...register("password")} 
-                />
+
+                {/* Contenedor relativo para el input y el botón de visibilidad */}
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    className="h-12 bg-slate-50 border-slate-200 focus-visible:ring-primary focus-visible:border-primary transition-all font-mono text-base pr-10"
+                    disabled={loading}
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-navy transition-colors"
+                    disabled={loading}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+
                 {errors.password && <p className="text-xs font-medium text-destructive">{errors.password.message}</p>}
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full h-12 bg-navy hover:bg-navy-light text-white font-bold text-base shadow-md transition-all mt-4" 
+              <Button
+                type="submit"
+                className="w-full h-12 bg-navy hover:bg-navy-light text-white font-bold text-base shadow-md transition-all mt-6 rounded-xl"
                 disabled={loading}
               >
                 {loading ? (
@@ -152,13 +192,6 @@ export default function Login() {
                 )}
               </Button>
             </form>
-
-            <div className="mt-8 text-center text-sm text-slate-500">
-              <span>¿No tienes cuenta?</span>{" "}
-              <Link to="/auth/register" className="font-bold text-navy hover:text-primary transition-colors underline decoration-gold/50 underline-offset-4">
-                Regístrate ahora
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>

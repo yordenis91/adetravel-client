@@ -1,16 +1,16 @@
 import React, { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Building2, 
-  FileText, 
-  Calculator, 
-  CheckCircle2, 
-  CreditCard, 
-  Ticket, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Users,
+  Building2,
+  FileText,
+  Calculator,
+  CheckCircle2,
+  CreditCard,
+  Ticket,
+  BarChart3,
   ScrollText,
   LogOut,
   ChevronRight,
@@ -32,7 +32,7 @@ const navSections = [
   {
     title: "Principal",
     items: [
-      { name: "Panel Principal", icon: LayoutDashboard, path: "/dashboard" },      
+      { name: "Panel Principal", icon: LayoutDashboard, path: "/dashboard" },
     ]
   },
   {
@@ -93,7 +93,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       if (navRef.current) {
         // Try to find by data-nav-path first as per plan
         let activeItem = navRef.current.querySelector(`[data-nav-path="${location.pathname}"]`);
-        
+
         // Fallback to .active class if not found (handles dashboard/root cases)
         if (!activeItem) {
           activeItem = navRef.current.querySelector(".sidebar-nav-item.active");
@@ -115,20 +115,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   }, [location.pathname]);
 
   // User is loaded via react-query (shared cache with Header)
-  
+
   return (
     <aside className={cn(
       "fixed left-0 top-0 h-screen w-64 bg-navy text-sidebar-foreground flex flex-col z-50 transition-transform duration-300 ease-in-out lg:translate-x-0",
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       <div className="p-6">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-navy font-bold">A</span>
-          </div>
-          <h1 className="text-xl font-playfair font-bold tracking-tight">
-            ADE <span className="text-primary italic">Travel</span>
-          </h1>
+        <div className="flex items-center mb-8">
+          <img
+            src="/cropped-logo-png-2.png"
+            alt="ADE Travel Logo"
+            className="h-10 sm:h-12 w-auto object-contain drop-shadow-sm"
+          />
         </div>
 
         <nav ref={navRef} className="space-y-8 overflow-y-auto max-h-[calc(100vh-200px)] hide-scrollbar">
@@ -141,7 +140,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {section.items.map((item) => {
                   const Icon = iconMap[item.name] || item.icon;
                   const isActive = location.pathname === item.path || (item.path === "/dashboard" && location.pathname === "/");
-                  
+
                   return (
                     <Link
                       key={item.name}
@@ -177,9 +176,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </span>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
           onClick={() => {
             if (onClose) onClose();
