@@ -10,52 +10,22 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-
-type NotificationItem = {
-  id: string;
-  title?: string;
-  message?: string;
-  createdAt: string | number;
-  type?: "INFO" | "SUCCESS" | "WARNING" | "ERROR" | string;
-  isRead?: boolean;
-  [k: string]: any;
-};
+import { useNotifications } from "@/hooks/useNotifications";
 
 export function NotificationBell() {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => api.get("/notifications").then((res) => res.data),
-    refetchInterval: 60000,
-  });
-
-  // Asegurarnos de soportar si la API envuelve en { data: ... }
-  const payload = data?.data || data;
-
-  const notifications: NotificationItem[] = Array.isArray(payload)
-    ? payload
-    : payload?.items ?? [];
-
-  const unreadCount: number = typeof payload?.unreadCount === "number"
-    ? payload.unreadCount
-    : notifications.filter((n) => !n.isRead).length;
-
-  const markAsRead = useMutation({
-    mutationFn: (id: string) => api.patch(`/notifications/${id}/read`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
-  });
-
-  const markAllAsRead = useMutation({
-    mutationFn: () => api.patch(`/notifications/read-all`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
-  });
+  
+  // 🔥 Usar el hook centralizado que ya maneja queries, mutations y polling cada 5s
+  const { 
+    notifications, 
+    unreadCount, 
+    isLoading, 
+    markAsRead, 
+    markAllAsRead 
+  } = useNotifications();
 
   const getIcon = (type?: string) => {
     switch ((type || "").toUpperCase()) {
@@ -104,7 +74,7 @@ export function NotificationBell() {
               variant="ghost"
               size="sm"
               className="text-xs text-muted-foreground hover:text-navy font-medium h-7 px-2"
-              onClick={() => markAllAsRead.mutate()}
+              onClick={() => markAllAsRead()}
             >
               Marcar todas como leídas
             </Button>
@@ -131,7 +101,7 @@ export function NotificationBell() {
             return (
               <DropdownMenuItem
                 key={n.id}
-                onClick={() => { if (!n.isRead) markAsRead.mutate(n.id); }}
+                onClick={() => { if (!n.isRead) markAsRead(n.id); }}
                 className={`flex gap-3 items-start px-3 py-3 cursor-pointer ${bg} hover:bg-slate-100 transition-colors`}
               >
                 <div className="flex-shrink-0 mt-0.5">
