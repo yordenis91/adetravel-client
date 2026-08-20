@@ -17,7 +17,9 @@ import {
   UserCog,
   Settings,
   Mail,
-  ClipboardList
+  ClipboardList,
+  Package2,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -47,6 +49,7 @@ const navSections = [
   {
     title: "Operaciones",
     items: [
+      { name: "Servicios", icon: Package2, path: "/servicios" },
       { name: "Cotizaciones", icon: Calculator, path: "/cotizaciones" },
       { name: "Confirmaciones", icon: CheckCircle2, path: "/confirmaciones" },
       { name: "Pagos", icon: CreditCard, path: "/pagos" },
@@ -59,6 +62,7 @@ const navSections = [
       { name: "Usuarios", icon: UserCog, path: "/usuarios" },
       { name: "Configuración", icon: Settings, path: "/configuracion" },
       { name: "Plantillas de Email", icon: Mail, path: "/plantillas-email" },
+      { name: "Nomencladores", icon: BookOpen, path: "/nomencladores" },
     ]
   },
   {

@@ -71,9 +71,17 @@ export default function DashboardPage() {
     return req ? req.count : 0;
   }, [reportData.requestsByStatus]);
 
+  // "Confirmadas" agrupa todo lo que ya pasó por la confirmación del proveedor (fases
+  // "Confirmación proveedor" y "Pago y voucher" del flujo granular, sin contar Vendida/Cancelada).
   const confirmedRequests = useMemo(() => {
-    const req = reportData.requestsByStatus.find((r: any) => r.status === "CONFIRMADA");
-    return req ? req.count : 0;
+    const confirmedStatuses = [
+      "ENVIADA_SOLICITUD_CONFIRMACION_PROVEEDOR", "CONFIRMADA_POR_PROVEEDOR", "ENVIADA_CONFIRMACION_CLIENTE",
+      "ENVIADA_SOLICITUD_PAGO_CLIENTE", "PAGADO_POR_CLIENTE", "PAGADO_AL_PROVEEDOR",
+      "VOUCHER_EMITIDO", "VOUCHER_ENTREGADO",
+    ];
+    return reportData.requestsByStatus
+      .filter((r: any) => confirmedStatuses.includes(r.status))
+      .reduce((sum: number, r: any) => sum + (r.count || 0), 0);
   }, [reportData.requestsByStatus]);
 
 

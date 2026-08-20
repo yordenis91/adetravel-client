@@ -15,15 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { FileText, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// 🔥 CORRECCIÓN: Nombres de estados actualizados a MAYÚSCULAS para coincidir con el backend Zod
-const statusConfig: Record<string, { label: string; color: string }> = {
-  "RECEPCIONADA": { label: "Recepcionada", color: "bg-blue-100 text-blue-700 hover:bg-blue-100/80" },
-  "COTIZADA": { label: "Cotizada", color: "bg-amber-100 text-amber-700 hover:bg-amber-100/80" },
-  "CONFIRMADA": { label: "Confirmada", color: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80" },
-  "CANCELADA": { label: "Cancelada", color: "bg-rose-100 text-rose-700 hover:bg-rose-100/80" },
-  "VENDIDA": { label: "Vendida", color: "bg-purple-100 text-purple-700 hover:bg-purple-100/80" },
-};
+import { getStatusColor, getStatusLabel } from "@/lib/workflow-status";
 
 export function RecentRequests() {
   const { data: responseData, isLoading } = useQuery({
@@ -100,8 +92,8 @@ export function RecentRequests() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={cn("text-[10px] font-bold border-none", statusConfig[req.status]?.color || "bg-slate-100 text-slate-600")}>
-                    {statusConfig[req.status]?.label || req.status || "Pendiente"}
+                  <Badge variant="outline" className={cn("text-[10px] font-bold border-none", getStatusColor(req.status).bg, getStatusColor(req.status).text)}>
+                    {getStatusLabel(req.status)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right text-xs font-medium text-muted-foreground">

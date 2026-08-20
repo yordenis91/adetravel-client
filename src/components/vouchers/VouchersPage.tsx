@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { 
-  Plus, 
-  Search, 
-  Ticket, 
-  Clock, 
-  CheckCircle, 
+import {
+  Plus,
+  Search,
+  Ticket,
+  Clock,
+  CheckCircle,
   XCircle,
-  Filter,
-  Download
+  Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { VouchersTable } from "./VouchersTable";
 import { VoucherFormDialog } from "./VoucherFormDialog";
 import { VoucherPDFPreview } from "./VoucherPDFPreview";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 import { sendEmail } from "@/integrations/core";
 import { buildVoucherEmail } from "@/lib/emailTemplates";
 import { renderTemplate } from "@/lib/templateVariables";
@@ -184,7 +184,29 @@ export default function VouchersPage() {
             Gestión y emisión de comprobantes de servicio para clientes.
           </p>
         </div>
-        <div className="flex gap-2">        
+        <div className="flex gap-2">
+          <ExportMenu
+            filename="vouchers_adetravel"
+            data={filteredVouchers.map((v: any) => {
+              const client = clients.find((c: any) => c.id === v.clientId);
+              return {
+                numero: v.voucherNumber,
+                cliente: client ? `${client.firstName} ${client.lastName}` : "",
+                servicio: v.serviceName || v.serviceType || "",
+                destino: v.destination || "",
+                estado: v.status,
+                fecha: v.createdAt,
+              };
+            })}
+            columns={[
+              { key: "numero", label: "N° Voucher" },
+              { key: "cliente", label: "Cliente" },
+              { key: "servicio", label: "Servicio" },
+              { key: "destino", label: "Destino" },
+              { key: "estado", label: "Estado" },
+              { key: "fecha", label: "Fecha" },
+            ]}
+          />
           <Button onClick={openCreate} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" /> Generar Voucher
           </Button>

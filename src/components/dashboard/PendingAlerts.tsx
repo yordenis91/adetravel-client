@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { isAtOrAfter } from "@/lib/workflow-status";
 
 interface Alert {
   id: string;
@@ -66,10 +67,14 @@ export function PendingAlerts() {
       });
     }
 
-    // 2. Viajes Confirmados sin Voucher (urgent)
+    // 2. Viajes Confirmados sin Voucher (urgent) — confirmados por el proveedor (o en un
+    // estado posterior) y todavía sin voucher emitido.
     const confirmedRequestsWithoutVoucher = requests.filter((req: any) => {
-      const status = req.status?.toUpperCase();
-      return (status === "CONFIRMADA" || status === "VENDIDA") && !vouchers.some((v: any) => v.requestId === req.id);
+      return (
+        req.status !== "CANCELADA" &&
+        isAtOrAfter(req.status, "CONFIRMADA_POR_PROVEEDOR") &&
+        !vouchers.some((v: any) => v.requestId === req.id)
+      );
     });
 
     if (confirmedRequestsWithoutVoucher.length > 0) {

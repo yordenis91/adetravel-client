@@ -27,8 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
-import { 
+import {
   Banknote, 
   CreditCard, 
   Building2, 
@@ -257,20 +258,16 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs font-bold text-navy">Solicitud *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isEditing}>
-                        <FormControl>
-                          <SelectTrigger className="bg-white">
-                            <SelectValue placeholder="Seleccione solicitud" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {requests.map((req: any) => (
-                            <SelectItem key={req.id} value={req.id}>
-                              {req.requestNumber} | {req.destinationCity}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Combobox
+                        options={requests.map((req: any) => ({ value: req.id, label: `${req.requestNumber} | ${req.destinationCity || ""}` }))}
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={isEditing}
+                        placeholder="Seleccione solicitud"
+                        searchPlaceholder="Buscar solicitud..."
+                        emptyText="Sin solicitudes."
+                        className="bg-white"
+                      />
                       <FormMessage />
                     </FormItem>
                   )}

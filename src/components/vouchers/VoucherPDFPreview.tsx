@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +6,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  Printer, 
+import {
+  Printer,
   X,
   MapPin,
   Phone,
@@ -16,10 +16,13 @@ import {
   Calendar,
   Ticket,
   User,
-  Info
+  Info,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface VoucherPDFPreviewProps {
   open: boolean;
@@ -38,6 +41,9 @@ export function VoucherPDFPreview({
   provider,
   request,
 }: VoucherPDFPreviewProps) {
+  const { toast } = useToast();
+  const [isDownloading, setIsDownloading] = useState(false);
+
   if (!voucher) return null;
 
   const formatDate = (dateStr: string) => {
@@ -49,232 +55,40 @@ export function VoucherPDFPreview({
     }
   };
 
-  const handlePrint = () => {
-    const content = document.getElementById('voucher-print-area')?.innerHTML;
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    
-    if (!printWindow) return;
-
-    printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Voucher ${voucher.voucherNumber}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Manrope', sans-serif; 
-      color: #0F1E3C; 
-      background: white; 
-      padding: 40px; 
-      font-size: 11px;
-      line-height: 1.5;
+  // Descarga el PDF real generado en el backend (@react-pdf/renderer, ver
+  // GET /vouchers/:id/pdf) y lo abre en una pestaña nueva: desde el visor de PDF nativo del
+  // navegador el usuario puede imprimirlo (Ctrl+P) o descargarlo, ya sobre el binario real —
+  // no sobre el HTML de la vista previa. La pestaña se abre de forma síncrona (antes del
+  // fetch) para que el navegador no la bloquee como popup.
+  const handleDownloadPdf = async () => {
+    const previewWindow = window.open("", "_blank");
+    setIsDownloading(true);
+    try {
+      const blob = await api.getBlob(`/vouchers/${voucher.id}/pdf`);
+      const url = URL.createObjectURL(blob);
+      if (previewWindow) {
+        previewWindow.location.href = url;
+        previewWindow.addEventListener("load", () => {
+          try { previewWindow.print(); } catch { /* el visor nativo de PDF no siempre expone print() */ }
+        });
+      } else {
+        // Popup bloqueado: forzamos la descarga directa del PDF real.
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${voucher.voucherNumber}.pdf`;
+        link.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      previewWindow?.close();
+      toast({
+        variant: "destructive",
+        title: "Error al generar el PDF",
+        description: error instanceof Error ? error.message : "Intenta nuevamente.",
+      });
+    } finally {
+      setIsDownloading(false);
     }
-    .voucher-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 30px;
-    }
-    .agency-info h1 {
-      font-size: 24px;
-      font-weight: 800;
-      color: #0F1E3C;
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-    }
-    .agency-info p {
-      color: #64748b;
-      font-size: 10px;
-    }
-    .voucher-label-box {
-      text-align: right;
-    }
-    .voucher-title {
-      font-size: 28px;
-      font-weight: 800;
-      color: #0F1E3C;
-      margin-bottom: 5px;
-    }
-    .voucher-number {
-      font-size: 14px;
-      font-weight: 700;
-      color: #C9A84C;
-      margin-bottom: 10px;
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      background: #f1f5f9;
-      border-radius: 4px;
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
-      color: #475569;
-    }
-    .status-emitido { background: #dcfce7; color: #166534; }
-    
-    .gold-divider {
-      height: 2px;
-      background-color: #C9A84C;
-      margin-bottom: 30px;
-    }
-    
-    .service-card {
-      background-color: #f0f4f8;
-      padding: 25px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      position: relative;
-    }
-    .service-type-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      background: #0F1E3C;
-      color: white;
-      font-size: 9px;
-      font-weight: 800;
-      border-radius: 4px;
-      margin-bottom: 10px;
-    }
-    .service-name {
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 10px;
-      color: #0F1E3C;
-    }
-    .service-meta {
-      display: flex;
-      gap: 20px;
-      font-size: 11px;
-      color: #64748b;
-    }
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .confirmation-box {
-      position: absolute;
-      top: 25px;
-      right: 25px;
-      text-align: right;
-    }
-    .conf-label {
-      font-size: 9px;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .conf-code {
-      background: white;
-      padding: 8px 15px;
-      border: 2px solid #C9A84C;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 800;
-      color: #0F1E3C;
-    }
-    
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      margin-bottom: 30px;
-    }
-    .section-title {
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #94a3b8;
-      margin-bottom: 8px;
-      border-bottom: 1px solid #f1f5f9;
-      padding-bottom: 4px;
-    }
-    .info-box {
-      padding: 15px;
-      background: #fafbfc;
-      border-radius: 8px;
-    }
-    .info-name {
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 5px;
-    }
-    .info-detail {
-      font-size: 10px;
-      color: #64748b;
-      margin-bottom: 2px;
-    }
-    
-    .passengers-section {
-      margin-bottom: 30px;
-    }
-    .passenger-list {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .passenger-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      background: #f8fafc;
-      border-radius: 6px;
-    }
-    .passenger-dot {
-      width: 6px;
-      height: 6px;
-      background: #0F1E3C;
-      border-radius: 50%;
-    }
-    
-    .details-box {
-      background: white;
-      border: 1px solid #f1f5f9;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-    }
-    .notes-box {
-      background: #f8fafc;
-      padding: 15px;
-      border-radius: 8px;
-      font-style: italic;
-      color: #64748b;
-      font-size: 10px;
-    }
-    
-    .voucher-footer {
-      margin-top: 50px;
-      padding-top: 20px;
-      border-top: 1px solid #f1f5f9;
-      text-align: center;
-      color: #94a3b8;
-      font-size: 9px;
-      line-height: 1.6;
-    }
-    
-    @media print {
-      body { padding: 0; }
-      @page { margin: 15mm; size: A4; }
-    }
-  </style>
-</head>
-<body>
-  ${content}
-</body>
-</html>`);
-    
-    printWindow.document.close();
-    setTimeout(() => { 
-      printWindow.focus(); 
-      printWindow.print(); 
-    }, 500);
   };
 
   return (
@@ -286,8 +100,9 @@ export function VoucherPDFPreview({
             <p className="text-sm text-muted-foreground mt-1">Comprobante oficial para {voucher.voucherNumber}</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handlePrint} className="bg-navy hover:bg-navy-light text-white gap-2">
-              <Printer className="w-4 h-4" /> Imprimir / Descargar PDF
+            <Button onClick={handleDownloadPdf} disabled={isDownloading} className="bg-navy hover:bg-navy-light text-white gap-2">
+              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+              Imprimir / Descargar PDF
             </Button>
             <Button variant="outline" size="icon" onClick={() => onOpenChange(false)}>
               <X className="w-4 h-4" />

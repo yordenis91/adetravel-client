@@ -1,30 +1,40 @@
-import React from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import React, { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Eye, 
-  Edit2, 
-  MoreHorizontal, 
-  FileText, 
-  ArrowRight, 
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Eye,
+  Edit2,
+  MoreHorizontal,
+  FileText,
+  ArrowRight,
   ArrowLeft,
-  RefreshCw,
   XCircle,
   MapPin,
   Calendar
@@ -33,6 +43,7 @@ import { RequestStatusBadge } from "./RequestStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { STATUS_LABELS, VALID_TRANSITIONS, WorkflowStatus } from "@/lib/workflow-status";
 
 interface RequestsTableProps {
   requests: any[];
@@ -40,18 +51,27 @@ interface RequestsTableProps {
   clients: any[];
   onEdit: (request: any) => void;
   onView: (request: any) => void;
-  onStatusChange: (id: string, newStatus: string) => void;
+  onStatusChange: (id: string, newStatus: string, cancellationReason?: string) => void;
 }
 
-export function RequestsTable({ 
-  requests, 
-  isLoading, 
-  clients, 
-  onEdit, 
-  onView, 
-  onStatusChange 
+export function RequestsTable({
+  requests,
+  isLoading,
+  clients,
+  onEdit,
+  onView,
+  onStatusChange
 }: RequestsTableProps) {
-  
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const [cancellationReason, setCancellationReason] = useState("");
+
+  const handleConfirmCancel = () => {
+    if (!cancelTargetId || !cancellationReason.trim()) return;
+    onStatusChange(cancelTargetId, "CANCELADA", cancellationReason.trim());
+    setCancelTargetId(null);
+    setCancellationReason("");
+  };
+
   const getClientName = (clientId: string) => {
     if (!clientId) return "Sin cliente asignado";
     const client = clients.find(c => c.id === clientId);
@@ -159,58 +179,26 @@ export function RequestsTable({
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuContent align="end" className="w-64">
                       <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Gestionar Estado</DropdownMenuLabel>
 
-                      {/* Desde Recepcionada */}
-                      {request.status === "Recepcionada" && (
-                        <DropdownMenuItem onClick={() => onStatusChange(request.id, "Cotizada")}>
-                          <ArrowRight className="mr-2 h-4 w-4 text-amber-500" />
-                          Marcar como Cotizada
-                        </DropdownMenuItem>
-                      )}
-
-                      {/* Desde Cotizada */}
-                      {request.status === "Cotizada" && (
-                        <>
-                          <DropdownMenuItem onClick={() => onStatusChange(request.id, "Confirmada")}>
-                            <ArrowRight className="mr-2 h-4 w-4 text-emerald-500" />
-                            Marcar como Confirmada
+                      {(VALID_TRANSITIONS[request.status] ?? [])
+                        .filter((s) => s !== "CANCELADA")
+                        .map((nextStatus) => (
+                          <DropdownMenuItem key={nextStatus} onClick={() => onStatusChange(request.id, nextStatus)}>
+                            {nextStatus === "RECEPCIONADA" ? (
+                              <ArrowLeft className="mr-2 h-4 w-4 text-blue-500" />
+                            ) : (
+                              <ArrowRight className="mr-2 h-4 w-4 text-emerald-500" />
+                            )}
+                            {STATUS_LABELS[nextStatus as WorkflowStatus]}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onStatusChange(request.id, "Recepcionada")}>
-                            <ArrowLeft className="mr-2 h-4 w-4 text-blue-500" />
-                            Volver a Recepcionada
-                          </DropdownMenuItem>
-                        </>
-                      )}
+                        ))}
 
-                      {/* Desde Confirmada */}
-                      {request.status === "Confirmada" && (
-                        <>
-                          <DropdownMenuItem onClick={() => onStatusChange(request.id, "Vendida")}>
-                            <ArrowRight className="mr-2 h-4 w-4 text-purple-500" />
-                            Marcar como Vendida
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onStatusChange(request.id, "Cotizada")}>
-                            <ArrowLeft className="mr-2 h-4 w-4 text-amber-500" />
-                            Volver a Cotizada
-                          </DropdownMenuItem>
-                        </>
-                      )}
-
-                      {/* Desde Cancelada (Reabrir) */}
-                      {request.status === "Cancelada" && (
-                        <DropdownMenuItem onClick={() => onStatusChange(request.id, "Recepcionada")}>
-                          <RefreshCw className="mr-2 h-4 w-4 text-blue-500" />
-                          Reabrir Solicitud
-                        </DropdownMenuItem>
-                      )}
-
-                      {/* Opción global de Cancelar (Solo si no está vendida ni cancelada previamente) */}
-                      { ["Recepcionada", "Cotizada", "Confirmada"].includes(request.status) && (
+                      {request.status !== "CANCELADA" && request.status !== "VENDIDA" && (
                         <>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(request.id, "Cancelada")}>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setCancelTargetId(request.id)}>
                             <XCircle className="mr-2 h-4 w-4" />
                             Cancelar Solicitud
                           </DropdownMenuItem>
@@ -224,6 +212,27 @@ export function RequestsTable({
           ))}
         </TableBody>
       </Table>
+
+      <AlertDialog open={!!cancelTargetId} onOpenChange={(open) => { if (!open) { setCancelTargetId(null); setCancellationReason(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar esta solicitud?</AlertDialogTitle>
+            <AlertDialogDescription>Esta acción no se puede deshacer. Indica el motivo de la cancelación (obligatorio).</AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            value={cancellationReason}
+            onChange={(e) => setCancellationReason(e.target.value)}
+            placeholder="Ej: El cliente desistió del viaje por motivos personales"
+            className="min-h-[80px]"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel} disabled={!cancellationReason.trim()} className="bg-rose-600 hover:bg-rose-700">
+              Confirmar cancelación
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

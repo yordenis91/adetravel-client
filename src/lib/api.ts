@@ -71,8 +71,26 @@ async function request(path: string, options?: RequestInit) {
   return res.json();
 }
 
+/**
+ * Para endpoints que devuelven un binario (p.ej. PDF real de Voucher/Cotización) en vez de JSON.
+ * No pasa por `request()` porque ese helper siempre hace `.json()` sobre la respuesta.
+ */
+async function requestBlob(path: string): Promise<Blob> {
+  const token = localStorage.getItem("ade_token");
+  const res = await fetch(`${BASE}${path}`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
+
+  return res.blob();
+}
+
 export const api = {
   get: (path: string) => request(path),
+  getBlob: (path: string) => requestBlob(path),
   post: (path: string, body: unknown) =>
     request(path, { method: "POST", body: JSON.stringify(body) }),
   put: (path: string, body: unknown) =>

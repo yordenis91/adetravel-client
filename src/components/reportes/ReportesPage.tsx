@@ -16,6 +16,7 @@ import PagosChart from "./PagosChart";
 import CotizacionesChart from "./CotizacionesChart";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { getStatusColor, getStatusLabel } from "@/lib/workflow-status";
 
 export default function ReportesPage() {
   // 🔥 Una sola llamada ultra-rápida al backend
@@ -147,10 +148,8 @@ export default function ReportesPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          req.status === 'VENDIDA' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {req.status}
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(req.status).bg} ${getStatusColor(req.status).text}`}>
+                          {getStatusLabel(req.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

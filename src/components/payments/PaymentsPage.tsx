@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { 
-  Plus, 
-  Search, 
-  DollarSign, 
-  Clock, 
-  CheckCircle, 
+import {
+  Plus,
+  Search,
+  DollarSign,
+  Clock,
+  CheckCircle,
   XCircle,
-  Filter,
-  Download
+  Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +30,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentsTable } from "./PaymentsTable";
 import { PaymentFormDialog } from "./PaymentFormDialog";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 import { sendEmail } from "@/integrations/core";
 import { buildPaymentEmail } from "@/lib/emailTemplates";
 import { renderTemplate } from "@/lib/templateVariables";
@@ -218,6 +218,30 @@ export default function PaymentsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <ExportMenu
+            filename="pagos_adetravel"
+            data={filteredPayments.map((p: any) => {
+              const client = clients.find((c: any) => c.id === p.clientId);
+              return {
+                numero: p.paymentNumber,
+                cliente: client ? `${client.firstName} ${client.lastName}` : "",
+                monto: p.amount,
+                moneda: p.currency,
+                metodo: p.method,
+                estado: p.status,
+                fecha: p.paymentDate || p.createdAt,
+              };
+            })}
+            columns={[
+              { key: "numero", label: "N° Pago" },
+              { key: "cliente", label: "Cliente" },
+              { key: "monto", label: "Monto" },
+              { key: "moneda", label: "Moneda" },
+              { key: "metodo", label: "Método" },
+              { key: "estado", label: "Estado" },
+              { key: "fecha", label: "Fecha" },
+            ]}
+          />
           <Button onClick={openCreate} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" /> Registrar Pago
           </Button>

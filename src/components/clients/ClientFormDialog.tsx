@@ -27,12 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 //import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
+import { useCatalog } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X } from "lucide-react";
 
 const clientSchema = z.object({
@@ -69,6 +71,7 @@ interface ClientFormDialogProps {
 export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: ClientFormDialogProps) {
   const { toast } = useToast();
   const isEditing = !!client;
+  const { data: nationalities } = useCatalog("nationalities");
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -242,9 +245,15 @@ const onSubmit = async (values: ClientFormValues) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nacionalidad</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Chilena" {...field} className="bg-slate-50 border-slate-100" />
-                          </FormControl>
+                          <Combobox
+                            options={nationalities.map((n: any) => ({ value: n.name, label: n.name }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowCustomValue
+                            placeholder="Ej: Chilena"
+                            searchPlaceholder="Buscar o escribir nacionalidad..."
+                            className="bg-slate-50 border-slate-100"
+                          />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}

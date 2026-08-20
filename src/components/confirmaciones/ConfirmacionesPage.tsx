@@ -1,198 +1,129 @@
-import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useConfirmations } from "@/hooks/useConfirmations";
+import { ConfirmationsTable } from "./ConfirmationsTable";
+import { ConfirmationFormDialog } from "./ConfirmationFormDialog";
+import { ConfirmationDetailSheet } from "./ConfirmationDetailSheet";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, CheckCircle2, ShoppingBag, DollarSign, Ticket } from "lucide-react";
-import { ConfirmacionesTable } from "./ConfirmacionesTable";
-import { ConfirmacionDetailSheet } from "./ConfirmacionDetailSheet";
+import { Plus, Search, CheckCircle2 } from "lucide-react";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 
 export default function ConfirmacionesPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("Todas");
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedConfirmation, setSelectedConfirmation] = useState<any>(null);
+  const queryClient = useQueryClient();
 
-  const { data: requestsResponseData = [], isLoading: isRequestsLoading } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'),
+  const { data: confirmations, isLoading } = useConfirmations({});
+
+  const { data: requestsData } = useQuery({ queryKey: ["requests-all"], queryFn: () => api.get("/requests?limit=1000") });
+  const requests = Array.isArray(requestsData) ? requestsData : (requestsData as any)?.data || [];
+
+  const { data: providersData } = useQuery({ queryKey: ["providers-all"], queryFn: () => api.get("/providers") });
+  const providers = Array.isArray(providersData) ? providersData : (providersData as any)?.data || [];
+
+  const filteredConfirmations = confirmations.filter((c: any) => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    const requestNumber = requests.find((r: any) => r.id === c.requestId)?.requestNumber || "";
+    return c.confirmationNumber?.toLowerCase().includes(search) || requestNumber.toLowerCase().includes(search);
   });
 
-  const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => api.get('/clients'),
-  });
-
-  const { data: paymentsResponseData = [] } = useQuery({
-    queryKey: ["payments"],
-    queryFn: () => api.get('/payments'),
-  });
-
-  const { data: vouchersResponseData = [] } = useQuery({
-    queryKey: ["vouchers"],
-    queryFn: () => api.get('/vouchers'),
-  });
-
-  const { data: quotationsResponseData = [] } = useQuery({
-    queryKey: ["quotations"],
-    queryFn: () => api.get('/quotations'),
-  });
-
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
-  const payments = Array.isArray(paymentsResponseData) ? paymentsResponseData : (paymentsResponseData as any)?.data || [];
-  const vouchers = Array.isArray(vouchersResponseData) ? vouchersResponseData : (vouchersResponseData as any)?.data || [];
-  const quotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
-
-  const confirmedRequests = useMemo(() => {
-    return requests.filter((r: any) => r.status === "CONFIRMADA" || r.status === "VENDIDA");
-  }, [requests]);
-
-  const filteredRequests = useMemo(() => {
-    return confirmedRequests.filter((request: any) => {
-      const client = clients.find((c: any) => c.id === request.clientId);
-      const clientName = client ? `${client.firstName} ${client.lastName}`.toLowerCase() : "";
-      const matchesSearch = 
-        request.requestNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        clientName.includes(searchTerm.toLowerCase());
-      
-      const matchesTab = activeTab === "Todas" || request.status === activeTab;
-      
-      return matchesSearch && matchesTab;
-    });
-  }, [confirmedRequests, clients, searchTerm, activeTab]);
-
-  const stats = useMemo(() => {
-    const totalConfirmadas = confirmedRequests.filter((r: any) => r.status === "CONFIRMADA").length;
-    const totalVendidas = confirmedRequests.filter((r: any) => r.status === "VENDIDA").length;
-    
-    const confirmedRequestIds = confirmedRequests.map((r: any) => r.id);
-    const completedPayments = payments.filter((p: any) => 
-      confirmedRequestIds.includes(p.requestId) && p.status === "COMPLETADO" && p.currency === "CLP"
-    );
-    const totalIngresos = completedPayments.reduce((acc: number, p: any) => acc + (p.amount || 0), 0);
-    
-    const emittedVouchers = vouchers.filter((v: any) => 
-      confirmedRequestIds.includes(v.requestId) && v.status === "EMITIDO"
-    ).length;
-
-    return { totalConfirmadas, totalVendidas, totalIngresos, emittedVouchers };
-  }, [confirmedRequests, payments, vouchers]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-CL", {
-      style: "currency",
-      currency: "CLP",
-    }).format(amount);
+  const handleAdd = () => {
+    setSelectedConfirmation(null);
+    setIsFormOpen(true);
   };
 
+  const handleEdit = (c: any) => {
+    setSelectedConfirmation(c);
+    setIsFormOpen(true);
+    setIsDetailOpen(false);
+  };
+
+  const handleView = (c: any) => {
+    setSelectedConfirmation(c);
+    setIsDetailOpen(true);
+  };
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["confirmations"] });
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-4xl font-playfair font-bold text-navy">Confirmaciones</h1>
-        <p className="text-muted-foreground">Reservas confirmadas y ventas cerradas</p>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-playfair font-bold text-navy mb-1 flex items-center gap-2">
+            <CheckCircle2 className="w-7 h-7 text-primary" />
+            Confirmaciones
+          </h1>
+          <p className="text-muted-foreground text-sm">Confirmaciones de reserva emitidas por los proveedores.</p>
+        </div>
+        <div className="flex gap-2">
+          <ExportMenu
+            filename="confirmaciones_adetravel"
+            data={filteredConfirmations.map((c: any) => {
+              const provider = providers.find((p: any) => p.id === c.providerId);
+              return {
+                numero: c.confirmationNumber,
+                solicitud: requests.find((r: any) => r.id === c.requestId)?.requestNumber || "",
+                proveedor: provider ? (provider.fantasyName || provider.name) : "",
+                precio: c.price,
+                vigencia: c.validUntil,
+              };
+            })}
+            columns={[
+              { key: "numero", label: "N° Confirmación" },
+              { key: "solicitud", label: "Solicitud" },
+              { key: "proveedor", label: "Proveedor" },
+              { key: "precio", label: "Precio" },
+              { key: "vigencia", label: "Vigencia" },
+            ]}
+          />
+          <Button onClick={handleAdd} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
+            <Plus className="w-4 h-4" />
+            Nueva Confirmación
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-none shadow-sm bg-white overflow-hidden group">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Confirmadas</p>
-                <h3 className="text-2xl font-bold text-navy">{stats.totalConfirmadas}</h3>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm bg-white overflow-hidden group">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Vendidas</p>
-                <h3 className="text-2xl font-bold text-navy">{stats.totalVendidas}</h3>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                <ShoppingBag className="w-5 h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm bg-white overflow-hidden group">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Ingresos (CLP)</p>
-                <h3 className="text-2xl font-bold text-navy">{formatCurrency(stats.totalIngresos)}</h3>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                <DollarSign className="w-5 h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm bg-white overflow-hidden group">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Vouchers Emitidos</p>
-                <h3 className="text-2xl font-bold text-navy">{stats.emittedVouchers}</h3>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                <Ticket className="w-5 h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-          <TabsList className="bg-white border border-gray-100 p-1">
-            <TabsTrigger value="Todas" className="text-xs uppercase tracking-widest font-bold px-4 py-2">Todas</TabsTrigger>
-            <TabsTrigger value="CONFIRMADA" className="text-xs uppercase tracking-widest font-bold px-4 py-2">Confirmadas</TabsTrigger>
-            <TabsTrigger value="VENDIDA" className="text-xs uppercase tracking-widest font-bold px-4 py-2">Vendidas</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <div className="relative w-full md:w-72">
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
+        <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar por n° o cliente..." 
-            className="pl-10 bg-white border-gray-100"
+          <Input
+            placeholder="Buscar por N° confirmación o solicitud..."
+            className="pl-10 bg-slate-50 border-slate-100 h-10 text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <ConfirmacionesTable 
-          requests={filteredRequests}
-          clients={clients}
-          payments={payments}
-          vouchers={vouchers}
-          isLoading={isRequestsLoading || isClientsLoading}
-          onView={(request) => setSelectedRequest(request)}
+        <ConfirmationsTable
+          confirmations={filteredConfirmations}
+          requests={requests}
+          providers={providers}
+          isLoading={isLoading}
+          onView={handleView}
+          onEdit={handleEdit}
         />
       </div>
 
-      {selectedRequest && (
-        <ConfirmacionDetailSheet 
-          request={selectedRequest}
-          client={clients.find((c: any) => c.id === selectedRequest.clientId)}
-          payments={payments.filter((p: any) => p.requestId === selectedRequest.id)}
-          vouchers={vouchers.filter((v: any) => v.requestId === selectedRequest.id)}
-          quotation={quotations.find((q: any) => q.requestId === selectedRequest.id && q.status === "ACEPTADA")}
-          open={!!selectedRequest}
-          onOpenChange={(open) => !open && setSelectedRequest(null)}
-        />
-      )}
+      <ConfirmationFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        confirmation={selectedConfirmation}
+        onSuccess={invalidate}
+      />
+
+      <ConfirmationDetailSheet
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        confirmation={selectedConfirmation}
+        requests={requests}
+        providers={providers}
+        onEdit={handleEdit}
+      />
     </div>
   );
 }

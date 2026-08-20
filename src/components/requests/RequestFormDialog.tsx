@@ -20,22 +20,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useCatalog } from "@/hooks/useCatalogs";
+import { Loader2 } from "lucide-react";
 
 const requestSchema = z.object({
   clientId: z.string().min(1, "Cliente es requerido"),
@@ -48,9 +41,8 @@ const requestSchema = z.object({
   durationDays: z.coerce.number().min(1, "Mínimo 1 día"),
   budgetMin: z.coerce.number().optional(),
   budgetMax: z.coerce.number().optional(),
-  status: z.string().default("Recepcionada"),
+  status: z.string().default("RECEPCIONADA"),
   description: z.string().optional(),
-  services: z.array(z.string()).default([]),
 }).refine(data => {
   // Validar solo si ambos tienen valor y el máximo es mayor a cero
   if (data.budgetMin !== undefined && data.budgetMax !== undefined && data.budgetMax > 0) {
@@ -64,21 +56,19 @@ const requestSchema = z.object({
 
 type RequestFormValues = z.infer<typeof requestSchema>;
 
-const AVAILABLE_SERVICES = [
-"HOTEL", "AEREO", "TOUR", "TRANSFER", "SEGURO", "RENT_A_CAR", "CRUCERO", "OTRO"
-];
-
 interface RequestFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   request?: any;
   clients: any[];
-  onSuccess: () => void;
+  onSuccess: (savedRequest: any, wasCreated: boolean) => void;
 }
 
 export function RequestFormDialog({ open, onOpenChange, request, clients, onSuccess }: RequestFormDialogProps) {
   const { toast } = useToast();
   const isEditing = !!request;
+  const { data: countries } = useCatalog("countries");
+  const { data: cities } = useCatalog("cities");
 
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
@@ -93,9 +83,8 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
       durationDays: 7,
       budgetMin: 0,
       budgetMax: 0,
-      status: "Recepcionada",
+      status: "RECEPCIONADA",
       description: "",
-      services: [],
     },
   });
 
@@ -112,9 +101,8 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
         durationDays: request.durationDays || 1,
         budgetMin: request.budgetMin || 0,
         budgetMax: request.budgetMax || 0,
-        status: request.status || "Recepcionada",
+        status: request.status || "RECEPCIONADA",
         description: request.description || "",
-        services: request.services || [],
       });
     } else if (open) {
       form.reset({
@@ -128,42 +116,33 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
         durationDays: 7,
         budgetMin: 0,
         budgetMax: 0,
-        status: "Recepcionada",
+        status: "RECEPCIONADA",
         description: "",
-        services: [],
       });
     }
   }, [request, form, open]);
 
    const onSubmit = async (values: RequestFormValues) => {
     try {
+      let saved: any;
       if (isEditing) {
-        // CORRECCIÓN: Usar api.patch en lugar de Request.update y quitar logActivity
-        await api.patch(`/requests/${request.id}`, values);
+        const res: any = await api.patch(`/requests/${request.id}`, values);
+        saved = res?.data ?? res;
         toast({ title: "Solicitud actualizada", description: "Los cambios se guardaron correctamente." });
       } else {
-        // CORRECCIÓN: Usar api.post, el backend generará el ID automáticamente
-        await api.post('/requests', values);
-        toast({ title: "Solicitud creada", description: `La solicitud ha sido registrada con éxito.` });
+        const res: any = await api.post('/requests', values);
+        saved = res?.data ?? res;
+        toast({ title: "Solicitud creada", description: `Ahora agrega los servicios de esta solicitud.` });
       }
-      onSuccess();
       onOpenChange(false);
+      onSuccess(saved, !isEditing);
     } catch (error: any) {
       console.error(error);
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: error.message || "Hubo un problema al procesar la solicitud.",
         variant: "destructive"
       });
-    }
-  };
-
-  const toggleService = (service: string) => {
-    const current = form.getValues("services");
-    if (current.includes(service)) {
-      form.setValue("services", current.filter(s => s !== service));
-    } else {
-      form.setValue("services", [...current, service]);
     }
   };
 
@@ -175,7 +154,7 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
             {isEditing ? "Editar Solicitud" : "Nueva Solicitud"}
           </SheetTitle>
           <SheetDescription>
-            Registra los detalles del viaje, itinerario y presupuesto del cliente.
+            Registra los datos generales del viaje. Los servicios específicos (alojamiento, pasajes, etc.) se agregan luego desde el detalle de la solicitud.
           </SheetDescription>
         </SheetHeader>
 
@@ -189,27 +168,21 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                     <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">1</span>
                     <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Datos Generales</h3>
                   </div>
-                  
+
                   <FormField
                     control={form.control}
                     name="clientId"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cliente Titular *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="bg-slate-50 border-slate-100 h-11">
-                              <SelectValue placeholder="Selecciona un cliente" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {clients.map(client => (
-                              <SelectItem key={client.id} value={client.id}>
-                                {client.firstName} {client.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Combobox
+                          options={clients.map((client: any) => ({ value: client.id, label: `${client.firstName} ${client.lastName}` }))}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Selecciona un cliente"
+                          searchPlaceholder="Buscar cliente..."
+                          emptyText="Sin clientes."
+                        />
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )}
@@ -237,9 +210,9 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">¿Es Paquete Completo?</FormLabel>
                           <FormControl>
                             <div className="flex items-center gap-2">
-                              <Switch 
-                                checked={field.value} 
-                                onCheckedChange={field.onChange} 
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
                               />
                               <span className="text-xs font-medium text-navy">{field.value ? "Sí" : "No"}</span>
                             </div>
@@ -258,7 +231,7 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                     <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">2</span>
                     <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Itinerario</h3>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -266,9 +239,15 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País Origen</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Chile" {...field} className="bg-slate-50 border-slate-100" />
-                          </FormControl>
+                          <Combobox
+                            options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowCustomValue
+                            placeholder="Ej: Chile"
+                            searchPlaceholder="Buscar o escribir país..."
+                            className="bg-slate-50 border-slate-100"
+                          />
                         </FormItem>
                       )}
                     />
@@ -278,9 +257,15 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ciudad Origen</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Santiago" {...field} className="bg-slate-50 border-slate-100" />
-                          </FormControl>
+                          <Combobox
+                            options={cities.map((c: any) => ({ value: c.name, label: c.name }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowCustomValue
+                            placeholder="Ej: Santiago"
+                            searchPlaceholder="Buscar o escribir ciudad..."
+                            className="bg-slate-50 border-slate-100"
+                          />
                         </FormItem>
                       )}
                     />
@@ -293,9 +278,15 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País Destino *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Francia" {...field} className="bg-slate-50 border-slate-100" />
-                          </FormControl>
+                          <Combobox
+                            options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowCustomValue
+                            placeholder="Ej: Francia"
+                            searchPlaceholder="Buscar o escribir país..."
+                            className="bg-slate-50 border-slate-100"
+                          />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
@@ -306,9 +297,15 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ciudad Destino *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: París" {...field} className="bg-slate-50 border-slate-100" />
-                          </FormControl>
+                          <Combobox
+                            options={cities.map((c: any) => ({ value: c.name, label: c.name }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowCustomValue
+                            placeholder="Ej: París"
+                            searchPlaceholder="Buscar o escribir ciudad..."
+                            className="bg-slate-50 border-slate-100"
+                          />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
@@ -368,41 +365,10 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
 
                 <Separator className="bg-slate-100" />
 
-                {/* Sección 4: Servicios */}
+                {/* Sección 4: Descripción */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">4</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Servicios Solicitados</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {AVAILABLE_SERVICES.map(service => {
-                      const isSelected = (form.watch("services") || []).includes(service);
-                      return (
-                        <Badge
-                          key={service}
-                          variant={isSelected ? "default" : "outline"}
-                          className={cn(
-                            "cursor-pointer px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all",
-                            isSelected 
-                              ? "bg-primary text-white border-primary shadow-md shadow-primary/20" 
-                              : "bg-white text-muted-foreground border-slate-200 hover:border-primary/50 hover:bg-slate-50"
-                          )}
-                          onClick={() => toggleService(service)}
-                        >
-                          {isSelected && <Check className="w-3 h-3 mr-1 inline-block" />}
-                          {service}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <Separator className="bg-slate-100" />
-
-                {/* Sección 5: Descripción */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">5</span>
+                    <span className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">4</span>
                     <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Descripción y Notas</h3>
                   </div>
                   <FormField
@@ -411,10 +377,10 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Detalles adicionales, requerimientos especiales, etc." 
+                          <Textarea
+                            placeholder="Detalles adicionales, requerimientos especiales, etc."
                             className="bg-slate-50 border-slate-100 min-h-[120px]"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                       </FormItem>

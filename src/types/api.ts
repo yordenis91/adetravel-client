@@ -4,6 +4,8 @@
  */
 
 import { PaginatedResponse } from '@/lib/api';
+import { WorkflowStatus } from '@/lib/workflow-status';
+import { ServiceDetails, ServiceType } from './service';
 
 // ============================================
 // Tipos de Entidades
@@ -25,7 +27,9 @@ export interface Request {
   id: string;
   requestNumber: string;
   clientId: string;
-  status: 'Recepcionada' | 'Cotizada' | 'Confirmada' | 'Vendida' | 'Cancelada';
+  status: WorkflowStatus;
+  isPackage?: boolean;
+  cancellationReason?: string | null;
   destinationCity?: string;
   destinationCountry?: string;
   originCity?: string;
@@ -34,11 +38,43 @@ export interface Request {
   [key: string]: unknown;
 }
 
+export interface Service {
+  id: string;
+  serviceNumber: string;
+  requestId: string;
+  type: ServiceType;
+  status: WorkflowStatus;
+  providerId?: string | null;
+  clientId?: string | null;
+  price?: number | null;
+  currency: 'CLP' | 'USD';
+  details: ServiceDetails;
+  cancellationReason?: string | null;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
+export interface Confirmation {
+  id: string;
+  confirmationNumber: string;
+  requestId: string;
+  serviceId?: string | null;
+  providerId: string;
+  providerConfirmationNumber?: string | null;
+  price: number;
+  validUntil?: string | null;
+  exchangeRate?: number | null;
+  notes?: string | null;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
 export interface Quotation {
   id: string;
   quotationNumber: string;
   clientId: string;
   requestId: string;
+  serviceId?: string | null;
   status: 'Borrador' | 'Enviada' | 'Aceptada' | 'Rechazada';
   total?: number;
   currency?: string;
@@ -117,6 +153,8 @@ export interface ActivityLog {
 
 export type ClientListResponse = PaginatedResponse<Client> | Client[];
 export type RequestListResponse = PaginatedResponse<Request> | Request[];
+export type ServiceListResponse = PaginatedResponse<Service> | Service[];
+export type ConfirmationListResponse = PaginatedResponse<Confirmation> | Confirmation[];
 export type QuotationListResponse = PaginatedResponse<Quotation> | Quotation[];
 export type PaymentListResponse = PaginatedResponse<Payment> | Payment[];
 export type VoucherListResponse = PaginatedResponse<Voucher> | Voucher[];

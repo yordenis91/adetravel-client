@@ -27,12 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
+import { useCatalog } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X, Building2, MapPin, Phone, User, Settings, CreditCard } from "lucide-react";
 
 const providerSchema = z.object({
@@ -70,6 +72,8 @@ interface ProviderFormDialogProps {
 
 export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: ProviderFormDialogProps) {
   const { toast } = useToast();
+  const { data: countries } = useCatalog("countries");
+  const { data: cities } = useCatalog("cities");
   const isEditing = !!provider;
 
   const form = useForm<ProviderFormValues>({
@@ -295,9 +299,15 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Chile" {...field} className="bg-slate-50 border-slate-100" />
-                          </FormControl>
+                          <Combobox
+                            options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowCustomValue
+                            placeholder="Ej: Chile"
+                            searchPlaceholder="Buscar o escribir país..."
+                            className="bg-slate-50 border-slate-100"
+                          />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
@@ -308,9 +318,15 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ciudad</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Santiago" {...field} className="bg-slate-50 border-slate-100" />
-                          </FormControl>
+                          <Combobox
+                            options={cities.map((c: any) => ({ value: c.name, label: c.name }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowCustomValue
+                            placeholder="Ej: Santiago"
+                            searchPlaceholder="Buscar o escribir ciudad..."
+                            className="bg-slate-50 border-slate-100"
+                          />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}

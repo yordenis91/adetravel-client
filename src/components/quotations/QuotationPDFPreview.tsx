@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,17 +6,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  FileDown, 
-  Printer, 
+import {
+  FileDown,
+  Printer,
   X,
   MapPin,
   Phone,
   Mail,
-  Globe
+  Globe,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface QuotationPDFPreviewProps {
   open: boolean;
@@ -33,10 +36,13 @@ export function QuotationPDFPreview({
   client,
   request,
 }: QuotationPDFPreviewProps) {
+  const { toast } = useToast();
+  const [isDownloading, setIsDownloading] = useState(false);
+
   if (!quotation) return null;
 
   const parsedItems = (quotation.items || []).map((i: any) => typeof i === "string" ? JSON.parse(i) : i);
-  
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(quotation.currency === "CLP" ? "es-CL" : "en-US", {
       style: "currency",
@@ -45,204 +51,41 @@ export function QuotationPDFPreview({
     }).format(amount || 0);
   };
 
-  const handlePrint = () => {
-    const content = document.getElementById('quotation-print-area')?.innerHTML;
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    
-    if (!printWindow) return;
-
-    printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Cotización ${quotation.quotationNumber}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Manrope', sans-serif; 
-      color: #0F1E3C; 
-      background: white; 
-      padding: 40px; 
-      font-size: 11px;
-      line-height: 1.5;
+  // Descarga el PDF real generado en el backend (@react-pdf/renderer, ver
+  // GET /quotations/:id/pdf) y lo abre en una pestaña nueva: desde el visor de PDF nativo del
+  // navegador el usuario puede imprimirlo (Ctrl+P) o descargarlo, ya sobre el binario real —
+  // no sobre el HTML de la vista previa. La pestaña se abre de forma síncrona (antes del
+  // fetch) para que el navegador no la bloquee como popup.
+  const handleDownloadPdf = async () => {
+    const previewWindow = window.open("", "_blank");
+    setIsDownloading(true);
+    try {
+      const blob = await api.getBlob(`/quotations/${quotation.id}/pdf`);
+      const url = URL.createObjectURL(blob);
+      if (previewWindow) {
+        previewWindow.location.href = url;
+        previewWindow.addEventListener("load", () => {
+          try { previewWindow.print(); } catch { /* el visor nativo de PDF no siempre expone print() */ }
+        });
+      } else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${quotation.quotationNumber}.pdf`;
+        link.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      previewWindow?.close();
+      toast({
+        variant: "destructive",
+        title: "Error al generar el PDF",
+        description: error instanceof Error ? error.message : "Intenta nuevamente.",
+      });
+    } finally {
+      setIsDownloading(false);
     }
-    .ade-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 30px;
-    }
-    .agency-info h1 {
-      font-size: 24px;
-      font-weight: 800;
-      color: #0F1E3C;
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-    }
-    .agency-info p {
-      color: #64748b;
-      font-size: 10px;
-    }
-    .quotation-label-box {
-      text-align: right;
-    }
-    .quotation-title {
-      font-size: 28px;
-      font-weight: 800;
-      color: #C9A84C;
-      margin-bottom: 5px;
-    }
-    .quotation-number {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0F1E3C;
-      margin-bottom: 10px;
-    }
-    .date-row {
-      font-size: 10px;
-      color: #64748b;
-    }
-    .date-row span {
-      color: #0F1E3C;
-      font-weight: 600;
-    }
-    .ade-divider {
-      height: 2px;
-      background-color: #C9A84C;
-      margin-bottom: 30px;
-    }
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      margin-bottom: 30px;
-    }
-    .section-title {
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #94a3b8;
-      margin-bottom: 8px;
-      border-bottom: 1px solid #f1f5f9;
-      padding-bottom: 4px;
-    }
-    .info-card {
-      background-color: #f8fafc;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    .info-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #0F1E3C;
-      margin-bottom: 4px;
-    }
-    .info-detail {
-      color: #64748b;
-      font-size: 10px;
-      margin-bottom: 2px;
-    }
-    .ade-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 30px;
-    }
-    .ade-table th {
-      background-color: #0F1E3C;
-      color: white;
-      text-align: left;
-      padding: 12px 15px;
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .ade-table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #f1f5f9;
-      vertical-align: top;
-    }
-    .ade-table tr:nth-child(even) {
-      background-color: #fcfcfc;
-    }
-    .service-name {
-      font-weight: 700;
-      color: #0F1E3C;
-      margin-bottom: 2px;
-    }
-    .service-desc {
-      font-size: 9px;
-      color: #64748b;
-    }
-    .text-right { text-align: right; }
-    .text-center { text-align: center; }
-    
-    .summary-container {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 40px;
-    }
-    .ade-totals {
-      width: 250px;
-      background-color: #f8fafc;
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid #f1f5f9;
-    }
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      color: #64748b;
-    }
-    .total-row.discount { color: #e11d48; }
-    .total-row.final {
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 2px solid #C9A84C;
-      color: #0F1E3C;
-      font-weight: 800;
-      font-size: 16px;
-    }
-    .terms-section {
-      margin-bottom: 40px;
-    }
-    .terms-content {
-      font-size: 10px;
-      color: #64748b;
-      font-style: italic;
-      background: #f8fafc;
-      padding: 15px;
-      border-radius: 8px;
-      line-height: 1.6;
-    }
-    .ade-footer {
-      margin-top: 50px;
-      padding-top: 20px;
-      border-top: 1px solid #f1f5f9;
-      text-align: center;
-      color: #94a3b8;
-      font-size: 9px;
-    }
-    @media print {
-      body { padding: 0; }
-      .no-print { display: none; }
-      @page { margin: 15mm; size: A4; }
-    }
-  </style>
-</head>
-<body>
-  ${content}
-</body>
-</html>`);
-    
-    printWindow.document.close();
-    setTimeout(() => { 
-      printWindow.focus(); 
-      printWindow.print(); 
-    }, 500);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -253,8 +96,9 @@ export function QuotationPDFPreview({
             <p className="text-sm text-muted-foreground mt-1">Revisa el documento antes de enviarlo al cliente.</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handlePrint} className="bg-navy hover:bg-navy-light text-white gap-2">
-              <Printer className="w-4 h-4" /> Imprimir / PDF
+            <Button onClick={handleDownloadPdf} disabled={isDownloading} className="bg-navy hover:bg-navy-light text-white gap-2">
+              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+              Imprimir / Descargar PDF
             </Button>
             <Button variant="outline" size="icon" onClick={() => onOpenChange(false)}>
               <X className="w-4 h-4" />

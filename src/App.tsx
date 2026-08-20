@@ -26,6 +26,7 @@ const ClientTimeline = React.lazy(() => import("@/pages/ClientTimeline"));
 const Providers = React.lazy(() => import("./pages/Providers"));
 const ProviderDetails = React.lazy(() => import("./pages/ProviderDetailsPage"));
 const Requests = React.lazy(() => import("./pages/Requests"));
+const Services = React.lazy(() => import("./pages/Services"));
 const Quotations = React.lazy(() => import("./pages/Quotations"));
 const Confirmaciones = React.lazy(() => import("./pages/Confirmaciones"));
 const Payments = React.lazy(() => import("./pages/Payments"));
@@ -37,6 +38,7 @@ const Usuarios = React.lazy(() => import("./pages/Usuarios"));
 const Configuracion = React.lazy(() => import("./pages/Configuracion"));
 const EmailTemplates = React.lazy(() => import("./pages/EmailTemplates"));
 const Tasks = React.lazy(() => import("./pages/Tasks")); // 🔥 Corregido: Ahora Tasks también es Lazy
+const Nomencladores = React.lazy(() => import("./pages/Nomencladores"));
 
 
 // 🔥 Configuración nivel Enterprise
@@ -106,11 +108,13 @@ const App = () => (
                 <Route path="/proveedores" element={<Providers />} />
                 <Route path="/proveedores/:providerId" element={<ProviderDetails />} />
                 <Route path="/solicitudes" element={<Requests />} />
+                <Route path="/servicios" element={<Services />} />
                 <Route path="/cotizaciones" element={<Quotations />} />
                 <Route path="/confirmaciones" element={<Confirmaciones />} />
                 <Route path="/pagos" element={<Payments />} />
                 <Route path="/vouchers" element={<Vouchers />} />
                 <Route path="/reportes" element={<Reportes />} />
+                <Route path="/nomencladores" element={<Nomencladores />} />
                 <Route path="/bitacora" element={<Bitacora />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/tareas" element={<Tasks />} />

@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -289,20 +290,15 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Vincular Solicitud *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="bg-white border-slate-200">
-                                <SelectValue placeholder="Selecciona una solicitud" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {requests.map(r => (
-                                <SelectItem key={r.id} value={r.id}>
-                                  {r.requestNumber} - {r.destinationCity || r.destinationCountry}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Combobox
+                            options={requests.map((r: any) => ({ value: r.id, label: `${r.requestNumber} - ${r.destinationCity || r.destinationCountry || ""}` }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Selecciona una solicitud"
+                            searchPlaceholder="Buscar solicitud..."
+                            emptyText="Sin solicitudes."
+                            className="bg-white border-slate-200"
+                          />
                           <FormMessage />
                         </FormItem>
                       )}

@@ -18,6 +18,7 @@ type ChangeStatusWithIdPayload = {
   id: string;
   status: string;
   notes?: string;
+  cancellationReason?: string;
 };
 
 type RequestMutationPayload = Record<string, unknown>;

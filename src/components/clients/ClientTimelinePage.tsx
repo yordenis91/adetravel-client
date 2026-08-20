@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { format, isAfter, subDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
+import { isWorkflowStatus, getStatusColor as getWorkflowStatusColor } from "@/lib/workflow-status";
 
 type EventType = "solicitud" | "cotizacion" | "pago" | "voucher" | "bitacora" | "tarea";
 
@@ -439,13 +440,18 @@ export default function ClientTimelinePage() {
 
 function getStatusColor(status: string) {
   const s = status.toUpperCase();
-  if (s === "RECEPCIONADA" || s === "BORRADOR") return "bg-slate-100 text-slate-600 border-slate-200";
-  if (s === "COTIZADA" || s === "ENVIADA") return "bg-sky-100 text-sky-700 border-sky-200";
-  if (s === "CONFIRMADA") return "bg-blue-100 text-blue-700 border-blue-200";
-  if (s === "VENDIDA") return "bg-amber-100 text-amber-700 border-amber-200";
+  // Estados del flujo granular de Solicitud/Servicio (17 valores) — fuente de verdad en
+  // src/lib/workflow-status.ts. Se resuelven primero para no caer en el fallback genérico.
+  if (isWorkflowStatus(s)) {
+    const c = getWorkflowStatusColor(s);
+    return `${c.bg} ${c.text} ${c.border}`;
+  }
+  // Estados de Cotización/Pago/Tarea que no comparten el enum granular de Solicitud.
+  if (s === "BORRADOR") return "bg-slate-100 text-slate-600 border-slate-200";
+  if (s === "ENVIADA") return "bg-sky-100 text-sky-700 border-sky-200";
   if (s === "ACEPTADA" || s === "COMPLETADO" || s === "COMPLETED") return "bg-emerald-100 text-emerald-700 border-emerald-200";
   if (s === "PENDIENTE" || s === "PENDING") return "bg-amber-100 text-amber-700 border-amber-200";
-  if (s === "CANCELADA" || s === "RECHAZADA" || s === "CANCELADO") return "bg-rose-100 text-rose-700 border-rose-200";
+  if (s === "RECHAZADA" || s === "CANCELADO") return "bg-rose-100 text-rose-700 border-rose-200";
   return "bg-slate-50 text-slate-500 border-slate-100";
 }
 

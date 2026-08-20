@@ -27,8 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
-import { 
+import {
   Ticket, 
   User, 
   Calendar, 
@@ -245,20 +246,14 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Solicitud *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccione solicitud" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {requests.map((req: any) => (
-                            <SelectItem key={req.id} value={req.id}>
-                              {req.requestNumber} | {req.destinationCity}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Combobox
+                        options={requests.map((req: any) => ({ value: req.id, label: `${req.requestNumber} | ${req.destinationCity || ""}` }))}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Seleccione solicitud"
+                        searchPlaceholder="Buscar solicitud..."
+                        emptyText="Sin solicitudes."
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -296,20 +291,14 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Proveedor del Servicio *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione el proveedor / hotel / operador" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {providers.map((provider: any) => (
-                          <SelectItem key={provider.id} value={provider.id}>
-                            {provider.fantasyName || provider.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                      options={providers.map((provider: any) => ({ value: provider.id, label: provider.fantasyName || provider.name }))}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Seleccione el proveedor / hotel / operador"
+                      searchPlaceholder="Buscar proveedor..."
+                      emptyText="Sin proveedores."
+                    />
                     <FormMessage />
                   </FormItem>
                 )}

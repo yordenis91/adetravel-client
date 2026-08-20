@@ -7,20 +7,21 @@ import { RequestFormDialog } from "./RequestFormDialog";
 import { RequestDetailSheet } from "./RequestDetailSheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Plus, 
-  Search, 
-  FileText, 
-  Inbox, 
-  Calculator, 
+import {
+  Plus,
+  Search,
+  FileText,
+  Inbox,
+  Calculator,
   CheckCircle,
   Trophy,
-  Filter,
-  Download
+  Filter
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
+import { STATUS_PHASES, getStatusLabel } from "@/lib/workflow-status";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 
 export default function RequestsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -42,18 +43,11 @@ export default function RequestsPage() {
   const { toast } = useToast();
 
 
-  // Normaliza el estado a formato capitalizado para el frontend
-  const formatStatus = (s?: string) => {
-    if (!s) return "Recepcionada";
-    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-  };
-
-  const { data: requestsResponseData, isLoading: isRequestsLoading } = useRequests({ status: activeTab === "all" ? undefined : activeTab });
-  const rawRequests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const requests = rawRequests.map((req: any) => ({
-    ...req,
-    status: formatStatus(req.status)
-  }));
+  // El filtrado por estado se hace en el cliente (ver `filteredRequests`) porque los tabs
+  // agrupan varios estados por fase (STATUS_PHASES) y el backend solo soporta un único valor
+  // de `status` por consulta. Los datos fluyen crudos (MAYÚSCULAS) desde la API, sin transformar.
+  const { data: requestsResponseData, isLoading: isRequestsLoading } = useRequests({});
+  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
 
   const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients-all"],
@@ -62,7 +56,30 @@ export default function RequestsPage() {
 
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
 
+  // Deep-link desde otras pantallas (p.ej. /servicios) para abrir directamente el detalle de
+  // una Solicitud: /solicitudes?view=<requestId>.
+  useEffect(() => {
+    const viewId = searchParams.get("view");
+    if (viewId && requests.length > 0) {
+      const found = requests.find((r: any) => r.id === viewId);
+      if (found) {
+        setSelectedRequest(found);
+        setIsDetailOpen(true);
+      }
+      searchParams.delete("view");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, requests]);
+
+  const matchesTab = (status: string) => {
+    if (activeTab === "all") return true;
+    if (activeTab === "VENDIDA" || activeTab === "CANCELADA") return status === activeTab;
+    const phase = STATUS_PHASES.find((p) => p.label === activeTab);
+    return phase ? (phase.statuses as string[]).includes(status) : true;
+  };
+
   const filteredRequests = requests.filter((req: any) => {
+    if (!matchesTab(req.status)) return false;
     const searchLower = searchTerm.toLowerCase();
     return (
       req.requestNumber?.toLowerCase().includes(searchLower) ||
@@ -89,8 +106,8 @@ export default function RequestsPage() {
     setIsFormOpen(true);
   };
 
-  const handleStatusChange = (id: string, newStatus: string) => {
-    updateStatusMutation.mutate({ id, status: newStatus }, {
+  const handleStatusChange = (id: string, newStatus: string, cancellationReason?: string) => {
+    updateStatusMutation.mutate({ id, status: newStatus, cancellationReason }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["requests"] });
         toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." });
@@ -102,12 +119,13 @@ export default function RequestsPage() {
     });
   };
 
-  const handleStatusUpdate = (id: string, status: string) => {
-    handleStatusChange(id, status);
-  };
-
   const getStats = (status: string) => {
     return requests.filter((r: any) => r.status === status).length;
+  };
+  const getPhaseStats = (phaseLabel: string) => {
+    const phase = STATUS_PHASES.find((p) => p.label === phaseLabel);
+    if (!phase) return 0;
+    return requests.filter((r: any) => (phase.statuses as string[]).includes(r.status)).length;
   };
 
   return (
@@ -118,10 +136,23 @@ export default function RequestsPage() {
           <p className="text-muted-foreground text-sm">Gestiona el flujo completo de solicitudes de viaje.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 bg-white text-xs font-bold uppercase tracking-wider">
-            <Download className="w-4 h-4" />
-            Exportar
-          </Button>
+          <ExportMenu
+            filename="solicitudes_adetravel"
+            data={filteredRequests.map((r: any) => ({
+              numero: r.requestNumber,
+              cliente: clients.find((c: any) => c.id === r.clientId)?.firstName + " " + (clients.find((c: any) => c.id === r.clientId)?.lastName || ""),
+              destino: [r.destinationCity, r.destinationCountry].filter(Boolean).join(", "),
+              estado: getStatusLabel(r.status),
+              fecha: r.requestDate,
+            }))}
+            columns={[
+              { key: "numero", label: "N° Solicitud" },
+              { key: "cliente", label: "Cliente" },
+              { key: "destino", label: "Destino" },
+              { key: "estado", label: "Estado" },
+              { key: "fecha", label: "Fecha" },
+            ]}
+          />
           <Button onClick={handleAdd} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" />
             Nueva Solicitud
@@ -145,7 +176,7 @@ export default function RequestsPage() {
           </div>
           <div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Recibidas</p>
-            <p className="text-xl font-playfair font-bold text-navy">{getStats("Recepcionada")}</p>
+            <p className="text-xl font-playfair font-bold text-navy">{getStats("RECEPCIONADA")}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
@@ -153,8 +184,8 @@ export default function RequestsPage() {
             <Calculator className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cotizadas</p>
-            <p className="text-xl font-playfair font-bold text-navy">{getStats("Cotizada")}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">En Cotización</p>
+            <p className="text-xl font-playfair font-bold text-navy">{getPhaseStats("Cotización")}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
@@ -162,8 +193,8 @@ export default function RequestsPage() {
             <CheckCircle className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Confirmadas</p>
-            <p className="text-xl font-playfair font-bold text-navy">{getStats("Confirmada")}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Con Proveedor</p>
+            <p className="text-xl font-playfair font-bold text-navy">{getPhaseStats("Confirmación proveedor")}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
@@ -172,7 +203,7 @@ export default function RequestsPage() {
           </div>
           <div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Vendidas</p>
-            <p className="text-xl font-playfair font-bold text-navy">{getStats("Vendida")}</p>
+            <p className="text-xl font-playfair font-bold text-navy">{getStats("VENDIDA")}</p>
           </div>
         </div>
       </div>
@@ -182,11 +213,13 @@ export default function RequestsPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full lg:w-auto overflow-x-auto">
             <TabsList className="bg-muted/50 p-1 h-auto flex-wrap sm:flex-nowrap">
               <TabsTrigger value="all" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Todas</TabsTrigger>
-              <TabsTrigger value="Recepcionada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Recibidas</TabsTrigger>
-              <TabsTrigger value="Cotizada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Cotizadas</TabsTrigger>
-              <TabsTrigger value="Confirmada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Confirmadas</TabsTrigger>
-              <TabsTrigger value="Vendida" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Vendidas</TabsTrigger>
-              <TabsTrigger value="Cancelada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Canceladas</TabsTrigger>
+              {STATUS_PHASES.map((phase) => (
+                <TabsTrigger key={phase.label} value={phase.label} className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">
+                  {phase.label}
+                </TabsTrigger>
+              ))}
+              <TabsTrigger value="VENDIDA" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Vendidas</TabsTrigger>
+              <TabsTrigger value="CANCELADA" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Canceladas</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -216,12 +249,18 @@ export default function RequestsPage() {
         />
       </div>
 
-      <RequestFormDialog 
-        open={isFormOpen} 
-        onOpenChange={setIsFormOpen} 
+      <RequestFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
         request={selectedRequest}
         clients={clients}
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["requests"] })}
+        onSuccess={(savedRequest, wasCreated) => {
+          queryClient.invalidateQueries({ queryKey: ["requests"] });
+          if (wasCreated && savedRequest) {
+            setSelectedRequest(savedRequest);
+            setIsDetailOpen(true);
+          }
+        }}
       />
 
       <RequestDetailSheet 
