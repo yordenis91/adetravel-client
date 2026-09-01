@@ -25,7 +25,7 @@ interface HeaderProps {
 
 export function Header({ title, onMobileMenuOpen }: HeaderProps) {
   // 🔥 2. Extraemos la función logout del contexto
-  const { logout } = useAuth();
+  const { logout, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const { data: response } = useQuery({
@@ -92,7 +92,7 @@ export function Header({ title, onMobileMenuOpen }: HeaderProps) {
               <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/perfil")}>
                 <User className="w-4 h-4" /> Mi Perfil
               </DropdownMenuItem>
-              {user?.role === "ADMINISTRADOR" && (
+              {hasPermission("MANAGE_SYSTEM_CONFIG") && (
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/configuracion")}>
                   <Settings className="w-4 h-4" /> Configuración
                 </DropdownMenuItem>

@@ -11,6 +11,7 @@ export interface AuthUser {
   department?: string | null;
   phone?: string | null;
   isActive: boolean;
+  permissions?: string[];
 }
 
 export type LoginPayload = {
