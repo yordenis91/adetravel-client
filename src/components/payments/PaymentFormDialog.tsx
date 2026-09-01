@@ -38,7 +38,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -170,24 +169,9 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
 
       if (isEditing) {
         await api.put(`/payments/${payment.id}`, payload);
-        await logActivity({
-          action: "PAGO_ACTUALIZADO",
-          entityType: "Pago",
-          entityId: payment.id,
-          entityLabel: values.paymentNumber,
-          description: `Se actualizó el registro de pago ${values.paymentNumber} por un monto de ${values.currency} ${values.amount}.`,
-        });
         toast({ title: "Pago actualizado", description: "El registro de pago se ha actualizado correctamente." });
       } else {
-        const res = await api.post('/payments', payload);
-        const newPayment = (res as any)?.data ?? res;
-        await logActivity({
-          action: "PAGO_REGISTRADO",
-          entityType: "Pago",
-          entityId: (newPayment as any).id,
-          entityLabel: values.paymentNumber,
-          description: `Se registró un nuevo pago (${values.paymentNumber}) de ${values.currency} ${values.amount}.`,
-        });
+        await api.post('/payments', payload);
         toast({ title: "Pago registrado", description: "El nuevo pago se ha registrado correctamente." });
       }
       queryClient.invalidateQueries({ queryKey: ["payments"] });

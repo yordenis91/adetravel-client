@@ -32,7 +32,6 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, X, Calculator, ReceiptText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -196,23 +195,9 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
 
       if (isEditing) {
         await api.patch(`/quotations/${quotation.id}`, payload);
-        await logActivity({
-          action: "COTIZACION_ACTUALIZADA",
-          entityType: "Cotización",
-          entityId: quotation.id,
-          entityLabel: values.quotationNumber,
-          description: `Se actualizó la cotización ${values.quotationNumber} con estado ${values.status}.`,
-        });
         toast({ title: "Cotización actualizada", description: "El documento ha sido guardado." });
       } else {
-        const newQuotation = await api.post('/quotations', payload);
-        await logActivity({
-          action: "COTIZACION_CREADA",
-          entityType: "Cotización",
-          entityId: (newQuotation as any).id,
-          entityLabel: values.quotationNumber,
-          description: `Se generó una nueva cotización: ${values.quotationNumber}.`,
-        });
+        await api.post('/quotations', payload);
         toast({ title: "Cotización creada", description: "El documento ha sido generado." });
       }
       onSuccess();

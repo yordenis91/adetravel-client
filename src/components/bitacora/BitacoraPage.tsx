@@ -131,11 +131,11 @@ export default function BitacoraPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="Cliente">Clientes</SelectItem>
-                <SelectItem value="Proveedor">Proveedores</SelectItem>
-                <SelectItem value="Solicitud">Solicitudes</SelectItem>
-                <SelectItem value="Cotización">Cotizaciones</SelectItem>
-                <SelectItem value="Pago">Pagos</SelectItem>
+                <SelectItem value="Client">Clientes</SelectItem>
+                <SelectItem value="Provider">Proveedores</SelectItem>
+                <SelectItem value="Request">Solicitudes</SelectItem>
+                <SelectItem value="Quotation">Cotizaciones</SelectItem>
+                <SelectItem value="Payment">Pagos</SelectItem>
                 <SelectItem value="Voucher">Vouchers</SelectItem>
                 <SelectItem value="EmailTemplate">Plantillas Email</SelectItem>
                 <SelectItem value="User">Usuarios</SelectItem>

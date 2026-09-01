@@ -32,7 +32,6 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X, Building2, MapPin, Phone, User, Settings, CreditCard } from "lucide-react";
@@ -159,23 +158,9 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
     try {
       if (isEditing) {
         await api.patch(`/providers/${provider.id}`, values);
-        await logActivity({
-          action: "PROVEEDOR_ACTUALIZADO",
-          entityType: "Proveedor",
-          entityId: provider.id,
-          entityLabel: values.fantasyName || values.name,
-          description: `Se actualizaron los datos del proveedor ${values.fantasyName || values.name}.`,
-        });
         toast({ title: "Proveedor actualizado", description: "Los datos se guardaron correctamente." });
       } else {
-        const newProvider = await api.post('/providers', values);
-        await logActivity({
-          action: "PROVEEDOR_CREADO",
-          entityType: "Proveedor",
-          entityId: (newProvider as any).id,
-          entityLabel: values.fantasyName || values.name,
-          description: `Se registró un nuevo proveedor: ${values.fantasyName || values.name}.`,
-        });
+        await api.post('/providers', values);
         toast({ title: "Proveedor creado", description: "El nuevo proveedor ha sido registrado." });
       }
       onSuccess();
