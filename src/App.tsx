@@ -40,6 +40,7 @@ const EmailTemplates = React.lazy(() => import("./pages/EmailTemplates"));
 const Tasks = React.lazy(() => import("./pages/Tasks")); // 🔥 Corregido: Ahora Tasks también es Lazy
 const Nomencladores = React.lazy(() => import("./pages/Nomencladores"));
 const Perfil = React.lazy(() => import("./pages/Perfil"));
+const Permisos = React.lazy(() => import("./pages/Permisos"));
 
 
 // 🔥 Configuración nivel Enterprise
@@ -106,45 +107,83 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/clientes" element={<Clients />} />
                 <Route path="/clientes/:clientId/timeline" element={<ClientTimeline />} />
-                <Route path="/proveedores" element={<Providers />} />
-                <Route path="/proveedores/:providerId" element={<ProviderDetails />} />
+                <Route
+                  path="/proveedores"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_PROVIDERS">
+                      <Providers />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/proveedores/:providerId"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_PROVIDERS">
+                      <ProviderDetails />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/solicitudes" element={<Requests />} />
                 <Route path="/servicios" element={<Services />} />
                 <Route path="/cotizaciones" element={<Quotations />} />
                 <Route path="/confirmaciones" element={<Confirmaciones />} />
                 <Route path="/pagos" element={<Payments />} />
                 <Route path="/vouchers" element={<Vouchers />} />
-                <Route path="/reportes" element={<Reportes />} />
+                <Route
+                  path="/reportes"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_REPORTS">
+                      <Reportes />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/nomencladores" element={<Nomencladores />} />
-                <Route path="/bitacora" element={<Bitacora />} />
+                <Route
+                  path="/bitacora"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_LOGS">
+                      <Bitacora />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/tareas" element={<Tasks />} />
                 <Route path="/perfil" element={<Perfil />} />
 
-                {/* 🔥 Rutas de Administración Protegidas por Rol */}
-                <Route 
-                  path="/usuarios" 
+                {/* 🔥 Rutas de Administración Protegidas por Permiso granular
+                    (antes solo por rol ADMINISTRADOR; el backend ya le otorga
+                    estos permisos a GERENTE también, así que se alinea con eso) */}
+                <Route
+                  path="/usuarios"
                   element={
-                    <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                    <ProtectedRoute requiredPermission="MANAGE_USERS">
                       <Usuarios />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/configuracion" 
+                <Route
+                  path="/configuracion"
                   element={
-                    <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                    <ProtectedRoute requiredPermission="MANAGE_SYSTEM_CONFIG">
                       <Configuracion />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/plantillas-email" 
+                <Route
+                  path="/plantillas-email"
                   element={
-                    <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                    <ProtectedRoute requiredPermission="MANAGE_TEMPLATES">
                       <EmailTemplates />
                     </ProtectedRoute>
-                  } 
+                  }
+                />
+                <Route
+                  path="/permisos"
+                  element={
+                    <ProtectedRoute requiredPermission="MANAGE_PERMISSIONS">
+                      <Permisos />
+                    </ProtectedRoute>
+                  }
                 />
               </Route>
               

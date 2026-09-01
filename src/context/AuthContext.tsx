@@ -10,6 +10,11 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (fullName: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+
+  // Verificación de permisos granulares (ver src/config/permissions.ts en el backend)
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasAllPermissions: (permissions: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -85,6 +90,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  function hasPermission(permission: string): boolean {
+    return !!user?.permissions?.includes(permission);
+  }
+
+  function hasAnyPermission(permissions: string[]): boolean {
+    return permissions.some((p) => hasPermission(p));
+  }
+
+  function hasAllPermissions(permissions: string[]): boolean {
+    return permissions.every((p) => hasPermission(p));
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -95,6 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         logout,
+        hasPermission,
+        hasAnyPermission,
+        hasAllPermissions,
       }}
     >
       {children}

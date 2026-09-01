@@ -19,11 +19,13 @@ import {
   Mail,
   ClipboardList,
   Package2,
-  BookOpen
+  BookOpen,
+  ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -41,7 +43,7 @@ const navSections = [
     title: "Gestión",
     items: [
       { name: "Clientes", icon: Users, path: "/clientes" },
-      { name: "Proveedores", icon: Building2, path: "/proveedores" },
+      { name: "Proveedores", icon: Building2, path: "/proveedores", permission: "VIEW_PROVIDERS" },
       { name: "Solicitudes", icon: FileText, path: "/solicitudes" },
       { name: "Tareas", icon: ClipboardList, path: "/tareas" },
     ]
@@ -59,17 +61,18 @@ const navSections = [
   {
     title: "Administración",
     items: [
-      { name: "Usuarios", icon: UserCog, path: "/usuarios" },
-      { name: "Configuración", icon: Settings, path: "/configuracion" },
-      { name: "Plantillas de Email", icon: Mail, path: "/plantillas-email" },
+      { name: "Usuarios", icon: UserCog, path: "/usuarios", permission: "MANAGE_USERS" },
+      { name: "Configuración", icon: Settings, path: "/configuracion", permission: "MANAGE_SYSTEM_CONFIG" },
+      { name: "Plantillas de Email", icon: Mail, path: "/plantillas-email", permission: "MANAGE_TEMPLATES" },
+      { name: "Permisos", icon: ShieldCheck, path: "/permisos", permission: "MANAGE_PERMISSIONS" },
       { name: "Nomencladores", icon: BookOpen, path: "/nomencladores" },
     ]
   },
   {
     title: "Reportes",
     items: [
-      { name: "Estadísticas", icon: BarChart3, path: "/reportes" },
-      { name: "Bitácora", icon: ScrollText, path: "/bitacora" },
+      { name: "Estadísticas", icon: BarChart3, path: "/reportes", permission: "VIEW_REPORTS" },
+      { name: "Bitácora", icon: ScrollText, path: "/bitacora", permission: "VIEW_LOGS" },
     ]
   }
 ];
@@ -86,10 +89,14 @@ const iconMap: Record<string, any> = {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const { data: me } = useQuery({
+  const { logout, hasPermission } = useAuth();
+  const { data: meResponse } = useQuery({
     queryKey: ["current-user"],
     queryFn: () => api.get("/auth/me")
   });
+  // El backend devuelve { data: {...} }; sin este unwrap, el nombre y el
+  // rol al pie del sidebar nunca se actualizaban (mismo bug que había en Header.tsx).
+  const me: any = (meResponse as any)?.data ?? meResponse;
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -141,7 +148,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {section.title}
               </h2>
               <div className="space-y-1">
-                {section.items.map((item) => {
+                {section.items
+                  .filter((item) => !item.permission || hasPermission(item.permission))
+                  .map((item) => {
                   const Icon = iconMap[item.name] || item.icon;
                   const isActive = location.pathname === item.path || (item.path === "/dashboard" && location.pathname === "/");
 
@@ -186,7 +195,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
           onClick={() => {
             if (onClose) onClose();
-            localStorage.removeItem("token");
+            logout();
             window.location.href = "/auth/login";
           }}
         >
