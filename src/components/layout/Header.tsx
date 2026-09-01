@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { GlobalSearch } from "@/components/dashboard/GlobalSearch";
 // 🔥 1. Importamos tu hook de autenticación
@@ -18,18 +19,22 @@ import { useAuth } from "@/context/AuthContext";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 
 interface HeaderProps {
-  title: string;  
+  title: string;
   onMobileMenuOpen?: () => void;
 }
 
 export function Header({ title, onMobileMenuOpen }: HeaderProps) {
   // 🔥 2. Extraemos la función logout del contexto
   const { logout } = useAuth();
-  
-  const { data: user } = useQuery({
+  const navigate = useNavigate();
+
+  const { data: response } = useQuery({
     queryKey: ["current-user"],
     queryFn: () => api.get("/auth/me")
   });
+  // El backend devuelve { data: {...} }; sin este unwrap, el nombre y el
+  // correo del menú nunca se resolvían y siempre mostraban "Cargando...".
+  const user: any = (response as any)?.data ?? response;
 
   const handleLogout = () => {
     // 🔥 3. Usamos el método oficial (esto borra el 'ade_token' y limpia los estados)
@@ -84,12 +89,14 @@ export function Header({ title, onMobileMenuOpen }: HeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer gap-2">
+              <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/perfil")}>
                 <User className="w-4 h-4" /> Mi Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer gap-2">
-                <Settings className="w-4 h-4" /> Configuración
-              </DropdownMenuItem>
+              {user?.role === "ADMINISTRADOR" && (
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/configuracion")}>
+                  <Settings className="w-4 h-4" /> Configuración
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive focus:text-destructive cursor-pointer gap-2 font-medium"
