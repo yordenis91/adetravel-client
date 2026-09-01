@@ -81,7 +81,7 @@ export default function EmailTab({ config, configId }: EmailTabProps) {
           <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex gap-3 text-sm text-blue-800">
             <Info className="w-5 h-5 flex-shrink-0" />
             <p>
-              El sistema utiliza el servicio de correo integrado de la plataforma. Los datos SMTP se almacenan como referencia para integraciones externas.
+              Estos son los datos reales del servidor SMTP que el sistema usa para enviar los correos a tus clientes (cotizaciones, pagos, vouchers, etc.). Guarda los cambios para que apliquen de inmediato.
             </p>
           </div>
 
