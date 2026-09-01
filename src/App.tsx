@@ -39,6 +39,7 @@ const Configuracion = React.lazy(() => import("./pages/Configuracion"));
 const EmailTemplates = React.lazy(() => import("./pages/EmailTemplates"));
 const Tasks = React.lazy(() => import("./pages/Tasks")); // 🔥 Corregido: Ahora Tasks también es Lazy
 const Nomencladores = React.lazy(() => import("./pages/Nomencladores"));
+const Perfil = React.lazy(() => import("./pages/Perfil"));
 
 
 // 🔥 Configuración nivel Enterprise
@@ -118,7 +119,8 @@ const App = () => (
                 <Route path="/bitacora" element={<Bitacora />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/tareas" element={<Tasks />} />
-                
+                <Route path="/perfil" element={<Perfil />} />
+
                 {/* 🔥 Rutas de Administración Protegidas por Rol */}
                 <Route 
                   path="/usuarios" 

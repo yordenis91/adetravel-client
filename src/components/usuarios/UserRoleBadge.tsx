@@ -29,17 +29,17 @@ export function UserRoleBadge({ role, type, className }: UserRoleBadgeProps) {
     );
   }
 
-  // Agency roles
+  // Agency roles (deben coincidir con el enum AgencyRole del schema de Prisma)
   const getAgencyStyles = (r: string) => {
     switch (r.toUpperCase()) {
       case 'GERENTE':
         return "bg-gold/10 text-gold-dark border-gold/20";
-      case 'AGENTE_SENIOR':
-        return "bg-blue-50 text-blue-600 border-blue-100";
-      case 'AGENTE':
+      case 'FINANZAS':
         return "bg-emerald-50 text-emerald-600 border-emerald-100";
-      case 'ASISTENTE':
-        return "bg-slate-50 text-slate-500 border-slate-100";
+      case 'OPERACIONES':
+        return "bg-blue-50 text-blue-600 border-blue-100";
+      case 'AGENTE_VENTAS':
+        return "bg-purple-50 text-purple-600 border-purple-100";
       default:
         return "bg-slate-50 text-slate-400 border-slate-100";
     }
