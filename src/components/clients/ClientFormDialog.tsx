@@ -32,7 +32,6 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-//import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X } from "lucide-react";

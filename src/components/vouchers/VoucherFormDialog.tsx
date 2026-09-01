@@ -41,7 +41,6 @@ import {
   Hash
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { logActivity } from "@/lib/activityLogger";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -177,23 +176,9 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
     try {
       if (isEditing) {
         await api.patch(`/vouchers/${voucher.id}`, values);
-        await logActivity({
-          action: "VOUCHER_ACTUALIZADO",
-          entityType: "Voucher",
-          entityId: voucher.id,
-          entityLabel: values.voucherNumber,
-          description: `Se actualizó el voucher ${values.voucherNumber} para el servicio ${values.serviceName}.`,
-        });
         toast({ title: "Voucher actualizado", description: "El registro del voucher se ha actualizado correctamente." });
       } else {
-        const newVoucher = await api.post('/vouchers', values);
-        await logActivity({
-          action: "VOUCHER_EMITIDO",
-          entityType: "Voucher",
-          entityId: (newVoucher as any).id,
-          entityLabel: values.voucherNumber,
-          description: `Se emitió un nuevo voucher (${values.voucherNumber}) para ${values.serviceName}.`,
-        });
+        await api.post('/vouchers', values);
         toast({ title: "Voucher creado", description: "El nuevo voucher se ha registrado correctamente." });
       }
       queryClient.invalidateQueries({ queryKey: ["vouchers"] });
