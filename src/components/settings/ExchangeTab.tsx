@@ -46,7 +46,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { TrendingUp, Plus, Edit2, Trash2, Save, Loader2, DollarSign, RefreshCw } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -166,10 +166,10 @@ const handleSyncApi = async () => {
       });
       // Refrescamos los datos en pantalla
       queryClient.invalidateQueries({ queryKey: ["system-config"] });
-   } catch (error: any) {
+   } catch (error) {
       // Leemos el mensaje específico que enviamos desde el backend
-      const errorMessage = error.response?.data?.message || "No se pudo conectar con el proveedor de divisas.";
-      
+      const errorMessage = getErrorMessage(error, "No se pudo conectar con el proveedor de divisas.");
+
       toast({
         variant: "destructive", // O "default" si prefieres que no sea rojo
         title: "Sincronización Protegida",

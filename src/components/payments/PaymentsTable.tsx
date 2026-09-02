@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -71,7 +72,8 @@ export function PaymentsTable({
   onDelete,
   onStatusChange
 }: PaymentsTableProps) {
-  
+  const navigate = useNavigate();
+
   const formatCurrency = (amount: number, currency: string) => {
     if (currency === "CLP") {
       return new Intl.NumberFormat("es-CL", {
@@ -222,7 +224,10 @@ export function PaymentsTable({
                         {payment.requestId && (
                           <>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer text-blue-600">
+                            <DropdownMenuItem
+                              className="cursor-pointer text-blue-600"
+                              onClick={() => navigate(`/solicitudes?view=${payment.requestId}`)}
+                            >
                               <ExternalLink className="mr-2 h-4 w-4" /> Ver solicitud
                             </DropdownMenuItem>
                           </>

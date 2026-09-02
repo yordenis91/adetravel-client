@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -40,7 +41,9 @@ import { es } from "date-fns/locale";
 export default function PaymentsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
+  // Deep-link desde el buscador global: /pagos?search=<paymentNumber>.
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get("search") || "");
   const [statusTab, setStatusTab] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);

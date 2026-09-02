@@ -130,7 +130,7 @@ export function GlobalSearch() {
                     {results.requests.map((r: any) => (
                       <button
                         key={r.id}
-                        onClick={() => handleSelect(`/solicitudes/${r.id}`)}
+                        onClick={() => handleSelect(`/solicitudes?view=${r.id}`)}
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-sky-50/50 transition-colors group"
                       >
                         <p className="text-sm font-bold text-navy group-hover:text-sky-700">{r.requestNumber || `#${r.id}`}</p>
@@ -149,7 +149,7 @@ export function GlobalSearch() {
                     {results.quotations.map((q: any) => (
                       <button
                         key={q.id}
-                        onClick={() => handleSelect(`/cotizaciones/${q.id}`)}
+                        onClick={() => handleSelect(`/cotizaciones?view=${q.id}`)}
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-amber-50/50 transition-colors group flex justify-between items-center"
                       >
                         <div>
@@ -171,7 +171,7 @@ export function GlobalSearch() {
                     {results.vouchers.map((v: any) => (
                       <button
                         key={v.id}
-                        onClick={() => handleSelect(`/vouchers/${v.id}`)}
+                        onClick={() => handleSelect(`/vouchers?view=${v.id}`)}
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-emerald-50/50 transition-colors group flex justify-between items-center"
                       >
                         <div>

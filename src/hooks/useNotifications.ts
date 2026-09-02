@@ -53,7 +53,7 @@ export function useNotifications() {
     queryKey: ["notifications-stats"],
     queryFn: async () => {
       const response = await api.get("/notifications/stats");
-      return response.data?.data;
+      return response.data;
     },
     refetchInterval: 5000,
     staleTime: 4000,
