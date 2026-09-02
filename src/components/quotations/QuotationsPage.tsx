@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { QuotationsTable } from "./QuotationsTable";
@@ -27,6 +28,7 @@ import { es } from "date-fns/locale";
 export default function QuotationsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [statusTab, setStatusTab] = useState("Todas");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -68,6 +70,20 @@ export default function QuotationsPage() {
     ...q,
     status: formatStatus(q.status)
   }));
+
+  // Deep-link desde el buscador global: /cotizaciones?view=<quotationId>.
+  useEffect(() => {
+    const viewId = searchParams.get("view");
+    if (viewId && quotations.length > 0) {
+      const found = quotations.find((q: any) => q.id === viewId);
+      if (found) {
+        setViewedQuotation(found);
+        setIsDetailOpen(true);
+      }
+      searchParams.delete("view");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, quotations]);
   const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
   const quotationTemplates = Array.isArray(quotationTemplatesResponseData) ? quotationTemplatesResponseData : (quotationTemplatesResponseData as any)?.data || [];

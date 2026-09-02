@@ -37,7 +37,7 @@ import {
   Globe,
   Loader2,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -168,7 +168,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
       }
 
       if (isEditing) {
-        await api.put(`/payments/${payment.id}`, payload);
+        await api.patch(`/payments/${payment.id}`, payload);
         toast({ title: "Pago actualizado", description: "El registro de pago se ha actualizado correctamente." });
       } else {
         await api.post('/payments', payload);
@@ -181,7 +181,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo guardar el pago. Asegúrese de que los datos sean correctos.",
+        description: getErrorMessage(error, "No se pudo guardar el pago. Asegúrese de que los datos sean correctos."),
       });
     }
   };

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -41,6 +42,7 @@ import { es } from "date-fns/locale";
 export default function VouchersPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusTab, setStatusTab] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -154,6 +156,20 @@ export default function VouchersPage() {
     setSelectedVoucher(null);
     setIsFormOpen(true);
   };
+
+  // Deep-link desde el buscador global: /vouchers?view=<voucherId>.
+  useEffect(() => {
+    const viewId = searchParams.get("view");
+    if (viewId && vouchers.length > 0) {
+      const found = vouchers.find((v: any) => v.id === viewId);
+      if (found) {
+        openEdit(found);
+      }
+      searchParams.delete("view");
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, setSearchParams, vouchers]);
 
   const handlePreviewPDF = (voucher: any) => {
     setPdfVoucher(voucher);

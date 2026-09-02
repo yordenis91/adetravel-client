@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { 
   Users, ShieldCheck, UserPlus, Search, Copy, Check, MoreVertical, Mail, Calendar, Info, Plus, UserX, UserCheck, Edit 
@@ -61,7 +61,7 @@ export default function UsuariosPage() {
       queryClient.invalidateQueries({ queryKey: ['users', 'stats'] });
       toast.success("Rol actualizado correctamente");
     },
-    onError: (error: any) => toast.error(error.response?.data?.message || "Error al actualizar rol")
+    onError: (error) => toast.error(getErrorMessage(error, "Error al actualizar rol"))
   });
 
   // 3. Mutación: Suspender / Reactivar (Tres puntitos)
@@ -73,7 +73,7 @@ export default function UsuariosPage() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success(variables.isActive ? "Usuario reactivado" : "Acceso suspendido");
     },
-    onError: (error: any) => toast.error(error.response?.data?.message || "No tienes permisos")
+    onError: (error) => toast.error(getErrorMessage(error, "No tienes permisos"))
   });
 
   // 4. Mutación: Crear Nuevo Usuario
@@ -89,7 +89,7 @@ export default function UsuariosPage() {
       setIsCreateModalOpen(false);
       setNewUser({ fullName: "", email: "", password: "", role: "USUARIO", agencyRole: "AGENTE_VENTAS" }); // Reset
     },
-    onError: (error: any) => toast.error(error.response?.data?.message || "Error al crear usuario")
+    onError: (error) => toast.error(getErrorMessage(error, "Error al crear usuario"))
   });
 
   // 5. Mutación: Editar Usuario (Nombre, Correo, Contraseña)
@@ -107,7 +107,7 @@ export default function UsuariosPage() {
       toast.success("Perfil de usuario actualizado con éxito");
       setIsEditModalOpen(false);
     },
-    onError: (error: any) => toast.error(error.response?.data?.message || "Error al actualizar perfil")
+    onError: (error) => toast.error(getErrorMessage(error, "Error al actualizar perfil"))
   });
 
   const handleEditUser = (e: React.FormEvent) => {

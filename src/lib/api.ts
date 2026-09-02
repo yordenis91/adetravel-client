@@ -100,6 +100,28 @@ export const api = {
   delete: (path: string) => request(path, { method: "DELETE" }),
 };
 
+/**
+ * Extrae el mensaje de error real del backend a partir de un error lanzado por
+ * `request()` (arriba). Ese error es un `Error` normal cuyo `.message` es el
+ * cuerpo crudo de la respuesta JSON — la mayoría de endpoints usan `sendError`
+ * ({error, code}), pero algunos (p.ej. la sincronización de tipo de cambio)
+ * responden {message: "..."} directamente, así que se revisan ambas claves.
+ * Este cliente usa `fetch`, no axios — un `error.response?.data?.message` nunca
+ * existe aquí y siempre cae al fallback, ocultando el error real.
+ */
+export function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    try {
+      const parsed = JSON.parse(error.message);
+      if (parsed?.error) return parsed.error;
+      if (parsed?.message) return parsed.message;
+    } catch {
+      if (error.message) return error.message;
+    }
+  }
+  return fallback;
+}
+
 export const SystemConfig = {
   list: async () => {
     const response = await api.get("/system-config");
