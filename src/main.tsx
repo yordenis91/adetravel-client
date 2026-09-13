@@ -23,13 +23,16 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({
-        maskAllText: false, // Puedes ponerlo en true para ocultar textos sensibles en las grabaciones
-        blockAllMedia: false,
+        // La app maneja PII (pasaportes, datos bancarios): las grabaciones
+        // de sesión deben ocultar texto y bloquear medios por defecto.
+        maskAllText: true,
+        blockAllMedia: true,
       }),
     ],
 
-    // Performance Monitoring (1.0 captura el 100% de las transacciones. En prod muy grande, bájalo a 0.2)
-    tracesSampleRate: 1.0,
+    // Performance Monitoring: 100% en desarrollo, 20% en producción para
+    // controlar el volumen/costo de transacciones.
+    tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
 
     // Session Replay (Graba la pantalla del usuario cuando ocurre un error)
     replaysSessionSampleRate: 0.1, 
