@@ -23,6 +23,9 @@ jobs:
       - name: 📦 Instalar dependencias
         run: npm install --legacy-peer-deps
 
+      - name: 🧪 Ejecutar tests con cobertura
+        run: npm run test:coverage
+
       - name: 🔨 Construir Vite
         env:
           VITE_API_URL: "http://localhost:3000/api"
