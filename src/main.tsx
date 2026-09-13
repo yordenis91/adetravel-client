@@ -3,10 +3,6 @@ import App from "./App.tsx";
 import "./index.css";
 import * as Sentry from "@sentry/react";
 
-// Superdev client initialization is disabled locally to avoid appId errors.
-// Re-enable by setting VITE_SUPERDEV_ENABLED=true and providing VITE_APP_ID / VITE_SUPERDEV_BASE_URL.
-// import "@/lib/superdev/client";
-
 const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 console.log("SENTRY CONFIGURADO:", !!import.meta.env.VITE_SENTRY_DSN);
