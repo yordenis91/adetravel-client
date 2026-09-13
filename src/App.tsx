@@ -15,6 +15,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import TermsOfService from "./pages/legal/TermsOfService";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/layout/AppLayout";
 //import { BrandingBadge } from "./components/BrandingBadge";
@@ -101,7 +103,9 @@ const App = () => (
               <Route path="/auth/register" element={<Register />} />
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/reset-password/:token" element={<ResetPassword />} />
-              
+              <Route path="/legal/terminos-de-servicio" element={<TermsOfService />} />
+              <Route path="/legal/politica-de-privacidad" element={<PrivacyPolicy />} />
+
               {/* RUTAS PROTEGIDAS ANIDADAS EN EL LAYOUT */}
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
