@@ -11,15 +11,20 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Loader2 } from "lucide-react";
 
 // 1. PRIMERO: Todas las importaciones estáticas (Rutas públicas)
+// Solo Login queda estático: es la página que de verdad se visita primero.
+// El resto de las rutas públicas se visitan mucho menos seguido y no
+// necesitan estar en el bundle inicial.
 import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/layout/AppLayout";
 //import { BrandingBadge } from "./components/BrandingBadge";
 
 // 2. DESPUÉS: Todas las importaciones dinámicas (Rutas protegidas - Code Splitting)
+const Register = React.lazy(() => import("./pages/Register"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
+const TermsOfService = React.lazy(() => import("./pages/legal/TermsOfService"));
+const PrivacyPolicy = React.lazy(() => import("./pages/legal/PrivacyPolicy"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Clients = React.lazy(() => import("./pages/Clients"));
 const ClientTimeline = React.lazy(() => import("@/pages/ClientTimeline"));
@@ -42,6 +47,15 @@ const Nomencladores = React.lazy(() => import("./pages/Nomencladores"));
 const Perfil = React.lazy(() => import("./pages/Perfil"));
 const Permisos = React.lazy(() => import("./pages/Permisos"));
 
+// Fallback para las rutas públicas cargadas de forma lazy (fuera de
+// AppLayout, así que no tienen el Suspense que envuelve al <Outlet />).
+function PublicPageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0A1128]">
+      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+    </div>
+  );
+}
 
 // 🔥 Configuración nivel Enterprise
 const queryClient = new QueryClient({
@@ -98,10 +112,12 @@ const App = () => (
               
               {/* Rutas públicas */}
               <Route path="/auth/login" element={<Login />} />
-              <Route path="/auth/register" element={<Register />} />
-              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-              <Route path="/auth/reset-password/:token" element={<ResetPassword />} />
-              
+              <Route path="/auth/register" element={<Suspense fallback={<PublicPageFallback />}><Register /></Suspense>} />
+              <Route path="/auth/forgot-password" element={<Suspense fallback={<PublicPageFallback />}><ForgotPassword /></Suspense>} />
+              <Route path="/auth/reset-password/:token" element={<Suspense fallback={<PublicPageFallback />}><ResetPassword /></Suspense>} />
+              <Route path="/legal/terminos-de-servicio" element={<Suspense fallback={<PublicPageFallback />}><TermsOfService /></Suspense>} />
+              <Route path="/legal/politica-de-privacidad" element={<Suspense fallback={<PublicPageFallback />}><PrivacyPolicy /></Suspense>} />
+
               {/* RUTAS PROTEGIDAS ANIDADAS EN EL LAYOUT */}
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />

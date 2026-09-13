@@ -202,6 +202,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <LogOut className="w-4 h-4" />
           <span className="text-xs">Cerrar Sesión</span>
         </Button>
+        <div className="mt-3 flex items-center justify-center gap-3 text-[10px] text-sidebar-foreground/40">
+          <Link to="/legal/terminos-de-servicio" className="hover:text-sidebar-foreground/70 transition-colors">
+            Términos
+          </Link>
+          <span>·</span>
+          <Link to="/legal/politica-de-privacidad" className="hover:text-sidebar-foreground/70 transition-colors">
+            Privacidad
+          </Link>
+        </div>
       </div>
     </aside>
   );

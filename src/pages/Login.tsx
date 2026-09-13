@@ -192,6 +192,18 @@ export default function Login() {
                 )}
               </Button>
             </form>
+
+            <p className="mt-6 text-center text-[11px] text-muted-foreground">
+              Al continuar, aceptas los{" "}
+              <Link to="/legal/terminos-de-servicio" className="underline hover:text-navy">
+                Términos de Servicio
+              </Link>{" "}
+              y la{" "}
+              <Link to="/legal/politica-de-privacidad" className="underline hover:text-navy">
+                Política de Privacidad
+              </Link>
+              .
+            </p>
           </CardContent>
         </Card>
       </div>
