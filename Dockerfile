@@ -6,7 +6,11 @@ WORKDIR /app
 # Copiar archivos de dependencias para aprovechar la caché de Docker
 COPY package*.json ./
 
-RUN npm ci
+# --legacy-peer-deps: hay conflictos de peer deps en este proyecto (mismo
+# motivo por el que ci-frontend.yml ya instala así). Sin el flag, `npm ci`
+# puede toparse con un bug interno del resolver de npm ("Cannot read
+# properties of null (reading 'edgesOut')") y el build de Docker falla.
+RUN npm ci --legacy-peer-deps
 
 # Copiar todo el código del frontend
 COPY . .
