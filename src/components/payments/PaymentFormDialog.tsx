@@ -72,39 +72,46 @@ const PAYMENT_METHODS = [
   { value: "WEBPAY", label: "Webpay", icon: Globe },
 ];
 
+const EMPTY_ARRAY: any[] = [];
+
 export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!payment;
 
-  const { data: paymentsResponse = [] } = useQuery({
+  const { data: paymentsResponse } = useQuery({
     queryKey: ["payments"],
     queryFn: () => api.get('/payments'),
     enabled: open,
   });
 
-  const { data: requestsResponse = [] } = useQuery({
+  const { data: requestsResponse } = useQuery({
     queryKey: ["requests"],
     queryFn: () => api.get('/requests'),
     enabled: open,
   });
 
-  const { data: quotationsResponse = [] } = useQuery({
+  const { data: quotationsResponse } = useQuery({
     queryKey: ["quotations"],
     queryFn: () => api.get('/quotations'),
     enabled: open,
   });
 
-  const { data: clientsResponse = [] } = useQuery({
+  const { data: clientsResponse } = useQuery({
     queryKey: ["clients"],
     queryFn: () => api.get('/clients'),
     enabled: open,
   });
 
-  const allPayments = Array.isArray(paymentsResponse) ? paymentsResponse : (paymentsResponse as any)?.data || [];
-  const requests = Array.isArray(requestsResponse) ? requestsResponse : (requestsResponse as any)?.data || [];
-  const quotations = Array.isArray(quotationsResponse) ? quotationsResponse : (quotationsResponse as any)?.data || [];
-  const clients = Array.isArray(clientsResponse) ? clientsResponse : (clientsResponse as any)?.data || [];
+  // IMPORTANTE: usar EMPTY_ARRAY (constante estable a nivel de módulo) en vez de
+  // un `[]` inline como fallback. Un `[]` literal aquí crea una referencia nueva
+  // en cada render mientras la query está pendiente, y como `allPayments` es
+  // dependencia del useEffect de abajo, eso lo dispara en cada render → loop de
+  // re-renders (efecto → form.reset → re-render → nueva referencia → efecto...).
+  const allPayments = Array.isArray(paymentsResponse) ? paymentsResponse : (paymentsResponse as any)?.data || EMPTY_ARRAY;
+  const requests = Array.isArray(requestsResponse) ? requestsResponse : (requestsResponse as any)?.data || EMPTY_ARRAY;
+  const quotations = Array.isArray(quotationsResponse) ? quotationsResponse : (quotationsResponse as any)?.data || EMPTY_ARRAY;
+  const clients = Array.isArray(clientsResponse) ? clientsResponse : (clientsResponse as any)?.data || EMPTY_ARRAY;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
