@@ -66,13 +66,3 @@ export const TEMPLATE_TYPES = [
     })
     return result
   }
-  
-  /** Replace {{variable}} placeholders with real data for actual sending */
-  export function renderTemplate(text: string, data: Record<string, string>): string {
-    if (!text) return '';
-    let result = text
-    Object.entries(data).forEach(([key, value]) => {
-      result = result.replaceAll(`{{${key}}}`, value || '')
-    })
-    return result
-  }

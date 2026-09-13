@@ -17,7 +17,6 @@ import { Loader2 } from "lucide-react";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/layout/AppLayout";
-//import { BrandingBadge } from "./components/BrandingBadge";
 
 // 2. DESPUÉS: Todas las importaciones dinámicas (Rutas protegidas - Code Splitting)
 const Register = React.lazy(() => import("./pages/Register"));
@@ -208,7 +207,6 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </AuthProvider>
-        {/* <BrandingBadge /> */}
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>

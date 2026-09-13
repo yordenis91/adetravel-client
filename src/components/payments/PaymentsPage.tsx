@@ -32,11 +32,6 @@ import { useToast } from "@/hooks/use-toast";
 import { PaymentsTable } from "./PaymentsTable";
 import { PaymentFormDialog } from "./PaymentFormDialog";
 import { ExportMenu } from "@/components/shared/ExportMenu";
-import { sendEmail } from "@/integrations/core";
-import { buildPaymentEmail } from "@/lib/emailTemplates";
-import { renderTemplate } from "@/lib/templateVariables";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 export default function PaymentsPage() {
   const { toast } = useToast();
@@ -64,15 +59,9 @@ export default function PaymentsPage() {
     queryFn: () => api.get('/clients'),
   });
 
-  const { data: paymentTemplatesResponseData = [] } = useQuery({
-    queryKey: ['emailTemplates', 'PAYMENT_CONFIRMED'],
-    queryFn: () => api.get('/email-templates?type=PAYMENT_CONFIRMED&isActive=true')
-  });
-
   const payments = Array.isArray(paymentsResponseData) ? paymentsResponseData : (paymentsResponseData as any)?.data || [];
   const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
-  const paymentTemplates = Array.isArray(paymentTemplatesResponseData) ? paymentTemplatesResponseData : (paymentTemplatesResponseData as any)?.data || [];
 
   const isLoading = isPaymentsLoading || isRequestsLoading || isClientsLoading;
 
@@ -132,59 +121,14 @@ export default function PaymentsPage() {
     },
   });
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  // El envío del email de confirmación al completar un pago ya lo hace el
+  // backend (ver changePaymentStatus en payments.controller.ts), respetando
+  // el switch "Pago confirmado" de Configuración > Email. Antes había un
+  // segundo intento de envío aquí mismo, desde el cliente, usando el SDK de
+  // Superdev — que está deshabilitado, así que ese intento siempre fallaba
+  // en silencio (atrapado por un catch que solo hacía console.error).
+  const handleStatusChange = (id: string, newStatus: string) => {
     updateStatusMutation.mutate({ id, status: newStatus });
-    if (newStatus === 'COMPLETADO') {
-      try {
-        const payment = payments.find((p: any) => p.id === id);
-        const client = clients.find((c: any) => c.id === payment?.clientId);
-        const request = requests.find((r: any) => r.id === payment?.requestId);
-        
-        if (client?.email && payment) {
-          const activeTemplate = paymentTemplates[0];
-          let subject: string, body_html: string;
-
-          if (activeTemplate) {
-            const methodLabels: Record<string, string> = { 
-              EFECTIVO: 'Efectivo', 
-              TARJETA: 'Tarjeta', 
-              TRANSFERENCIA: 'Transferencia Bancaria', 
-              CHEQUE: 'Cheque', 
-              WEBPAY: 'Webpay' 
-            };
-            
-            const data: Record<string, string> = {
-              client_name: `${client.firstName} ${client.lastName}`,
-              payment_number: payment.paymentNumber || '',
-              amount: new Intl.NumberFormat("es-CL", { style: "currency", currency: payment.currency || "CLP" }).format(payment.amount || 0),
-              currency: payment.currency || 'CLP',
-              payment_date: payment.paymentDate ? format(new Date(payment.paymentDate), "dd 'de' MMMM, yyyy", { locale: es }) : '',
-              payment_method: methodLabels[payment.method] || payment.method || '',
-              reference: payment.reference || '',
-              agency_name: 'ADE Travel',
-              agency_email: 'contacto@adetravel.cl',
-            };
-            subject = renderTemplate(activeTemplate.subject, data);
-            body_html = renderTemplate(activeTemplate.bodyHtml, data);
-          } else {
-            const result = buildPaymentEmail(payment, client, request);
-            subject = result.subject;
-            body_html = result.body_html;
-          }
-
-          await sendEmail({
-            to: client.email,
-            subject,
-            body_html,
-            from_name: 'ADE Travel',
-            from_local_part: 'pagos'
-          });
-          toast({ title: "Confirmación enviada", description: `Email enviado a ${client.email}` });
-        }
-      } catch (err) {
-        console.error('Error sending payment email:', err);
-      }
-    }
   };
 
   const openEdit = (payment: any) => {

@@ -19,11 +19,6 @@ import {
   Filter
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { sendEmail } from "@/integrations/core";
-import { buildQuotationEmail } from "@/lib/emailTemplates";
-import { renderTemplate } from "@/lib/templateVariables";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 export default function QuotationsPage() {
   const queryClient = useQueryClient();
@@ -55,11 +50,6 @@ export default function QuotationsPage() {
     queryFn: () => api.get('/clients'),
   });
 
-  const { data: quotationTemplatesResponseData = [], isLoading: loadingQuotationTemplates } = useQuery({
-    queryKey: ['emailTemplates', 'QUOTATION_SENT'],
-    queryFn: () => api.get('/email-templates?type=QUOTATION_SENT&isActive=true')
-  });
-
   const formatStatus = (s?: string) => {
     if (!s) return "Borrador";
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
@@ -86,9 +76,8 @@ export default function QuotationsPage() {
   }, [searchParams, setSearchParams, quotations]);
   const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
-  const quotationTemplates = Array.isArray(quotationTemplatesResponseData) ? quotationTemplatesResponseData : (quotationTemplatesResponseData as any)?.data || [];
 
-  const isLoading = loadingClients || loadingRequests || loadingQuotations || loadingQuotationTemplates;
+  const isLoading = loadingClients || loadingRequests || loadingQuotations;
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string, status: string }) => 
@@ -124,53 +113,16 @@ export default function QuotationsPage() {
     duplicateQuotationMutation.mutate(id);
   };
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  // El envío del email al cliente cuando la cotización pasa a "Enviada" (y
+  // también en Aceptada/Rechazada) ya lo hace el backend (changeQuotationStatus
+  // en quotations.controller.ts), respetando el switch "Cotización enviada"
+  // de Configuración > Email. Antes había un segundo intento de envío aquí
+  // mismo, desde el cliente, usando el SDK de Superdev — que está
+  // deshabilitado, así que ese intento siempre fallaba en silencio (atrapado
+  // por un catch que solo hacía console.error, y el toast de "éxito" nunca
+  // llegaba a mostrarse).
+  const handleStatusChange = (id: string, newStatus: string) => {
     updateStatusMutation.mutate({ id, status: newStatus });
-
-    if (newStatus === 'Enviada') {
-      try {
-        const quotation = quotations.find((q: any) => q.id === id);
-        const client = clients.find((c: any) => c.id === quotation?.clientId);
-        const request = requests.find((r: any) => r.id === quotation?.requestId);
-        
-        if (client?.email && quotation) {
-          const activeTemplate = quotationTemplates[0];
-          let subject: string, body_html: string;
-          
-          if (activeTemplate) {
-            const destination = request ? `${request.originCity || ''} → ${request.destinationCity || ''}` : '';
-            const data: Record<string, string> = {
-              client_name: `${client.firstName} ${client.lastName}`,
-              quotation_number: quotation.quotationNumber || '',
-              valid_until: quotation.validUntil ? format(new Date(quotation.validUntil), "dd 'de' MMMM, yyyy", { locale: es }) : '',
-              destination,
-              total: new Intl.NumberFormat("es-CL", { style: "currency", currency: quotation.currency || "CLP" }).format(quotation.total || 0),
-              currency: quotation.currency || 'CLP',
-              agency_name: 'ADE Travel',
-              agency_email: 'contacto@adetravel.cl',
-              agency_phone: '+56 9 1234 5678',
-            };
-            subject = renderTemplate(activeTemplate.subject, data);
-            body_html = renderTemplate(activeTemplate.bodyHtml, data);
-          } else {
-            const result = buildQuotationEmail(quotation, client, request);
-            subject = result.subject;
-            body_html = result.body_html;
-          }
-
-          await sendEmail({
-            to: client.email,
-            subject,
-            body_html,
-            from_name: 'ADE Travel',
-            from_local_part: 'cotizaciones'
-          });
-          toast({ title: "Email enviado", description: `Cotización enviada a ${client.email}` });
-        }
-      } catch (err) {
-        console.error('Error sending quotation email:', err);
-      }
-    }
   };
 
   const handleEdit = (quotation: any) => {

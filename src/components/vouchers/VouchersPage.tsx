@@ -33,11 +33,6 @@ import { VouchersTable } from "./VouchersTable";
 import { VoucherFormDialog } from "./VoucherFormDialog";
 import { VoucherPDFPreview } from "./VoucherPDFPreview";
 import { ExportMenu } from "@/components/shared/ExportMenu";
-import { sendEmail } from "@/integrations/core";
-import { buildVoucherEmail } from "@/lib/emailTemplates";
-import { renderTemplate } from "@/lib/templateVariables";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 export default function VouchersPage() {
   const { toast } = useToast();
@@ -74,16 +69,10 @@ export default function VouchersPage() {
     queryFn: () => api.get('/providers'),
   });
 
-  const { data: voucherTemplatesResponseData = [] } = useQuery({
-    queryKey: ['emailTemplates', 'VOUCHER_ISSUED'],
-    queryFn: () => api.get('/email-templates?type=VOUCHER_ISSUED&isActive=true')
-  });
-
   const vouchers = Array.isArray(vouchersResponseData) ? vouchersResponseData : (vouchersResponseData as any)?.data || [];
   const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
   const providers = Array.isArray(providersResponseData) ? providersResponseData : (providersResponseData as any)?.data || [];
-  const voucherTemplates = Array.isArray(voucherTemplatesResponseData) ? voucherTemplatesResponseData : (voucherTemplatesResponseData as any)?.data || [];
 
   const isLoading = isLoadingVouchers || isLoadingRequests || isLoadingClients || isLoadingProviders;
 
