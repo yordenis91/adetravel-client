@@ -36,8 +36,11 @@ export function ServicesSection({ requestId, isPackage, defaultClientId }: Servi
     setIsFormOpen(true);
   };
 
-  const handleStatusChange = (serviceId: string, newStatus: string, cancellationReason?: string) => {
-    changeStatusMutation.mutate({ id: serviceId, status: newStatus, cancellationReason }, {
+  const handleStatusChange = (serviceId: string, newStatus: string, note?: string) => {
+    // Igual que en Solicitudes: cancellationReason queda en su propia columna del Servicio,
+    // notes solo enriquece la Bitácora (ver changeServiceStatus en el backend).
+    const payload = newStatus === "CANCELADA" ? { id: serviceId, status: newStatus, cancellationReason: note } : { id: serviceId, status: newStatus, notes: note };
+    changeStatusMutation.mutate(payload, {
       onSuccess: () => {
         toast({ title: "Estado actualizado" });
         queryClient.invalidateQueries({ queryKey: ["requests", requestId] });
@@ -100,7 +103,7 @@ export function ServicesSection({ requestId, isPackage, defaultClientId }: Servi
               <div className="p-4 pt-0 border-t border-slate-50">
                 <RequestStatusActions
                   currentStatus={service.status}
-                  onChange={(status, reason) => handleStatusChange(service.id, status, reason)}
+                  onChange={(status, note) => handleStatusChange(service.id, status, note)}
                 />
               </div>
             )}

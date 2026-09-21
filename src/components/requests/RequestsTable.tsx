@@ -17,17 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Eye,
   Edit2,
@@ -40,6 +29,7 @@ import {
   Calendar
 } from "lucide-react";
 import { RequestStatusBadge } from "./RequestStatusBadge";
+import { StatusChangeDialog } from "./StatusChangeDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -51,7 +41,7 @@ interface RequestsTableProps {
   clients: any[];
   onEdit: (request: any) => void;
   onView: (request: any) => void;
-  onStatusChange: (id: string, newStatus: string, cancellationReason?: string) => void;
+  onStatusChange: (id: string, newStatus: string, note?: string) => void;
 }
 
 export function RequestsTable({
@@ -62,14 +52,12 @@ export function RequestsTable({
   onView,
   onStatusChange
 }: RequestsTableProps) {
-  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
-  const [cancellationReason, setCancellationReason] = useState("");
+  const [pendingChange, setPendingChange] = useState<{ requestId: string; status: WorkflowStatus } | null>(null);
 
-  const handleConfirmCancel = () => {
-    if (!cancelTargetId || !cancellationReason.trim()) return;
-    onStatusChange(cancelTargetId, "CANCELADA", cancellationReason.trim());
-    setCancelTargetId(null);
-    setCancellationReason("");
+  const handleConfirm = (note?: string) => {
+    if (!pendingChange) return;
+    onStatusChange(pendingChange.requestId, pendingChange.status, note);
+    setPendingChange(null);
   };
 
   const getClientName = (clientId: string) => {
@@ -185,7 +173,7 @@ export function RequestsTable({
                       {(VALID_TRANSITIONS[request.status] ?? [])
                         .filter((s) => s !== "CANCELADA")
                         .map((nextStatus) => (
-                          <DropdownMenuItem key={nextStatus} onClick={() => onStatusChange(request.id, nextStatus)}>
+                          <DropdownMenuItem key={nextStatus} onClick={() => setPendingChange({ requestId: request.id, status: nextStatus as WorkflowStatus })}>
                             {nextStatus === "RECEPCIONADA" ? (
                               <ArrowLeft className="mr-2 h-4 w-4 text-blue-500" />
                             ) : (
@@ -198,7 +186,7 @@ export function RequestsTable({
                       {request.status !== "CANCELADA" && request.status !== "VENDIDA" && (
                         <>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => setCancelTargetId(request.id)}>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setPendingChange({ requestId: request.id, status: "CANCELADA" })}>
                             <XCircle className="mr-2 h-4 w-4" />
                             Cancelar Solicitud
                           </DropdownMenuItem>
@@ -213,26 +201,12 @@ export function RequestsTable({
         </TableBody>
       </Table>
 
-      <AlertDialog open={!!cancelTargetId} onOpenChange={(open) => { if (!open) { setCancelTargetId(null); setCancellationReason(""); } }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Cancelar esta solicitud?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer. Indica el motivo de la cancelación (obligatorio).</AlertDialogDescription>
-          </AlertDialogHeader>
-          <Textarea
-            value={cancellationReason}
-            onChange={(e) => setCancellationReason(e.target.value)}
-            placeholder="Ej: El cliente desistió del viaje por motivos personales"
-            className="min-h-[80px]"
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel>Volver</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmCancel} disabled={!cancellationReason.trim()} className="bg-rose-600 hover:bg-rose-700">
-              Confirmar cancelación
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <StatusChangeDialog
+        open={!!pendingChange}
+        onOpenChange={(open) => { if (!open) setPendingChange(null); }}
+        targetStatus={pendingChange?.status ?? null}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 }
