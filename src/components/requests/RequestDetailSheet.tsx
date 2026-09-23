@@ -31,7 +31,7 @@ interface RequestDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   request: any;
   clients: any[];
-  onStatusChange: (id: string, newStatus: string, cancellationReason?: string) => void;
+  onStatusChange: (id: string, newStatus: string, note?: string) => void;
   onEdit: (request: any) => void;
 }
 
@@ -52,8 +52,8 @@ export function RequestDetailSheet({
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount || 0);
   };
 
-  const handleStatusUpdate = (newStatus: string, cancellationReason?: string) => {
-    onStatusChange(request.id, newStatus, cancellationReason);
+  const handleStatusUpdate = (newStatus: string, note?: string) => {
+    onStatusChange(request.id, newStatus, note);
   };
 
   return (

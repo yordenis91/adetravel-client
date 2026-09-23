@@ -1,23 +1,13 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { ArrowLeft, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import { STATUS_LABELS, VALID_TRANSITIONS, WORKFLOW_STATUSES, WorkflowStatus, getPhaseIndex } from "@/lib/workflow-status";
+import { StatusChangeDialog } from "./StatusChangeDialog";
 
 interface RequestStatusActionsProps {
   currentStatus: string;
-  /** Se llama con (nuevoEstado, motivoCancelacion?) tras confirmar la acción. */
-  onChange: (status: string, cancellationReason?: string) => void;
+  /** Se llama con (nuevoEstado, nota?) tras confirmar la transición en el diálogo. */
+  onChange: (status: string, note?: string) => void;
 }
 
 /**
@@ -26,19 +16,17 @@ interface RequestStatusActionsProps {
  * Solicitud y Servicio comparten exactamente el mismo flujo (WorkflowStatus).
  */
 export function RequestStatusActions({ currentStatus, onChange }: RequestStatusActionsProps) {
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancellationReason, setCancellationReason] = useState("");
+  const [pendingStatus, setPendingStatus] = useState<WorkflowStatus | null>(null);
 
   const allowed = (VALID_TRANSITIONS[currentStatus] ?? []).filter((s) => s !== "CANCELADA") as WorkflowStatus[];
   const isTerminal = currentStatus === "VENDIDA";
   const isCancelled = currentStatus === "CANCELADA";
   const currentPhase = getPhaseIndex(currentStatus);
 
-  const handleConfirmCancel = () => {
-    if (!cancellationReason.trim()) return;
-    onChange("CANCELADA", cancellationReason.trim());
-    setCancelOpen(false);
-    setCancellationReason("");
+  const handleConfirm = (note?: string) => {
+    if (!pendingStatus) return;
+    onChange(pendingStatus, note);
+    setPendingStatus(null);
   };
 
   if (isTerminal) {
@@ -61,7 +49,7 @@ export function RequestStatusActions({ currentStatus, onChange }: RequestStatusA
           <Button
             key={nextStatus}
             type="button"
-            onClick={() => onChange(nextStatus)}
+            onClick={() => setPendingStatus(nextStatus)}
             variant={isBackward ? "outline" : "default"}
             className={
               isBackward
@@ -78,7 +66,7 @@ export function RequestStatusActions({ currentStatus, onChange }: RequestStatusA
       {!isCancelled && (
         <Button
           type="button"
-          onClick={() => setCancelOpen(true)}
+          onClick={() => setPendingStatus("CANCELADA")}
           variant="ghost"
           className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 gap-2 font-bold text-xs uppercase tracking-wider ml-auto"
         >
@@ -87,32 +75,12 @@ export function RequestStatusActions({ currentStatus, onChange }: RequestStatusA
         </Button>
       )}
 
-      <AlertDialog open={cancelOpen} onOpenChange={(open) => { setCancelOpen(open); if (!open) setCancellationReason(""); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Cancelar esta solicitud/servicio?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Indica el motivo de la cancelación (obligatorio).
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Textarea
-            value={cancellationReason}
-            onChange={(e) => setCancellationReason(e.target.value)}
-            placeholder="Ej: El cliente desistió del viaje por motivos personales"
-            className="min-h-[80px]"
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel>Volver</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmCancel}
-              disabled={!cancellationReason.trim()}
-              className="bg-rose-600 hover:bg-rose-700"
-            >
-              Confirmar cancelación
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <StatusChangeDialog
+        open={!!pendingStatus}
+        onOpenChange={(open) => { if (!open) setPendingStatus(null); }}
+        targetStatus={pendingStatus}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 }

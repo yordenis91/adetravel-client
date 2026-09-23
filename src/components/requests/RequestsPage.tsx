@@ -106,8 +106,12 @@ export default function RequestsPage() {
     setIsFormOpen(true);
   };
 
-  const handleStatusChange = (id: string, newStatus: string, cancellationReason?: string) => {
-    updateStatusMutation.mutate({ id, status: newStatus, cancellationReason }, {
+  const handleStatusChange = (id: string, newStatus: string, note?: string) => {
+    // La nota se guarda en un campo u otro según el destino: cancellationReason queda además
+    // en su propia columna de la Solicitud, mientras que notes solo enriquece la Bitácora
+    // (ver changeRequestStatus en el backend).
+    const payload = newStatus === "CANCELADA" ? { id, status: newStatus, cancellationReason: note } : { id, status: newStatus, notes: note };
+    updateStatusMutation.mutate(payload, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["requests"] });
         toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." });
