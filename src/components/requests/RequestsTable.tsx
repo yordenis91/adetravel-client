@@ -112,8 +112,11 @@ export function RequestsTable({
         <TableBody>
           {requests.map((request) => (
             <TableRow key={request.id} className="group hover:bg-slate-50/50 transition-colors">
-              <TableCell className="font-mono text-xs font-bold text-primary">
-                {request.requestNumber}
+              <TableCell>
+                <p className="font-mono text-xs font-bold text-primary">{request.requestNumber}</p>
+                {request.createdByName && (
+                  <p className="text-[10px] text-muted-foreground truncate">por {request.createdByName}</p>
+                )}
               </TableCell>
               <TableCell>
                 <p className="text-sm font-bold text-navy">{getClientName(request.clientId)}</p>
