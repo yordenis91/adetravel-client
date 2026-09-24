@@ -103,6 +103,9 @@ export function RequestDetailSheet({
                 <div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
                   <p className="text-lg font-playfair font-bold text-navy">{clientName}</p>
                   <p className="text-xs text-muted-foreground mt-1">ID Cliente: {request.clientId}</p>
+                  {request.createdByName && (
+                    <p className="text-xs text-muted-foreground mt-1">Creada por {request.createdByName}</p>
+                  )}
                 </div>
               </div>
 
