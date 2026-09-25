@@ -48,7 +48,9 @@ export function useRequest(id: string) {
     enabled: Boolean(id)
   });
 
-  const data = responseData && !Array.isArray(responseData) ? responseData : (responseData as any)?.data || null;
+  // GET /requests/:id siempre es sendItem({data: {...}}), nunca un array — a diferencia
+  // de useRequests() de arriba, acá no hace falta el chequeo de Array.isArray.
+  const data = (responseData as any)?.data ?? null;
   return { data, ...rest };
 }
 
@@ -59,7 +61,7 @@ export function useRequestStats() {
     staleTime: 60_000
   });
 
-  const data = responseData && !Array.isArray(responseData) ? responseData : (responseData as any)?.data || {};
+  const data = (responseData as any)?.data ?? {};
   return { data, ...rest };
 }
 

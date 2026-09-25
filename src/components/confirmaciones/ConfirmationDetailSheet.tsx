@@ -40,7 +40,7 @@ export function ConfirmationDetailSheet({ open, onOpenChange, confirmation, requ
           <div className="space-y-4 pb-10">
             <div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Solicitud</p>
-              <button onClick={() => navigate(`/solicitudes?view=${confirmation.requestId}`)} className="text-sm font-bold text-primary flex items-center gap-1 hover:underline">
+              <button onClick={() => navigate(`/solicitudes/${confirmation.requestId}`)} className="text-sm font-bold text-primary flex items-center gap-1 hover:underline">
                 {request?.requestNumber || confirmation.requestId} <ExternalLink className="w-3 h-3" />
               </button>
             </div>

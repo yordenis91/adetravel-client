@@ -12,7 +12,7 @@ interface RequestStatusActionsProps {
 
 /**
  * Botones de transición de estado, genéricos sobre el mapa VALID_TRANSITIONS de 17 estados.
- * Compartido por RequestDetailSheet/RequestsTable y ServiceFormDialog/ServicesSection, ya que
+ * Compartido por RequestDetailPage/RequestsTable y ServiceFormDialog/ServicesSection, ya que
  * Solicitud y Servicio comparten exactamente el mismo flujo (WorkflowStatus).
  */
 export function RequestStatusActions({ currentStatus, onChange }: RequestStatusActionsProps) {

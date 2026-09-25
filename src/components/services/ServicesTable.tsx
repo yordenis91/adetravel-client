@@ -74,7 +74,7 @@ export function ServicesTable({ services, requests, providers, isLoading }: Serv
               </TableCell>
               <TableCell><RequestStatusBadge status={service.status} /></TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => navigate(`/solicitudes?view=${service.requestId}`)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => navigate(`/solicitudes/${service.requestId}`)}>
                   <Eye className="w-4 h-4" />
                 </Button>
               </TableCell>

@@ -130,7 +130,7 @@ export function GlobalSearch() {
                     {results.requests.map((r: any) => (
                       <button
                         key={r.id}
-                        onClick={() => handleSelect(`/solicitudes?view=${r.id}`)}
+                        onClick={() => handleSelect(`/solicitudes/${r.id}`)}
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-sky-50/50 transition-colors group"
                       >
                         <p className="text-sm font-bold text-navy group-hover:text-sky-700">{r.requestNumber || `#${r.id}`}</p>
