@@ -30,8 +30,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { api, extractArrayFromResponse } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAuth } from "@/context/AuthContext";
 
 const taskSchema = z.object({
   title: z.string().min(1, "El título es requerido"),
@@ -42,6 +43,7 @@ const taskSchema = z.object({
   relatedEntityType: z.string().optional().nullable(),
   relatedEntityId: z.string().optional().nullable(),
   relatedEntityLabel: z.string().optional().nullable(),
+  assigneeId: z.string().optional().nullable(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -64,6 +66,13 @@ export function TaskFormDialog({
   const [isLoadingEntities, setIsLoadingEntities] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
+
+  const { data: usersResponse } = useQuery({
+    queryKey: ["users-assignable"],
+    queryFn: () => api.get("/users?limit=100&isActive=true"),
+  });
+  const assignableUsers = extractArrayFromResponse(usersResponse as any);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -76,6 +85,7 @@ export function TaskFormDialog({
       relatedEntityType: null,
       relatedEntityId: null,
       relatedEntityLabel: null,
+      assigneeId: currentUser?.id,
     },
   });
 
@@ -92,6 +102,7 @@ export function TaskFormDialog({
         relatedEntityType: task.relatedEntityType || null,
         relatedEntityId: task.relatedEntityId || null,
         relatedEntityLabel: task.relatedEntityLabel || null,
+        assigneeId: task.userId,
       });
     } else {
       form.reset({
@@ -103,9 +114,10 @@ export function TaskFormDialog({
         relatedEntityType: null,
         relatedEntityId: null,
         relatedEntityLabel: null,
+        assigneeId: currentUser?.id,
       });
     }
-  }, [task, open, form]);
+  }, [task, open, form, currentUser?.id]);
 
   useEffect(() => {
     async function loadRelatedEntities() {
@@ -254,6 +266,36 @@ export function TaskFormDialog({
                         value={field.value || ""}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="assigneeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Asignar a
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || currentUser?.id}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar responsable" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {assignableUsers.map((u: any) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.fullName}{u.id === currentUser?.id ? " (Tú)" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {task?.createdByName && task.createdBy !== currentUser?.id && (
+                      <p className="text-[11px] text-muted-foreground">Asignada por {task.createdByName}</p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

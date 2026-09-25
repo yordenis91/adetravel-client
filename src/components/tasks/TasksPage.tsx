@@ -38,6 +38,8 @@ import { es } from "date-fns/locale";
 import { TaskFormDialog } from "./TaskFormDialog";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
+import { UserRound } from "lucide-react";
 
 export default function TasksPage() {
   const [activeTab, setActiveTab] = useState("pendientes");
@@ -47,10 +49,19 @@ export default function TasksPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
   const { data: allTasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => extractArrayFromResponse(await api.get("/tasks")),
+  });
+
+  // Tareas que yo le asigné a otra persona: salen de "Mis Tareas" apenas se crean
+  // (porque ahí solo aparecen las tareas asignadas a mí), así que necesitan su
+  // propia vista para no perderles el rastro.
+  const { data: delegatedTasks = [], isLoading: isLoadingDelegated } = useQuery({
+    queryKey: ["tasks", "delegated"],
+    queryFn: async () => extractArrayFromResponse(await api.get("/tasks?scope=delegated&limit=100")),
   });
 
   const PRIORITY_WEIGHT: Record<string, number> = { ALTA: 1, MEDIA: 2, BAJA: 3 };
@@ -199,9 +210,16 @@ export default function TasksPage() {
             >
               Vencidas <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600">{overdueCount}</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="delegadas"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg px-4"
+            >
+              Delegadas <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700">{delegatedTasks.length}</span>
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
+        {activeTab !== "delegadas" && (
         <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-xl">
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-44">
@@ -239,9 +257,16 @@ export default function TasksPage() {
             <LayoutGrid className="w-4 h-4 mr-2" /> Kanban
           </Button>
         </div>
+        )}
       </div>
 
-      {isLoading ? (
+      {activeTab === "delegadas" ? (
+        <DelegatedTasksList
+          tasks={delegatedTasks.filter((t: any) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))}
+          isLoading={isLoadingDelegated}
+          onEdit={openEdit}
+        />
+      ) : isLoading ? (
         <div className="grid gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-20 bg-white rounded-xl animate-pulse" />
@@ -299,6 +324,12 @@ export default function TasksPage() {
                 </div>
                 <div className="flex items-center gap-6 shrink-0">
                   <DueDateBadge dueDate={task.dueDate} status={task.status} />
+                  {task.createdByName && task.createdBy !== currentUser?.id && (
+                    <div className="hidden md:flex items-center gap-1 bg-violet-50 text-violet-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                      <UserRound className="w-3 h-3" />
+                      Asignada por {task.createdByName}
+                    </div>
+                  )}
                   {task.relatedEntityLabel && (
                     <div className="hidden md:flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
                       <Clock className="w-3 h-3" />
@@ -376,6 +407,7 @@ export default function TasksPage() {
 }
 
 function KanbanColumn({ title, icon, tasks, onEdit, onToggle, color, droppableId }: any) {
+  const { user: currentUser } = useAuth();
   const bgColors: any = {
     blue: "bg-blue-50/50",
     emerald: "bg-emerald-50/50",
@@ -435,6 +467,12 @@ function KanbanColumn({ title, icon, tasks, onEdit, onToggle, color, droppableId
                     <div className="flex flex-wrap items-center gap-2 mt-auto">
                       <DueDateBadge dueDate={task.dueDate} status={task.status} />
                       <PriorityBadge priority={task.priority} />
+                      {task.createdByName && task.createdBy !== currentUser?.id && (
+                        <span className="flex items-center gap-1 bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter">
+                          <UserRound className="w-2.5 h-2.5" />
+                          {task.createdByName}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
@@ -495,5 +533,72 @@ function PriorityBadge({ priority }: { priority: string }) {
     )}>
       {priority}
     </span>
+  );
+}
+
+function DelegatedTasksList({ tasks, isLoading, onEdit }: { tasks: any[]; isLoading: boolean; onEdit: (task: any) => void }) {
+  if (isLoading) {
+    return (
+      <div className="grid gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-20 bg-white rounded-xl animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (tasks.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+          <UserRound className="w-8 h-8 text-slate-300" />
+        </div>
+        <h3 className="text-lg font-medium text-navy">Sin tareas delegadas</h3>
+        <p className="text-muted-foreground text-sm max-w-xs text-center mt-1">
+          Las tareas que le asignes a otra persona del equipo van a aparecer acá.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {tasks.map((task) => (
+        <div
+          key={task.id}
+          className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer"
+          onClick={() => onEdit(task)}
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className={cn(
+                "text-sm font-semibold text-navy truncate",
+                task.status === "COMPLETADA" && "line-through text-muted-foreground"
+              )}>
+                {task.title}
+              </p>
+              <PriorityBadge priority={task.priority} />
+              {task.status === "COMPLETADA" && (
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border leading-none uppercase tracking-tighter shrink-0 bg-emerald-50 text-emerald-600 border-emerald-100">
+                  Completada
+                </span>
+              )}
+            </div>
+            {task.description && (
+              <p className="text-xs text-muted-foreground truncate mt-0.5">{task.description}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-6 shrink-0">
+            <DueDateBadge dueDate={task.dueDate} status={task.status} />
+            {task.assigneeName && (
+              <div className="hidden md:flex items-center gap-1 bg-violet-50 text-violet-700 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                <UserRound className="w-3 h-3" />
+                Asignada a {task.assigneeName}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
