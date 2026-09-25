@@ -4,7 +4,6 @@ import { api } from "@/lib/api";
 import { useRequests, useChangeRequestStatus } from "@/hooks/useRequests";
 import { RequestsTable } from "./RequestsTable";
 import { RequestFormDialog } from "./RequestFormDialog";
-import { RequestDetailSheet } from "./RequestDetailSheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,17 +18,17 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { STATUS_PHASES, getStatusLabel } from "@/lib/workflow-status";
 import { ExportMenu } from "@/components/shared/ExportMenu";
 
 export default function RequestsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -38,7 +37,7 @@ export default function RequestsPage() {
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
-  
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -55,21 +54,6 @@ export default function RequestsPage() {
   });
 
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
-
-  // Deep-link desde otras pantallas (p.ej. /servicios) para abrir directamente el detalle de
-  // una Solicitud: /solicitudes?view=<requestId>.
-  useEffect(() => {
-    const viewId = searchParams.get("view");
-    if (viewId && requests.length > 0) {
-      const found = requests.find((r: any) => r.id === viewId);
-      if (found) {
-        setSelectedRequest(found);
-        setIsDetailOpen(true);
-      }
-      searchParams.delete("view");
-      setSearchParams(searchParams, { replace: true });
-    }
-  }, [searchParams, setSearchParams, requests]);
 
   const matchesTab = (status: string) => {
     if (activeTab === "all") return true;
@@ -93,12 +77,10 @@ export default function RequestsPage() {
   const handleEdit = (request: any) => {
     setSelectedRequest(request);
     setIsFormOpen(true);
-    setIsDetailOpen(false);
   };
 
   const handleView = (request: any) => {
-    setSelectedRequest(request);
-    setIsDetailOpen(true);
+    navigate(`/solicitudes/${request.id}`);
   };
 
   const handleAdd = () => {
@@ -115,10 +97,6 @@ export default function RequestsPage() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["requests"] });
         toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." });
-        if (selectedRequest) {
-          const updated = requests.find((r: any) => r.id === selectedRequest.id);
-          if (updated) setSelectedRequest(updated);
-        }
       }
     });
   };
@@ -261,19 +239,9 @@ export default function RequestsPage() {
         onSuccess={(savedRequest, wasCreated) => {
           queryClient.invalidateQueries({ queryKey: ["requests"] });
           if (wasCreated && savedRequest) {
-            setSelectedRequest(savedRequest);
-            setIsDetailOpen(true);
+            navigate(`/solicitudes/${savedRequest.id}`);
           }
         }}
-      />
-
-      <RequestDetailSheet 
-        open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
-        request={selectedRequest}
-        clients={clients}
-        onStatusChange={handleStatusChange}
-        onEdit={handleEdit}
       />
     </div>
   );

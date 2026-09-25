@@ -415,7 +415,7 @@ export default function ClientTimelinePage() {
                   className="w-full gap-2 font-bold" 
                   onClick={() => {
                     const idParam = selectedEvent.originalData.id ? `?search=${selectedEvent.originalData.id}` : '';
-                    if (selectedEvent.type === "solicitud") navigate(`/solicitudes${idParam}`);
+                    if (selectedEvent.type === "solicitud") navigate(`/solicitudes/${selectedEvent.originalData.id}`);
                     if (selectedEvent.type === "cotizacion") navigate(`/cotizaciones${idParam}`);
                     if (selectedEvent.type === "pago") navigate(`/pagos${idParam}`);
                     if (selectedEvent.type === "voucher") navigate(`/vouchers${idParam}`);

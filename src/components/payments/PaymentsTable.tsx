@@ -226,7 +226,7 @@ export function PaymentsTable({
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="cursor-pointer text-blue-600"
-                              onClick={() => navigate(`/solicitudes?view=${payment.requestId}`)}
+                              onClick={() => navigate(`/solicitudes/${payment.requestId}`)}
                             >
                               <ExternalLink className="mr-2 h-4 w-4" /> Ver solicitud
                             </DropdownMenuItem>

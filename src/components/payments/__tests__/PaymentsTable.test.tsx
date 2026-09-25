@@ -47,10 +47,7 @@ describe("PaymentsTable", () => {
     navigateMock.mockClear();
   });
 
-  // Regresión: "Ver solicitud" apuntaba a /solicitudes/:id, una ruta que no
-  // existe (la página de Solicitudes usa el patrón ?view=<id> para abrir el
-  // detalle), así que el botón caía siempre en el catch-all 404.
-  it("el botón 'Ver solicitud' navega a /solicitudes?view=<requestId>", async () => {
+  it("el botón 'Ver solicitud' navega a /solicitudes/:requestId", async () => {
     const user = userEvent.setup();
     renderTable();
 
@@ -62,7 +59,7 @@ describe("PaymentsTable", () => {
     await user.click(verSolicitud);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith(`/solicitudes?view=${PAYMENT.requestId}`);
+      expect(navigateMock).toHaveBeenCalledWith(`/solicitudes/${PAYMENT.requestId}`);
     });
   });
 
