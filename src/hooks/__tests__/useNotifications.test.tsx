@@ -161,4 +161,30 @@ describe("useNotifications hook", () => {
       expect(patchSpy).toHaveBeenCalledWith("/notifications/read-all");
     });
   });
+
+  it("hace polling cada 30 s (no más a menudo, para no agotar el rate limit de la API)", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const getSpy = vi.spyOn(api, "get").mockImplementation(async (url: string) => ({
+        data: url === "/notifications" ? { data: [], unreadCount: 0, total: 0 } : { data: {} },
+      }) as any);
+      const client = createQueryClient();
+      render(
+        <Wrapper client={client}>
+          <NotificationsTestComponent />
+        </Wrapper>
+      );
+      const calls = (u: string) => getSpy.mock.calls.filter((c) => c[0] === u).length;
+
+      await waitFor(() => expect(calls("/notifications")).toBe(1));
+      await vi.advanceTimersByTimeAsync(29_000);
+      expect(calls("/notifications")).toBe(1);
+      expect(calls("/notifications/stats")).toBe(1);
+      await vi.advanceTimersByTimeAsync(1_500);
+      await waitFor(() => expect(calls("/notifications")).toBe(2));
+      expect(calls("/notifications/stats")).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

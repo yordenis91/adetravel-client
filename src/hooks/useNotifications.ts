@@ -32,20 +32,20 @@ export interface NotificationResponse {
 
 /**
  * Hook para gestionar notificaciones del usuario
- * Incluye polling cada 5 segundos, mutations para marcar como leída, eliminar, etc.
+ * Incluye polling cada 30 segundos, mutations para marcar como leída, eliminar, etc.
  */
 export function useNotifications() {
   const queryClient = useQueryClient();
 
-  // Query: Obtener todas las notificaciones con polling cada 5 segundos
+  // Query: Obtener todas las notificaciones con polling cada 30 segundos
   const notificationsQuery = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
       const response = await api.get("/notifications");
       return response.data;
     },
-    refetchInterval: 5000, // Polling cada 5 segundos
-    staleTime: 4000, // Datos válidos por 4 segundos
+    refetchInterval: 30000, // Polling cada 30 segundos
+    staleTime: 25000, // Datos válidos por 25 segundos
   });
 
   // Query: Obtener estadísticas de notificaciones
@@ -55,8 +55,8 @@ export function useNotifications() {
       const response = await api.get("/notifications/stats");
       return response.data;
     },
-    refetchInterval: 5000,
-    staleTime: 4000,
+    refetchInterval: 30000,
+    staleTime: 25000,
   });
 
   // Mutation: Marcar una notificación como leída
