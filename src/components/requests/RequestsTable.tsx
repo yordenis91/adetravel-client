@@ -35,6 +35,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { STATUS_LABELS, VALID_TRANSITIONS, WorkflowStatus } from "@/lib/workflow-status";
 
+import { PermissionGuard } from "@/components/PermissionGuard";
+
 interface RequestsTableProps {
   requests: any[];
   isLoading: boolean;
@@ -60,10 +62,13 @@ export function RequestsTable({
     setPendingChange(null);
   };
 
-  const getClientName = (clientId: string) => {
+  // `embedded` es el cliente que la API ya incluye en cada solicitud: sirve cuando
+  // el usuario no puede cargar la lista de clientes (sin VIEW_CLIENTS) y evita dejar
+  // "Cargando..." para siempre.
+  const getClientName = (clientId: string, embedded?: { firstName?: string; lastName?: string } | null) => {
     if (!clientId) return "Sin cliente asignado";
-    const client = clients.find(c => c.id === clientId);
-    return client ? `${client.firstName} ${client.lastName}` : "Cargando...";
+    const client = clients.find(c => c.id === clientId) ?? embedded;
+    return client ? `${client.firstName} ${client.lastName}` : "Cliente no disponible";
   };
 
   const formatCurrency = (amount: number) => {
@@ -119,7 +124,7 @@ export function RequestsTable({
                 )}
               </TableCell>
               <TableCell>
-                <p className="text-sm font-bold text-navy">{getClientName(request.clientId)}</p>
+                <p className="text-sm font-bold text-navy">{getClientName(request.clientId, request.client)}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-tight">ID: {request.clientId?.substring(0, 8) ?? 'N/A'}</p>
               </TableCell>
               <TableCell>
@@ -161,6 +166,7 @@ export function RequestsTable({
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(request)}>
                     <Eye className="w-4 h-4" />
                   </Button>
+                  <PermissionGuard permission="MANAGE_REQUESTS">
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(request)}>
                     <Edit2 className="w-4 h-4" />
                   </Button>
@@ -197,6 +203,7 @@ export function RequestsTable({
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  </PermissionGuard>
                 </div>
               </TableCell>
             </TableRow>
