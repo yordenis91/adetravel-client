@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -14,25 +15,35 @@ interface Alert {
 }
 
 export function PendingAlerts() {
+  const { hasPermission } = useAuth();
+  const canPayments = hasPermission("VIEW_PAYMENTS");
+  const canRequests = hasPermission("VIEW_REQUESTS");
+  const canQuotations = hasPermission("VIEW_QUOTATIONS");
+  const canVouchers = hasPermission("VIEW_VOUCHERS");
+
   // 🔥 1. Consultas optimizadas a tu API real (Limitadas y filtradas para no colapsar la memoria)
   const { data: payData, isLoading: loadingPayments } = useQuery({
     queryKey: ["alerts-payments"],
     queryFn: () => api.get('/payments?status=PENDIENTE&limit=20'),
+    enabled: canPayments,
   });
 
   const { data: reqData, isLoading: loadingRequests } = useQuery({
     queryKey: ["alerts-requests"],
     queryFn: () => api.get('/requests?limit=100'),
+    enabled: canRequests,
   });
 
   const { data: quotData, isLoading: loadingQuotations } = useQuery({
     queryKey: ["alerts-quotations"],
     queryFn: () => api.get('/quotations?status=ENVIADA&limit=50'),
+    enabled: canQuotations,
   });
 
   const { data: vouchData, isLoading: loadingVouchers } = useQuery({
     queryKey: ["alerts-vouchers"],
     queryFn: () => api.get('/vouchers?limit=100'),
+    enabled: canVouchers,
   });
 
   const isLoading = loadingPayments || loadingRequests || loadingQuotations || loadingVouchers;
@@ -161,6 +172,9 @@ export function PendingAlerts() {
 
     return generatedAlerts;
   }, [isLoading, payments, vouchers, requests, quotations]);
+
+  // Sin ninguno de los cuatro permisos no hay nada que avisar: no se muestra el widget.
+  if (!canPayments && !canRequests && !canQuotations && !canVouchers) return null;
 
   if (isLoading) {
     return (

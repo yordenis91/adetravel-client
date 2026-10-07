@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import * as Sentry from "@sentry/react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { StatsCard } from "./StatsCard";
 import { RecentRequests } from "./RecentRequests";
 import { ExchangeRatesWidget } from "./ExchangeRatesWidget";
@@ -27,16 +28,22 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 export default function DashboardPage() {
+  const { hasPermission } = useAuth();
+  const canReports = hasPermission("VIEW_REPORTS");
+  const canConfig = hasPermission("MANAGE_SYSTEM_CONFIG");
+
   // 🔥 Una SOLA petición ultra-rápida que trae todos los KPIs pre-calculados
   const { data: response, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
-    queryFn: () => api.get('/reports')
+    queryFn: () => api.get('/reports'),
+    enabled: canReports,
   });
 
   // 🔥 NUEVO: Obtener la configuración del sistema para las Tasas de Cambio
   const { data: configData } = useQuery({
     queryKey: ["system-config"],
-    queryFn: () => api.get('/system-config')
+    queryFn: () => api.get('/system-config'),
+    enabled: canConfig,
   });
 
   // Extraer y parsear las tasas de forma segura
@@ -122,6 +129,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {canReports && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total Clientes"
@@ -164,10 +172,11 @@ export default function DashboardPage() {
           delay={0.4}
         />
       </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <RecentRequests />
+          {hasPermission("VIEW_REQUESTS") && <RecentRequests />}
         </div>
 
         <div className="space-y-6">
@@ -175,6 +184,7 @@ export default function DashboardPage() {
             <div className="relative z-10">
               <h3 className="text-lg font-playfair font-bold mb-4">Acciones Rápidas</h3>
               <div className="grid grid-cols-1 gap-3">
+                {hasPermission("MANAGE_REQUESTS") && (
                 <Button asChild variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
                   <Link to="/solicitudes?action=new">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-110 duration-300">
@@ -183,7 +193,9 @@ export default function DashboardPage() {
                     <span className="text-xs font-bold uppercase tracking-wider">Nueva Solicitud</span>
                   </Link>
                 </Button>
+                )}
 
+                {hasPermission("CREATE_CLIENT") && (
                 <Button asChild variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
                   <Link to="/clientes?action=new">
                     <div className="w-8 h-8 rounded-lg bg-emerald-400 flex items-center justify-center group-hover:scale-110 duration-300">
@@ -192,7 +204,9 @@ export default function DashboardPage() {
                     <span className="text-xs font-bold uppercase tracking-wider">Nuevo Cliente</span>
                   </Link>
                 </Button>
+                )}
 
+                {hasPermission("MANAGE_PROVIDERS") && (
                 <Button asChild variant="secondary" className="w-full justify-start gap-3 bg-white/10 hover:bg-white/20 border-white/5 text-white hover:text-white transition-all group">
                   <Link to="/proveedores?action=new">
                     <div className="w-8 h-8 rounded-lg bg-blue-400 flex items-center justify-center group-hover:scale-110 duration-300">
@@ -201,6 +215,7 @@ export default function DashboardPage() {
                     <span className="text-xs font-bold uppercase tracking-wider">Nuevo Proveedor</span>
                   </Link>
                 </Button>
+                )}
               </div>
             </div>
             <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-primary/20 rounded-full blur-3xl"></div>
@@ -209,8 +224,8 @@ export default function DashboardPage() {
 
           <PendingAlerts />
           <TasksWidget />
-          <ExchangeRatesWidget exchangeRates={exchangeRates} />
-          <BirthdayReminder />
+          {canConfig && <ExchangeRatesWidget exchangeRates={exchangeRates} />}
+          {hasPermission("VIEW_CLIENTS") && <BirthdayReminder />}
 
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             {/* ... tus avisos pendientes ... */}
