@@ -82,10 +82,21 @@ export default function UsuariosPage() {
       // Ajusta esta ruta según cómo tengas configurado tu router de auth en el backend
       return await api.post('/auth/invite', userData); 
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['users', 'stats'] });
-      toast.success("Usuario creado e invitación enviada");
+      // El backend crea el usuario aunque el correo falle (o el SMTP no esté configurado);
+      // en ese caso hay que avisarlo y dar otra vía para que la persona entre.
+      const emailSent = (result as { data?: { emailSent?: boolean } })?.data?.emailSent;
+      if (emailSent === false) {
+        toast.warning("Usuario creado, pero no se pudo enviar el correo", {
+          description:
+            "Revisa la configuración de correo (SMTP). Mientras tanto puedes entregarle la contraseña temporal por otro medio.",
+          duration: 10000,
+        });
+      } else {
+        toast.success("Usuario creado e invitación enviada");
+      }
       setIsCreateModalOpen(false);
       setNewUser({ fullName: "", email: "", password: "", role: "USUARIO", agencyRole: "AGENTE_VENTAS" }); // Reset
     },
@@ -166,7 +177,7 @@ export default function UsuariosPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-navy">Contraseña Temporal</label>
-                <Input required type="password" placeholder="Min. 8 caracteres" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} />
+                <Input required type="password" placeholder="8+ caracteres, mayúscula, número y símbolo (!@#$%^&*)" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-navy">Rol en la Agencia</label>
