@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { GreetingName } from "./GreetingName";
 
 export default function DashboardPage() {
   // 🔥 Una SOLA petición ultra-rápida que trae todos los KPIs pre-calculados
@@ -108,7 +109,7 @@ export default function DashboardPage() {
             >
               <GreetingIcon className={`w-8 h-8 ${iconColor}`} />
             </motion.div>
-            <h1 className="text-3xl font-playfair font-bold text-navy">{greeting}, Admin</h1>
+            <h1 className="text-3xl font-playfair font-bold text-navy">{greeting}<GreetingName /></h1>
           </div>
           <p className="text-muted-foreground text-sm">
             Esto es lo que está pasando hoy, {new Date().toLocaleDateString("es-CL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.

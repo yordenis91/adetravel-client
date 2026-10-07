@@ -121,8 +121,22 @@ const App = () => (
               {/* RUTAS PROTEGIDAS ANIDADAS EN EL LAYOUT */}
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/clientes" element={<Clients />} />
-                <Route path="/clientes/:clientId/timeline" element={<ClientTimeline />} />
+                <Route
+                  path="/clientes"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_CLIENTS">
+                      <Clients />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/clientes/:clientId/timeline"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_CLIENTS">
+                      <ClientTimeline />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/proveedores"
                   element={
@@ -139,13 +153,62 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/solicitudes" element={<Requests />} />
-                <Route path="/solicitudes/:requestId" element={<RequestDetail />} />
-                <Route path="/servicios" element={<Services />} />
-                <Route path="/cotizaciones" element={<Quotations />} />
-                <Route path="/confirmaciones" element={<Confirmaciones />} />
-                <Route path="/pagos" element={<Payments />} />
-                <Route path="/vouchers" element={<Vouchers />} />
+                <Route
+                  path="/solicitudes"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_REQUESTS">
+                      <Requests />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/solicitudes/:requestId"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_REQUESTS">
+                      <RequestDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/servicios"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_SERVICES">
+                      <Services />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/cotizaciones"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_QUOTATIONS">
+                      <Quotations />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/confirmaciones"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_CONFIRMATIONS">
+                      <Confirmaciones />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pagos"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_PAYMENTS">
+                      <Payments />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/vouchers"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_VOUCHERS">
+                      <Vouchers />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/reportes"
                   element={
@@ -154,7 +217,14 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/nomencladores" element={<Nomencladores />} />
+                <Route
+                  path="/nomencladores"
+                  element={
+                    <ProtectedRoute requiredPermission="VIEW_CATALOGS">
+                      <Nomencladores />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/bitacora"
                   element={
