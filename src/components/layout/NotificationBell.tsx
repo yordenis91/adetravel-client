@@ -18,7 +18,7 @@ export function NotificationBell() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   
-  // 🔥 Usar el hook centralizado que ya maneja queries, mutations y polling cada 5s
+  // 🔥 Usar el hook centralizado que ya maneja queries, mutations y polling cada 30s
   const { 
     notifications, 
     unreadCount, 
