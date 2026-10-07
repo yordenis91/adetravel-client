@@ -23,6 +23,7 @@ FROM nginx:1.27-alpine
 
 # Copiar la configuración personalizada de Nginx para soportar SPA routing
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx-security-headers.conf /etc/nginx/snippets/security-headers.conf
 
 # Copiar los archivos estáticos compilados desde la etapa anterior al directorio de Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
