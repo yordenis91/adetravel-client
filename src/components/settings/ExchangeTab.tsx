@@ -477,7 +477,7 @@ const handleSyncApi = async () => {
         title="¿Eliminar tasa de cambio?"
         description="Esta acción no se puede deshacer y la tasa dejará de mostrarse en el Dashboard."
         onConfirm={() => rateToDelete && handleDeleteRate(rateToDelete)}
-        variant="destructive"
+        variant="danger"
       />
     </div>
   );

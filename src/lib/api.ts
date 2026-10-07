@@ -91,11 +91,11 @@ async function requestBlob(path: string): Promise<Blob> {
 export const api = {
   get: (path: string) => request(path),
   getBlob: (path: string) => requestBlob(path),
-  post: (path: string, body: unknown) =>
+  post: (path: string, body?: unknown) =>
     request(path, { method: "POST", body: JSON.stringify(body) }),
-  put: (path: string, body: unknown) =>
+  put: (path: string, body?: unknown) =>
     request(path, { method: "PUT", body: JSON.stringify(body) }),
-  patch: (path: string, body: unknown) =>
+  patch: (path: string, body?: unknown) =>
     request(path, { method: "PATCH", body: JSON.stringify(body) }),
   delete: (path: string) => request(path, { method: "DELETE" }),
 };

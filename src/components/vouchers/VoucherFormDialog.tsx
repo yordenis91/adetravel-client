@@ -123,7 +123,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
   });
 
   const { fields, append, remove } = useFieldArray({
-    control: form.control,
+    control: form.control as any,
     name: "passengerNames" as any
   });
 

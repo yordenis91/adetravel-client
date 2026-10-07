@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // jsdom no implementa estas APIs del navegador; varios componentes Radix UI
 // (Select, Popover, Command/cmdk) las usan y sin esto los tests que los

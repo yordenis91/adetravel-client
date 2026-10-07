@@ -70,7 +70,10 @@ describe("PaymentFormDialog", () => {
     renderDialog(EXISTING_PAYMENT);
 
     const submitButton = await screen.findByRole("button", { name: /Actualizar Registro/i });
-    fireEvent.click(submitButton);
+    // Esperar a que el efecto del formulario cargue el pago antes de enviarlo, y enviar el <form>
+    // directamente: el click sobre el botón dentro del Sheet de Radix no dispara el submit en jsdom.
+    await waitFor(() => expect(screen.getByDisplayValue("1500")).toBeInTheDocument());
+    fireEvent.submit(submitButton.closest("form")!);
 
     await waitFor(() => {
       expect(patchSpy).toHaveBeenCalledWith(`/payments/${EXISTING_PAYMENT.id}`, expect.any(Object));
