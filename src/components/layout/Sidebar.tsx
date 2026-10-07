@@ -42,20 +42,20 @@ const navSections = [
   {
     title: "Gestión",
     items: [
-      { name: "Clientes", icon: Users, path: "/clientes" },
+      { name: "Clientes", icon: Users, path: "/clientes", permission: "VIEW_CLIENTS" },
       { name: "Proveedores", icon: Building2, path: "/proveedores", permission: "VIEW_PROVIDERS" },
-      { name: "Solicitudes", icon: FileText, path: "/solicitudes" },
+      { name: "Solicitudes", icon: FileText, path: "/solicitudes", permission: "VIEW_REQUESTS" },
       { name: "Tareas", icon: ClipboardList, path: "/tareas" },
     ]
   },
   {
     title: "Operaciones",
     items: [
-      { name: "Servicios", icon: Package2, path: "/servicios" },
-      { name: "Cotizaciones", icon: Calculator, path: "/cotizaciones" },
-      { name: "Confirmaciones", icon: CheckCircle2, path: "/confirmaciones" },
-      { name: "Pagos", icon: CreditCard, path: "/pagos" },
-      { name: "Vouchers", icon: Ticket, path: "/vouchers" },
+      { name: "Servicios", icon: Package2, path: "/servicios", permission: "VIEW_SERVICES" },
+      { name: "Cotizaciones", icon: Calculator, path: "/cotizaciones", permission: "VIEW_QUOTATIONS" },
+      { name: "Confirmaciones", icon: CheckCircle2, path: "/confirmaciones", permission: "VIEW_CONFIRMATIONS" },
+      { name: "Pagos", icon: CreditCard, path: "/pagos", permission: "VIEW_PAYMENTS" },
+      { name: "Vouchers", icon: Ticket, path: "/vouchers", permission: "VIEW_VOUCHERS" },
     ]
   },
   {
@@ -65,7 +65,7 @@ const navSections = [
       { name: "Configuración", icon: Settings, path: "/configuracion", permission: "MANAGE_SYSTEM_CONFIG" },
       { name: "Plantillas de Email", icon: Mail, path: "/plantillas-email", permission: "MANAGE_TEMPLATES" },
       { name: "Permisos", icon: ShieldCheck, path: "/permisos", permission: "MANAGE_PERMISSIONS" },
-      { name: "Nomencladores", icon: BookOpen, path: "/nomencladores" },
+      { name: "Nomencladores", icon: BookOpen, path: "/nomencladores", permission: "VIEW_CATALOGS" },
     ]
   },
   {
