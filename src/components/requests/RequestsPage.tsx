@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { PermissionGuard } from "@/components/PermissionGuard";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { STATUS_PHASES, getStatusLabel } from "@/lib/workflow-status";
 import { ExportMenu } from "@/components/shared/ExportMenu";
@@ -48,9 +50,13 @@ export default function RequestsPage() {
   const { data: requestsResponseData, isLoading: isRequestsLoading } = useRequests({});
   const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
 
+  // La lista de clientes solo se pide con VIEW_CLIENTS; sin él la tabla usa el cliente
+  // que ya viene incrustado en cada solicitud.
+  const { hasPermission } = useAuth();
   const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients-all"],
-    queryFn: async () => await api.get('/clients')
+    queryFn: async () => await api.get('/clients'),
+    enabled: hasPermission("VIEW_CLIENTS"),
   });
 
   const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
@@ -122,7 +128,10 @@ export default function RequestsPage() {
             filename="solicitudes_adetravel"
             data={filteredRequests.map((r: any) => ({
               numero: r.requestNumber,
-              cliente: clients.find((c: any) => c.id === r.clientId)?.firstName + " " + (clients.find((c: any) => c.id === r.clientId)?.lastName || ""),
+              cliente: (() => {
+                const c = clients.find((cl: any) => cl.id === r.clientId) ?? r.client;
+                return c ? `${c.firstName} ${c.lastName || ""}`.trim() : "";
+              })(),
               destino: [r.destinationCity, r.destinationCountry].filter(Boolean).join(", "),
               estado: getStatusLabel(r.status),
               fecha: r.requestDate,
@@ -135,10 +144,12 @@ export default function RequestsPage() {
               { key: "fecha", label: "Fecha" },
             ]}
           />
+          <PermissionGuard permission="MANAGE_REQUESTS">
           <Button onClick={handleAdd} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" />
             Nueva Solicitud
           </Button>
+          </PermissionGuard>
         </div>
       </div>
 

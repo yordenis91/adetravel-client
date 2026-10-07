@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { ApiError } from "@/lib/api";
 import { Loader2, Lock, Eye, EyeOff } from "lucide-react";
 
 // 🛡️ Validación estricta y segura
@@ -59,11 +60,26 @@ export default function Login() {
       await login(values.email, values.password);
       toast.success("Autenticación exitosa", { description: "Bienvenido al panel administrativo" });
       navigate("/dashboard", { replace: true });
-    } catch (error: any) {
-      // 🔒 Seguridad: Mensaje genérico para evitar filtración de usuarios
-      toast.error("Credenciales inválidas", {
-        description: "El correo o la contraseña no son correctos. Intenta nuevamente."
-      });
+    } catch (error: unknown) {
+      // Solo un 401 significa "credenciales incorrectas". Antes cualquier fallo
+      // (límite de intentos, cuenta desactivada, servidor caído) se mostraba así
+      // y llevaba a creer que la contraseña estaba mal.
+      // 🔒 Seguridad: el 401 sigue siendo un mensaje genérico (no revela si el usuario existe).
+      if (error instanceof ApiError && error.status === 429) {
+        toast.error("Demasiados intentos", {
+          description: "Espera unos minutos antes de volver a intentarlo."
+        });
+      } else if (error instanceof ApiError && error.code === "USER_INACTIVE") {
+        toast.error("Cuenta desactivada", { description: "Contacta al administrador." });
+      } else if (error instanceof ApiError && error.status === 401) {
+        toast.error("Credenciales inválidas", {
+          description: "El correo o la contraseña no son correctos. Intenta nuevamente."
+        });
+      } else {
+        toast.error("No pudimos iniciar sesión", {
+          description: "Hubo un problema de conexión o del servidor. Intenta de nuevo en unos minutos."
+        });
+      }
     } finally {
       setLoading(false);
     }

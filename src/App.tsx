@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom
 import * as Sentry from "@sentry/react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { isChunkLoadError } from "@/lib/chunk-reload";
 import { Loader2 } from "lucide-react";
 
 // 1. PRIMERO: Todas las importaciones estáticas (Rutas públicas)
@@ -75,15 +76,19 @@ const FallbackError = ({ error, resetError }: { error: unknown; componentStack: 
       {/* Icono de advertencia rápido */}
       <span className="text-2xl font-bold">!</span>
     </div>
-    <h2 className="text-2xl font-playfair font-bold text-navy mb-2">Ups, algo salió mal</h2>
+    <h2 className="text-2xl font-playfair font-bold text-navy mb-2">
+      {isChunkLoadError(error) ? "Hay una versión nueva del portal" : "Ups, algo salió mal"}
+    </h2>
     <p className="text-muted-foreground max-w-md mb-6">
-      Hemos detectado un error inesperado y nuestro equipo técnico ya ha sido notificado automáticamente.
+      {isChunkLoadError(error)
+        ? "El portal se actualizó mientras lo tenías abierto. Recarga la página para continuar."
+        : "Hemos detectado un error inesperado y nuestro equipo técnico ya ha sido notificado automáticamente."}
     </p>
     <button 
-      onClick={resetError} 
+      onClick={isChunkLoadError(error) ? () => window.location.reload() : resetError} 
       className="bg-navy hover:bg-navy-light text-white font-bold py-2 px-6 rounded-xl transition-all"
     >
-      Intentar recargar la página
+      {isChunkLoadError(error) ? "Recargar la página" : "Intentar recargar la página"}
     </button>
     <p className="text-xs text-slate-400 mt-8 font-mono">
       Error ID: {error instanceof Error ? error.message : "Desconocido"}

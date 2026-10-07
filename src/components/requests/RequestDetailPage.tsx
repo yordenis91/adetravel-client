@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import { useRequest, useChangeRequestStatus } from "@/hooks/useRequests";
 import {
   ArrowLeft,
@@ -64,22 +65,28 @@ export default function RequestDetailPage() {
   const { data: request, isLoading: isRequestLoading } = useRequest(requestId!);
   const updateStatusMutation = useChangeRequestStatus();
 
+  // Datos auxiliares: solo se piden si el usuario tiene el permiso de ese módulo
+  // (la API respondería 403); sin ellos la pantalla sigue funcionando con menos detalle.
+  const { hasPermission } = useAuth();
+
   const { data: clientsResponse = [] } = useQuery({
     queryKey: ["clients-all"],
     queryFn: async () => await api.get("/clients"),
+    enabled: hasPermission("VIEW_CLIENTS"),
   });
   const clients = Array.isArray(clientsResponse) ? clientsResponse : (clientsResponse as any)?.data || [];
 
   const { data: providersResponse = [] } = useQuery({
     queryKey: ["providers-all"],
     queryFn: async () => await api.get("/providers?limit=200"),
+    enabled: hasPermission("VIEW_PROVIDERS"),
   });
   const providers = Array.isArray(providersResponse) ? providersResponse : (providersResponse as any)?.data || [];
 
   const { data: logsResponse = [], isLoading: isLogsLoading } = useQuery({
     queryKey: ["request-logs", requestId],
     queryFn: async () => await api.get(`/activity-logs?entityId=${requestId}&limit=100`),
-    enabled: !!requestId,
+    enabled: !!requestId && hasPermission("VIEW_LOGS"),
   });
   const logs = Array.isArray(logsResponse) ? logsResponse : (logsResponse as any)?.data || [];
 

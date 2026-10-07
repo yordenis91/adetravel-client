@@ -54,6 +54,49 @@ export function extractTotalFromResponse<T>(response: ApiResponse<T>): number {
   return 0;
 }
 
+/**
+ * Error de una respuesta HTTP no exitosa. `message` sigue siendo el cuerpo crudo
+ * de la respuesta (lo que espera `getErrorMessage`); `status` y `code` permiten
+ * distinguir sesión vencida (401) de falta de permisos (403) sin parsear texto.
+ */
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(status: number, body: string) {
+    super(body);
+    this.name = "ApiError";
+    this.status = status;
+    try {
+      this.code = JSON.parse(body)?.code;
+    } catch {
+      /* cuerpo no JSON (p.ej. HTML de un proxy): sin code */
+    }
+  }
+}
+
+/** True si el error es un 403 del backend (el usuario no tiene el permiso). */
+export const isForbiddenError = (error: unknown): boolean =>
+  error instanceof ApiError && error.status === 403;
+
+type ApiEventHandlers = {
+  onUnauthorized?: () => void;
+  onForbidden?: (error: ApiError) => void;
+};
+let handlers: ApiEventHandlers = {};
+
+/** El AuthProvider registra aquí qué hacer ante 401 (cerrar sesión) y 403 (avisar y resincronizar permisos). */
+export function setApiEventHandlers(next: ApiEventHandlers) {
+  handlers = next;
+}
+
+async function failFrom(res: Response, path: string): Promise<never> {
+  const error = new ApiError(res.status, await res.text());
+  // El 401 de /auth/login es "credenciales incorrectas", no una sesión vencida.
+  if (res.status === 401 && !path.startsWith("/auth/login")) handlers.onUnauthorized?.();
+  if (res.status === 403) handlers.onForbidden?.(error);
+  throw error;
+}
+
 async function request(path: string, options?: RequestInit) {
   const token = localStorage.getItem("ade_token");
   const res = await fetch(`${BASE}${path}`, {
@@ -64,9 +107,7 @@ async function request(path: string, options?: RequestInit) {
     ...options,
   });
 
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
+  if (!res.ok) return failFrom(res, path);
 
   return res.json();
 }
@@ -81,9 +122,7 @@ async function requestBlob(path: string): Promise<Blob> {
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
 
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
+  if (!res.ok) return failFrom(res, path);
 
   return res.blob();
 }

@@ -2,6 +2,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import * as Sentry from "@sentry/react";
+import { installChunkReloadHandler } from "./lib/chunk-reload";
+
+// Tras un despliegue nuevo, las pestañas con la versión vieja piden módulos que ya no existen.
+installChunkReloadHandler();
 
 const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
