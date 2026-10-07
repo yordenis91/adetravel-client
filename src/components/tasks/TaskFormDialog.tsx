@@ -478,8 +478,8 @@ export function TaskFormDialog({
         title="¿Eliminar tarea?"
         description="Esta acción no se puede deshacer. La tarea será eliminada permanentemente."
         onConfirm={handleDelete}
-        confirmText="Eliminar"
-        variant="destructive"
+        confirmLabel="Eliminar"
+        variant="danger"
       />
     </>
   );

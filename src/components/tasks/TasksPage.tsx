@@ -241,7 +241,7 @@ export default function TasksPage() {
           <div className="w-px h-6 bg-slate-200 mx-1"></div>
 
           <Button
-            variant={viewMode === "list" ? "white" : "ghost"}
+            variant="ghost"
             size="sm"
             onClick={() => setViewMode("list")}
             className={cn("px-3 rounded-lg", viewMode === "list" && "bg-white shadow-sm")}
@@ -249,7 +249,7 @@ export default function TasksPage() {
             <ListIcon className="w-4 h-4 mr-2" /> Lista
           </Button>
           <Button
-            variant={viewMode === "kanban" ? "white" : "ghost"}
+            variant="ghost"
             size="sm"
             onClick={() => setViewMode("kanban")}
             className={cn("px-3 rounded-lg", viewMode === "kanban" && "bg-white shadow-sm")}
