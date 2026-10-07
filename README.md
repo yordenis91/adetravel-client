@@ -32,7 +32,7 @@ Contenido clave de `src` (alto nivel):
 
 ## Requisitos
 
-- Node.js 18+ (recomendado)
+- Node.js 22 (el que usa el Dockerfile del backend)
 - npm / pnpm / yarn
 - Acceso al backend en `adetravel-api` o una URL a la API
 
@@ -56,7 +56,7 @@ Basado en `package.json`:
 Ejemplo rápido para desarrollo local:
 
 ```bash
-cd /var/www/html/adetravel-client
+cd adetravel-client
 npm install
 export VITE_API_URL=http://localhost:3000/api
 npm run dev
@@ -68,16 +68,23 @@ El backend se encuentra en [../adetravel-api](../adetravel-api). Comandos comune
 
 - `npm run dev` — Ejecuta el servidor en modo desarrollo (ts-node)
 - `npm run build` — Compila TypeScript
-- `npm run start` — Ejecuta el `dist` (aplica `prisma db push` antes de iniciar)
+- `npm run start` — Ejecuta el `dist` (aplica `prisma migrate deploy` antes de iniciar)
 - `npm run prisma:migrate` — Ejecuta migraciones (desarrollo)
 - `npm run seed:admin` — Crea un usuario admin de ejemplo
+- `npm run test:e2e` — Tests e2e contra un Postgres de pruebas local (`adtv-dev-pg`)
+
+No ejecutar `seed:all` en producción: carga clientes, proveedores y un flujo de demostración.
 
 Variables de entorno importantes (backend):
 
 - `DATABASE_URL` — URL de conexión PostgreSQL
 - `PORT` — Puerto del servidor (ej. `3000`)
 - `JWT_SECRET` — Secreto para firmar tokens
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` — Para envío de emails
+- `PII_ENCRYPTION_KEY` — Clave hex de 64 caracteres para cifrar pasaporte y cuenta bancaria de clientes (guardarla aparte de los backups)
+- `FRONTEND_URL` — Origen permitido por CORS y base de los enlaces de los correos
+- `ALLOW_PUBLIC_REGISTRATION` — `true` habilita `POST /auth/register`; por defecto `false` (los usuarios entran por invitación)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — Para envío de emails (la configuración guardada en Sistema → Configuración tiene prioridad)
+- `BACKUP_S3_*` — Backup diario de la base a S3 (ver `adetravel-api/OPERATIONS.md`)
 
 ## Arquitectura y despliegue
 
