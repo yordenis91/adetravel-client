@@ -14,6 +14,8 @@ interface AuthContextType {
   logout: () => void;
   /** Vuelve a pedir el usuario y sus permisos al servidor (p.ej. tras un 403 inesperado). */
   refreshUser: () => Promise<void>;
+  /** Sustituye el token de sesión (p.ej. el nuevo que devuelve la API al cambiar la contraseña). */
+  replaceToken: (token: string) => void;
 
   // Verificación de permisos granulares (ver src/config/permissions.ts en el backend)
   hasPermission: (permission: string) => boolean;
@@ -120,6 +122,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  function replaceToken(newToken: string) {
+    localStorage.setItem(TOKEN_KEY, newToken);
+    setToken(newToken);
+  }
+
   function logout() {
     // 1) remove token from storage
     auth.logout();
@@ -161,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         refreshUser,
+        replaceToken,
         hasPermission,
         hasAnyPermission,
         hasAllPermissions,
