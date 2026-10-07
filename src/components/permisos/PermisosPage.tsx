@@ -15,7 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ShieldCheck, Save, Loader2, Search, UserCog, History, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ShieldCheck, Save, Loader2, Search, UserCog, History, X, Ban, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -263,15 +273,17 @@ interface UserPermissionsDetail {
   agencyRole: string | null;
   rolePermissions: string[];
   directGrants: { permission: string; grantedAt: string; expiresAt: string | null }[];
+  deniedPermissions?: { permission: string; grantedAt: string; expiresAt: string | null }[];
   effectivePermissions: string[];
 }
 
-function UserPermissionsPanel({ catalog }: { catalog: CatalogEntry[] }) {
+export function UserPermissionsPanel({ catalog }: { catalog: CatalogEntry[] }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [newPermission, setNewPermission] = useState<string>("");
+  const [pendingDeny, setPendingDeny] = useState<string | null>(null);
 
   const { data: usersRaw, isLoading: usersLoading } = useQuery({
     queryKey: ["permissions", "user-search", search],
@@ -307,7 +319,35 @@ function UserPermissionsPanel({ catalog }: { catalog: CatalogEntry[] }) {
     onError: (error) => toast({ variant: "destructive", title: "No se pudo revocar", description: extractError(error) }),
   });
 
+  const denyMutation = useMutation({
+    mutationFn: (permission: string) =>
+      api.post(`/permissions/users/${selectedUserId}`, { permission, effect: "DENY" }),
+    onSuccess: () => {
+      toast({ title: "Permiso quitado a este usuario" });
+      setPendingDeny(null);
+      queryClient.invalidateQueries({ queryKey: ["permissions", "user-detail", selectedUserId] });
+    },
+    onError: (error) => {
+      setPendingDeny(null);
+      toast({ variant: "destructive", title: "No se pudo quitar", description: extractError(error) });
+    },
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: (permission: string) => api.delete(`/permissions/users/${selectedUserId}/${permission}`),
+    onSuccess: () => {
+      toast({ title: "Permiso restaurado" });
+      queryClient.invalidateQueries({ queryKey: ["permissions", "user-detail", selectedUserId] });
+    },
+    onError: (error) => toast({ variant: "destructive", title: "No se pudo restaurar", description: extractError(error) }),
+  });
+
   const grantablePermissions = catalog.filter((c) => !detail?.rolePermissions.includes(c.name));
+  const denials = detail?.deniedPermissions ?? [];
+  const isActiveDenial = (d: { expiresAt: string | null }) => !d.expiresAt || new Date(d.expiresAt) > new Date();
+  const deniedNow = new Set(denials.filter(isActiveDenial).map((d) => d.permission));
+  const keptRolePermissions = (detail?.rolePermissions ?? []).filter((p) => !deniedNow.has(p));
+  const describePermission = (name: string | null) => catalog.find((c) => c.name === name)?.description ?? "";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -367,6 +407,71 @@ function UserPermissionsPanel({ catalog }: { catalog: CatalogEntry[] }) {
             <CardContent className="pt-6 space-y-6">
               {detail.systemRole !== "ADMINISTRADOR" && (
                 <>
+                  <div>
+                    <h4 className="text-sm font-bold text-navy dark:text-white mb-1">
+                      Permisos del rol ({keptRolePermissions.length})
+                    </h4>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Quitar un permiso aquí solo afecta a este usuario: el rol y los demás usuarios no cambian.
+                    </p>
+                    {detail.rolePermissions.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Este usuario no tiene rol de agencia.</p>
+                    ) : keptRolePermissions.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Se le quitaron todos los permisos del rol.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {keptRolePermissions.map((p) => (
+                          <Badge key={p} variant="outline" className="text-xs gap-1 pr-1" title={describePermission(p)}>
+                            {p}
+                            <button
+                              type="button"
+                              aria-label={`Quitar ${p} a este usuario`}
+                              className="rounded p-0.5 text-destructive hover:bg-destructive/10"
+                              onClick={() => setPendingDeny(p)}
+                            >
+                              <Ban className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-navy dark:text-white mb-2">
+                      Permisos quitados a este usuario ({deniedNow.size})
+                    </h4>
+                    {denials.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">A este usuario no se le ha quitado ningún permiso.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {denials.map((d) => (
+                          <div key={d.permission} className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
+                            <div>
+                              <span className="text-sm font-semibold">{d.permission}</span>
+                              <span className="text-xs text-muted-foreground ml-2">
+                                quitado el {format(new Date(d.grantedAt), "d MMM yyyy", { locale: es })}
+                                {d.expiresAt &&
+                                  (isActiveDenial(d)
+                                    ? ` · vence ${format(new Date(d.expiresAt), "d MMM yyyy", { locale: es })}`
+                                    : " · vencida, ya no aplica")}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              aria-label={`Restaurar ${d.permission}`}
+                              disabled={restoreMutation.isPending}
+                              onClick={() => restoreMutation.mutate(d.permission)}
+                            >
+                              <RotateCcw className="w-4 h-4 mr-1" /> Restaurar
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div>
                     <h4 className="text-sm font-bold text-navy dark:text-white mb-2">Otorgar permiso adicional</h4>
                     <div className="flex gap-2">
@@ -440,6 +545,26 @@ function UserPermissionsPanel({ catalog }: { catalog: CatalogEntry[] }) {
           </Card>
         )}
       </div>
+
+      <AlertDialog open={!!pendingDeny} onOpenChange={(open) => !open && setPendingDeny(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Quitar {pendingDeny} a {selectedUser?.fullName ?? "este usuario"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {describePermission(pendingDeny)}. Solo se le quita a esta persona; el rol y los demás usuarios no cambian.
+              Puedes restaurarlo cuando quieras. Lo notará en cuanto vuelva a iniciar sesión.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => pendingDeny && denyMutation.mutate(pendingDeny)}>
+              Quitar permiso
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -458,6 +583,8 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   ROLE_PERMISSIONS_UPDATED: "Permisos de rol actualizados",
   USER_PERMISSION_GRANTED: "Permiso otorgado a usuario",
   USER_PERMISSION_REVOKED: "Permiso revocado a usuario",
+  USER_PERMISSION_DENIED: "Permiso quitado a usuario",
+  USER_PERMISSION_DENY_REMOVED: "Permiso restaurado a usuario",
 };
 
 function AuditPanel() {
