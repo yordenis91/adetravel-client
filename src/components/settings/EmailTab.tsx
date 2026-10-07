@@ -37,13 +37,19 @@ export default function EmailTab({ config, configId }: EmailTabProps) {
     },
   });
 
+  // La API no devuelve la contraseña del SMTP (solo smtpPasswordSet): el campo empieza
+  // vacío y solo se envía si se escribe una nueva. Vacío = conservar la guardada.
+  const passwordSaved = !!config?.smtpPasswordSet;
+
   useEffect(() => {
     if (config) {
-      reset(config);
+      reset({ ...config, smtpPassword: "" });
     }
   }, [config, reset]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (formData: any) => {
+    const { smtpPasswordSet: _readOnly, ...data } = formData;
+    if (!data.smtpPassword) delete data.smtpPassword;
     try {
       if (configId) {
         await SystemConfig.update(configId, data);
@@ -106,6 +112,8 @@ export default function EmailTab({ config, configId }: EmailTabProps) {
                     id="smtpPassword" 
                     type={showPassword ? "text" : "password"} 
                     {...register("smtpPassword")} 
+                    placeholder={passwordSaved ? "Guardada · escribe una nueva para cambiarla" : ""}
+                    autoComplete="new-password"
                     className="pr-10"
                   />
                   <button 
