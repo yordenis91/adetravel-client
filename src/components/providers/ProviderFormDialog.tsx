@@ -2,14 +2,6 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,25 +9,23 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog, useCitiesForCountry } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X, Building2, MapPin, Phone, User, Settings, CreditCard } from "lucide-react";
 
+import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
+import { Headset, Landmark, UserCog } from "lucide-react";
 const providerSchema = z.object({
   name: z.string().min(2, "Razón social es requerida"),
   fantasyName: z.string().optional(),
@@ -176,36 +166,23 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[700px] p-0 flex flex-col">
-        <SheetHeader className="p-8 pb-4">
-          <SheetTitle className="text-2xl font-playfair font-bold text-navy">
-            {isEditing ? "Editar Proveedor" : "Nuevo Proveedor"}
-          </SheetTitle>
-          <SheetDescription>
-            Registra la información completa del proveedor para operaciones y pagos.
-          </SheetDescription>
-        </SheetHeader>
+    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Proveedor" : "Nuevo Proveedor"} description="Registra la información completa del proveedor para operaciones y pagos." widthClassName="sm:max-w-[700px]">
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-            <ScrollArea className="flex-1 px-8">
-              <div className="space-y-8 pb-10">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <FormSheetBody>
+              <div className="space-y-5">
                 {/* 1. Datos del Proveedor */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">1</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Datos del Proveedor</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <FormSection tone="blue" icon={Building2} title="Datos del Proveedor">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Razón Social *</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Razón Social *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ej: Transportes y Turismo SpA" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Ej: Transportes y Turismo SpA" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -216,9 +193,9 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       name="fantasyName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre Fantasía</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Nombre Fantasía</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ej: Viajes Express" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Ej: Viajes Express" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -229,9 +206,9 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       name="rut"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">RUT Empresa</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">RUT Empresa</FormLabel>
                           <FormControl>
-                            <Input placeholder="76.123.456-K" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="76.123.456-K" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -243,10 +220,10 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                     name="businessType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de Servicio</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Tipo de Servicio</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-slate-50 border-slate-100">
+                            <SelectTrigger className="bg-white">
                               <SelectValue placeholder="Selecciona tipo" />
                             </SelectTrigger>
                           </FormControl>
@@ -267,23 +244,18 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       </FormItem>
                     )}
                   />
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* 2. Ubicación */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">2</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Ubicación</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <FormSection tone="emerald" icon={MapPin} title="Ubicación">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="country"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">País</FormLabel>
                           <Combobox
                             options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
@@ -294,7 +266,7 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                             allowCustomValue
                             placeholder="Ej: Chile"
                             searchPlaceholder="Buscar o escribir país..."
-                            className="bg-slate-50 border-slate-100"
+                            className="bg-white"
                           />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -305,7 +277,7 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       name="city"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ciudad</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Ciudad</FormLabel>
                           <Combobox
                             options={cities.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
@@ -313,7 +285,7 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                             allowCustomValue
                             placeholder="Ej: Santiago"
                             searchPlaceholder="Buscar o escribir ciudad..."
-                            className="bg-slate-50 border-slate-100"
+                            className="bg-white"
                           />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -325,33 +297,28 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dirección Física</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Dirección Física</FormLabel>
                         <FormControl>
-                          <Input placeholder="Calle, Número, Oficina" {...field} className="bg-slate-50 border-slate-100" />
+                          <Input placeholder="Calle, Número, Oficina" {...field} className="bg-white" />
                         </FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )}
                   />
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* 3. Contacto General */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">3</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Contacto General</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <FormSection tone="amber" icon={Phone} title="Contacto General">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Central</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Email Central</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="central@proveedor.com" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="email" placeholder="central@proveedor.com" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -362,47 +329,42 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Teléfono Central</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Teléfono Central</FormLabel>
                           <FormControl>
-                            <Input placeholder="+56 2 1234 5678" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="+56 2 1234 5678" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* 4. Contacto Ejecutivo */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center font-bold text-xs">4</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Contacto Ejecutivo</h3>
-                  </div>
+                <FormSection tone="violet" icon={UserCog} title="Contacto Ejecutivo">
                   <FormField
                     control={form.control}
                     name="executiveName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre Ejecutivo</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Nombre Ejecutivo</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nombre del responsable comercial" {...field} className="bg-slate-50 border-slate-100" />
+                          <Input placeholder="Nombre del responsable comercial" {...field} className="bg-white" />
                         </FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="executiveEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Ejecutivo</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Email Ejecutivo</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="ejecutivo@proveedor.com" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="email" placeholder="ejecutivo@proveedor.com" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -413,47 +375,42 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       name="executivePhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Teléfono Ejecutivo</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Teléfono Ejecutivo</FormLabel>
                           <FormControl>
-                            <Input placeholder="+56 9 1234 5678" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="+56 9 1234 5678" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* 5. Contacto Operativo */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">5</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Contacto Operativo</h3>
-                  </div>
+                <FormSection tone="rose" icon={Headset} title="Contacto Operativo">
                   <FormField
                     control={form.control}
                     name="contactName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre Operativo</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Nombre Operativo</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nombre del responsable de reservas/operaciones" {...field} className="bg-slate-50 border-slate-100" />
+                          <Input placeholder="Nombre del responsable de reservas/operaciones" {...field} className="bg-white" />
                         </FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="contactEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Operativo</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Email Operativo</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="operaciones@proveedor.com" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="email" placeholder="operaciones@proveedor.com" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -464,35 +421,30 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       name="contactPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Teléfono Operativo</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Teléfono Operativo</FormLabel>
                           <FormControl>
-                            <Input placeholder="+56 9 8765 4321" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="+56 9 8765 4321" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* 6. Datos Bancarios y Pagos */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">6</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Datos Bancarios y Pagos</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <FormSection tone="blue" icon={Landmark} title="Datos Bancarios y Pagos">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="paymentMethod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Método de Pago Preferido</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Método de Pago Preferido</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-slate-50 border-slate-100">
+                              <SelectTrigger className="bg-white">
                                 <SelectValue placeholder="Selecciona" />
                               </SelectTrigger>
                             </FormControl>
@@ -514,9 +466,9 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       name="vatPercentage"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">IVA / VAT (%)</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">IVA / VAT (%)</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="number" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -528,23 +480,23 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                     name="bankName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Banco</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Banco</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nombre del Banco" {...field} className="bg-slate-50 border-slate-100" />
+                          <Input placeholder="Nombre del Banco" {...field} className="bg-white" />
                         </FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="bankAccount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">N° Cuenta</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">N° Cuenta</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ej: 123456789" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Ej: 123456789" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -555,21 +507,21 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       name="bankAccountHolder"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Titular de Cuenta</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Titular de Cuenta</FormLabel>
                           <FormControl>
-                            <Input placeholder="Razón Social o Nombre" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Razón Social o Nombre" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
               </div>
-            </ScrollArea>
+            </FormSheetBody>
 
-            <SheetFooter className="p-8 border-t border-slate-100 bg-slate-50/50">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <FormSheetFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting} className="min-w-[120px]">
@@ -582,10 +534,9 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                   isEditing ? "Guardar Cambios" : "Crear Proveedor"
                 )}
               </Button>
-            </SheetFooter>
+            </FormSheetFooter>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+      </FormSheet>
   );
 }

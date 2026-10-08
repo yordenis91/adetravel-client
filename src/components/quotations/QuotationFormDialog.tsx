@@ -2,14 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,21 +9,18 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { calculateQuotationTotals } from "@/lib/money";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +28,8 @@ import { Loader2, Plus, Trash2, X, Calculator, ReceiptText } from "lucide-react"
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
+import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
+import { FileText, ListChecks, StickyNote } from "lucide-react";
 const quotationSchema = z.object({
   requestId: z.string().min(1, "Solicitud es requerida"),
   clientId: z.string().min(1, "Cliente es requerido"),
@@ -205,42 +196,22 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
   const selectedClient = selectedRequest?.client ?? quotation?.client;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[800px] p-0 flex flex-col">
-        <SheetHeader className="p-8 pb-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-navy flex items-center justify-center text-white">
-              <ReceiptText className="w-5 h-5" />
-            </div>
-            <div>
-              <SheetTitle className="text-2xl font-playfair font-bold text-navy">
-                {isEditing ? "Editar Cotización" : "Nueva Cotización"}
-              </SheetTitle>
-              <SheetDescription>
-                Genera un documento formal de propuesta para el cliente.
-              </SheetDescription>
-            </div>
-          </div>
-        </SheetHeader>
+    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Cotización" : "Nueva Cotización"} description="Genera un documento formal de propuesta para el cliente." widthClassName="sm:max-w-[800px]">
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-            <ScrollArea className="flex-1 px-8">
-              <div className="space-y-8 pb-10">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <FormSheetBody>
+              <div className="space-y-5">
                 {/* 1. Datos Generales */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">1</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Datos de la Cotización</h3>
-                  </div>
+                <FormSection tone="blue" icon={FileText} title="Datos de la Cotización">
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="quotationNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">N° Cotización</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">N° Cotización</FormLabel>
                           <FormControl>
                             <Input {...field} readOnly className="bg-slate-50 border-slate-200 font-mono font-bold text-navy" />
                           </FormControl>
@@ -252,9 +223,9 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                       name="validUntil"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Válida Hasta *</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Válida Hasta *</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} className="bg-white border-slate-200" />
+                            <Input type="date" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -262,13 +233,13 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="requestId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Vincular Solicitud *</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Vincular Solicitud *</FormLabel>
                           <Combobox
                             options={requestOptions.options}
                             onSearchChange={requestOptions.onSearchChange}
@@ -279,14 +250,14 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                             placeholder="Selecciona una solicitud"
                             searchPlaceholder="Buscar solicitud..."
                             emptyText="Sin solicitudes."
-                            className="bg-white border-slate-200"
+                            className="bg-white"
                           />
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     <div className="space-y-2">
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cliente</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Cliente</FormLabel>
                       <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500">
                           {selectedClient ? `${selectedClient.firstName[0]}${selectedClient.lastName[0]}` : "?"}
@@ -298,16 +269,16 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="currency"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Moneda</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Moneda</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-white border-slate-200">
+                              <SelectTrigger className="bg-white">
                                 <SelectValue placeholder="Moneda" />
                               </SelectTrigger>
                             </FormControl>
@@ -325,10 +296,10 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                         name="status"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Estado</FormLabel>
+                            <FormLabel className="text-xs font-bold text-navy">Estado</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger className="bg-white border-slate-200">
+                                <SelectTrigger className="bg-white">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -344,28 +315,20 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                       />
                     )}
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* 2. Partidas / Servicios */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">2</span>
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Servicios / Partidas</h3>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-8 gap-1.5 border-dashed">
+                <FormSection tone="amber" icon={ListChecks} title="Servicios / Partidas" action={<Button type="button" variant="outline" size="sm" onClick={addItem} className="h-9 gap-1.5 border-dashed bg-white">
                       <Plus className="w-3.5 h-3.5" /> Agregar Servicio
-                    </Button>
-                  </div>
+                    </Button>}>
 
                   <div className="space-y-4">
                     {items.map((item, index) => (
                       <div key={item.id} className="group relative bg-slate-50/50 p-4 rounded-xl border border-slate-100 space-y-4">
-                        <div className="grid grid-cols-12 gap-4">
-                          <div className="col-span-5 space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Servicio / Producto</label>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-12 sm:gap-4">
+                          <div className="col-span-2 space-y-1.5 sm:col-span-5">
+                            <label className="text-xs font-bold text-navy">Servicio / Producto</label>
                             <Input 
                               placeholder="Ej: Pasaje Aéreo, Hotel, Tour" aria-label="Servicio o producto" 
                               value={item.service} 
@@ -373,8 +336,8 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                               className="bg-white"
                             />
                           </div>
-                          <div className="col-span-2 space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cantidad</label>
+                          <div className="col-span-1 space-y-1.5 sm:col-span-2">
+                            <label className="text-xs font-bold text-navy">Cantidad</label>
                             <Input 
                               type="number" 
                               value={item.quantity} aria-label="Cantidad" 
@@ -382,8 +345,8 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                               className="bg-white text-center"
                             />
                           </div>
-                          <div className="col-span-3 space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Precio Unitario ({currency})</label>
+                          <div className="col-span-1 space-y-1.5 sm:col-span-3">
+                            <label className="text-xs font-bold text-navy">Precio Unitario ({currency})</label>
                             <Input 
                               type="number" 
                               value={item.unitPrice} aria-label="Precio unitario" 
@@ -391,16 +354,16 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                               className="bg-white text-right font-medium"
                             />
                           </div>
-                          <div className="col-span-2 space-y-1.5 text-right">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Subtotal</label>
+                          <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-2 sm:block sm:space-y-1.5 sm:text-right">
+                            <label className="text-xs font-bold text-navy">Subtotal</label>
                             <div className="h-10 flex items-center justify-end px-3 font-bold text-navy text-sm">
                               {new Intl.NumberFormat(currency === "CLP" ? "es-CL" : "en-US").format(item.quantity * item.unitPrice)}
                             </div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-12 gap-4">
-                          <div className="col-span-11 space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Descripción (opcional)</label>
+                        <div className="grid grid-cols-12 gap-3 sm:gap-4">
+                          <div className="col-span-10 space-y-1.5 sm:col-span-11">
+                            <label className="text-xs font-bold text-navy">Descripción (opcional)</label>
                             <Input 
                               placeholder="Detalles adicionales, fechas, especificaciones..." 
                               value={item.description} 
@@ -409,12 +372,12 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                               className="bg-white text-xs"
                             />
                           </div>
-                          <div className="col-span-1 flex items-end justify-end pb-0.5">
+                          <div className="col-span-2 flex items-end justify-end pb-0.5 sm:col-span-1">
                             <Button 
                               type="button" 
                               variant="ghost" 
                               size="icon" aria-label="Quitar línea" 
-                              className="h-9 w-9 text-rose-400 hover:text-rose-600 hover:bg-rose-50"
+                              className="h-11 w-11 text-rose-400 sm:h-9 sm:w-9 hover:text-rose-600 hover:bg-rose-50"
                               onClick={() => removeItem(item.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -426,7 +389,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                   </div>
 
                   <div className="flex justify-end pt-4">
-                    <div className="w-[300px] bg-navy/5 p-6 rounded-2xl border border-navy/10 space-y-3">
+                    <div className="w-full sm:w-[300px] bg-navy/5 p-4 sm:p-6 rounded-2xl border border-navy/10 space-y-3">
                       <div className="flex justify-between text-xs font-medium text-muted-foreground">
                         <span>Subtotal</span>
                         <span className="font-bold text-navy">{new Intl.NumberFormat(currency === "CLP" ? "es-CL" : "en-US").format(totals.subtotal)}</span>
@@ -437,7 +400,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                         <Input 
                           type="number" 
                           aria-label={`Descuento (${currency})`}
-                          className="h-7 w-24 text-right bg-white border-navy/10" 
+                          className="h-9 w-28 text-right bg-white border-navy/10" 
                           value={discount} 
                           onChange={(e) => form.setValue("discount", Number(e.target.value))}
                         />
@@ -460,16 +423,11 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                       </div>
                     </div>
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* 3. Notas */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">3</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Notas y Condiciones</h3>
-                  </div>
+                <FormSection tone="violet" icon={StickyNote} title="Notas y Condiciones">
 
                   <div className="grid gap-6">
                     <FormField
@@ -477,9 +435,9 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                       name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Observaciones Internas</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Observaciones Internas</FormLabel>
                           <FormControl>
-                            <Textarea {...field} className="bg-white border-slate-200 min-h-[100px]" placeholder="Solo visible para el equipo..." />
+                            <Textarea {...field} className="bg-white min-h-[100px]" placeholder="Solo visible para el equipo..." />
                           </FormControl>
                         </FormItem>
                       )}
@@ -489,20 +447,20 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                       name="termsAndConditions"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Términos y Condiciones</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Términos y Condiciones</FormLabel>
                           <FormControl>
-                            <Textarea {...field} className="bg-white border-slate-200 min-h-[100px]" placeholder="Información sobre pagos, anulaciones, etc." />
+                            <Textarea {...field} className="bg-white min-h-[100px]" placeholder="Información sobre pagos, anulaciones, etc." />
                           </FormControl>
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
               </div>
-            </ScrollArea>
+            </FormSheetBody>
 
-            <SheetFooter className="p-8 border-t border-slate-100 bg-slate-50/50">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="text-muted-foreground">
+            <FormSheetFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting} className="min-w-[160px] bg-navy hover:bg-navy-light text-white font-bold shadow-lg shadow-navy/20">
@@ -512,10 +470,9 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                   <><ReceiptText className="mr-2 h-4 w-4" /> {isEditing ? "Guardar Cambios" : "Generar Cotización"}</>
                 )}
               </Button>
-            </SheetFooter>
+            </FormSheetFooter>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+      </FormSheet>
   );
 }

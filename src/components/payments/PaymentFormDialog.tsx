@@ -2,14 +2,6 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription,
-  SheetFooter
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,16 +9,14 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,13 +26,13 @@ import {
   Building2, 
   FileText, 
   Globe,
-  Loader2,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 
+import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
 const formSchema = z.object({
   requestId: z.string().min(1, "La solicitud es requerida"),
   quotationId: z.string().optional().nullable(),
@@ -217,26 +207,15 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
   }, [selectedRequestId, selectedRequest, quotations, form, isEditing, toast]);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] overflow-y-auto">
-        <SheetHeader className="mb-6 mt-4">
-          <SheetTitle className="text-2xl font-playfair font-bold text-navy">
-            {isEditing ? "Editar Pago" : "Registrar Nuevo Pago"}
-          </SheetTitle>
-          <SheetDescription>
-            Complete los detalles del pago recibido para la solicitud seleccionada.
-          </SheetDescription>
-        </SheetHeader>
+    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Pago" : "Registrar Nuevo Pago"} description="Complete los detalles del pago recibido para la solicitud seleccionada." widthClassName="sm:max-w-[600px]">
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <FormSheetBody>
             {/* Section 1: Vinculación */}
-            <div className="space-y-4 p-5 rounded-xl bg-blue-50/50 border border-blue-100">
-              <h3 className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
-                <FileText className="w-4 h-4" /> Vinculación de Solicitud
-              </h3>
+            <FormSection tone="blue" icon={FileText} title="Vinculación de Solicitud">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="requestId"
@@ -300,7 +279,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="clientId"
@@ -330,15 +309,12 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   )}
                 />
               </div>
-            </div>
+            </FormSection>
 
             {/* Section 2: Monto y Método */}
-            <div className="space-y-4 p-5 rounded-xl bg-emerald-50/50 border border-emerald-100">
-              <h3 className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2">
-                <Banknote className="w-4 h-4" /> Monto y Método
-              </h3>
+            <FormSection tone="emerald" icon={Banknote} title="Monto y Método">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="amount"
@@ -381,7 +357,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="paymentDate"
@@ -427,15 +403,12 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   )}
                 />
               </div>
-            </div>
+            </FormSection>
 
             {/* Section 3: Estado y Referencia */}
-            <div className="space-y-4 p-5 rounded-xl bg-amber-50/50 border border-amber-100">
-              <h3 className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
-                <Globe className="w-4 h-4" /> Estado y Referencia
-              </h3>
+            <FormSection tone="amber" icon={Globe} title="Estado y Referencia">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {isEditing ? (
                   <FormField
                     control={form.control}
@@ -503,12 +476,16 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   </FormItem>
                 )}
               />
-            </div>
+            </FormSection>
 
-            <SheetFooter className="pt-2">
+          </FormSheetBody>
+            <FormSheetFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
               <Button 
                 type="submit" 
-                className="w-full bg-navy hover:bg-navy-light text-white font-bold h-12"
+                className="bg-navy hover:bg-navy-light text-white font-bold"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting ? (
@@ -522,10 +499,9 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   </>
                 )}
               </Button>
-            </SheetFooter>
+            </FormSheetFooter>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+      </FormSheet>
   );
 }

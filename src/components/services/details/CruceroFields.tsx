@@ -6,27 +6,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function CruceroFields({ control }: { control: Control<any> }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <FormField control={control} name="details.clientName" render={({ field }) => (
-        <FormItem className="md:col-span-2">
-          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cliente *</FormLabel>
-          <FormControl><Input {...field} className="bg-slate-50 border-slate-100" /></FormControl>
+        <FormItem className="sm:col-span-2">
+          <FormLabel className="text-xs font-bold text-navy">Cliente *</FormLabel>
+          <FormControl><Input {...field} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.cruiseName" render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre del crucero *</FormLabel>
-          <FormControl><Input {...field} className="bg-slate-50 border-slate-100" /></FormControl>
+          <FormLabel className="text-xs font-bold text-navy">Nombre del crucero *</FormLabel>
+          <FormControl><Input {...field} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.cabinType" render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de cabina *</FormLabel>
+          <FormLabel className="text-xs font-bold text-navy">Tipo de cabina *</FormLabel>
           <Select onValueChange={field.onChange} value={field.value}>
             <FormControl>
-              <SelectTrigger className="bg-slate-50 border-slate-100"><SelectValue placeholder="Selecciona" /></SelectTrigger>
+              <SelectTrigger className="bg-white"><SelectValue placeholder="Selecciona" /></SelectTrigger>
             </FormControl>
             <SelectContent>
               <SelectItem value="INTERNA">Interna</SelectItem>
@@ -38,22 +38,22 @@ export function CruceroFields({ control }: { control: Control<any> }) {
       )} />
       <FormField control={control} name="details.cabinCount" render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cantidad de camarotes</FormLabel>
-          <FormControl><Input type="number" min={1} {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-slate-50 border-slate-100" /></FormControl>
+          <FormLabel className="text-xs font-bold text-navy">Cantidad de camarotes</FormLabel>
+          <FormControl><Input type="number" min={1} {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.passengerCount" render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cantidad de personas</FormLabel>
-          <FormControl><Input type="number" min={1} {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-slate-50 border-slate-100" /></FormControl>
+          <FormLabel className="text-xs font-bold text-navy">Cantidad de personas</FormLabel>
+          <FormControl><Input type="number" min={1} {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.route" render={({ field }) => (
-        <FormItem className="md:col-span-2">
-          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ruta a seguir</FormLabel>
-          <FormControl><Input {...field} className="bg-slate-50 border-slate-100" /></FormControl>
+        <FormItem className="sm:col-span-2">
+          <FormLabel className="text-xs font-bold text-navy">Ruta a seguir</FormLabel>
+          <FormControl><Input {...field} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
