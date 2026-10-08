@@ -36,6 +36,7 @@ import { es } from "date-fns/locale";
 import { STATUS_LABELS, VALID_TRANSITIONS, WorkflowStatus } from "@/lib/workflow-status";
 
 import { PermissionGuard } from "@/components/PermissionGuard";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 interface RequestsTableProps {
   requests: any[];
@@ -108,7 +109,7 @@ export function RequestsTable({
             <TableHead className="text-xs font-bold uppercase tracking-wider">ID</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Cliente</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Destino</TableHead>
-            <TableHead className="text-xs font-bold uppercase tracking-wider">Servicios</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Servicios solicitados</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Presupuesto</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Estado</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Fecha</TableHead>
@@ -138,7 +139,7 @@ export function RequestsTable({
                 <div className="flex items-center gap-1">
                   {request.services?.slice(0, 2).map((s: string) => (
                     <Badge key={s} variant="secondary" className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-600 border-none">
-                      {s}
+                      {serviceTypeLabel(s)}
                     </Badge>
                   ))}
                   {request.services?.length > 2 && (

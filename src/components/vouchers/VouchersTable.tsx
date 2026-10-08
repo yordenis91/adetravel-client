@@ -34,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { VoucherStatusBadge } from "./VoucherStatusBadge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 interface VouchersTableProps {
   vouchers: any[];
@@ -132,7 +133,7 @@ export function VouchersTable({
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-bold text-[10px] text-blue-600 uppercase tracking-wider bg-blue-50 w-max px-1.5 py-0.5 rounded">
-                      {voucher.serviceType}
+                      {serviceTypeLabel(voucher.serviceType)}
                     </span>
                     <span className="text-xs font-medium text-navy mt-1">{voucher.serviceName}</span>
                   </div>

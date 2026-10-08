@@ -36,6 +36,7 @@ import { VouchersTable } from "./VouchersTable";
 import { VoucherFormDialog } from "./VoucherFormDialog";
 import { VoucherPDFPreview } from "./VoucherPDFPreview";
 import { ExportMenu } from "@/components/shared/ExportMenu";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 export default function VouchersPage() {
   const { toast } = useToast();
@@ -163,7 +164,7 @@ export default function VouchersPage() {
               return {
                 numero: v.voucherNumber,
                 cliente: client ? `${client.firstName} ${client.lastName}` : "",
-                servicio: v.serviceName || v.serviceType || "",
+                servicio: v.serviceName || serviceTypeLabel(v.serviceType),
                 destino: v.destination || "",
                 estado: v.status,
                 fecha: v.createdAt,
