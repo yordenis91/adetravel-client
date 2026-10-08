@@ -52,3 +52,25 @@ export function useDeleteCatalogItem(resource: CatalogResource) {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["catalog", resource] }),
   });
 }
+
+const uniqueByName = (items: CatalogItem[]) => {
+  const seen = new Set<string>();
+  return items.filter((i) => (seen.has(i.name) ? false : (seen.add(i.name), true)));
+};
+
+/** Ciudades sugeridas según el país escrito/elegido (los campos guardan texto, no FK). Si el país
+ * está vacío o no figura en el nomenclador, se ofrecen todas las ciudades (sin repetir nombres). */
+export function useCitiesForCountry(countryName?: string | null) {
+  const { data: countries } = useCatalog("countries");
+  const country = countries.find((c) => c.name.toLowerCase() === (countryName ?? "").trim().toLowerCase());
+  const { data: cities } = useCatalog("cities", country?.id, "countryId");
+  return { cities: country ? cities : uniqueByName(cities), countryKnown: !!country };
+}
+
+/** Modelos sugeridos según la marca escrita/elegida; sin marca conocida se ofrecen todos los modelos. */
+export function useModelsForBrand(brandName?: string | null) {
+  const { data: brands } = useCatalog("car-brands");
+  const brand = brands.find((b) => b.name.toLowerCase() === (brandName ?? "").trim().toLowerCase());
+  const { data: models } = useCatalog("car-models", brand?.id, "carBrandId");
+  return { models: brand ? models : uniqueByName(models), brandKnown: !!brand };
+}

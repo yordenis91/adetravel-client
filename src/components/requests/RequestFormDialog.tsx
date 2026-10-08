@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { useCatalog } from "@/hooks/useCatalogs";
+import { useCatalog, useCitiesForCountry } from "@/hooks/useCatalogs";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Loader2 } from "lucide-react";
 
@@ -73,7 +73,6 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
     params: { isActive: "true" },
   });
   const { data: countries } = useCatalog("countries");
-  const { data: cities } = useCatalog("cities");
 
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
@@ -92,6 +91,8 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
       description: "",
     },
   });
+  const { cities: originCities } = useCitiesForCountry(form.watch("originCountry"));
+  const { cities: destinationCities } = useCitiesForCountry(form.watch("destinationCountry"));
 
   useEffect(() => {
     if (request && open) {
@@ -250,7 +251,10 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                           <Combobox
                             options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
-                            onChange={field.onChange}
+                            onChange={(v) => {
+                              if (v !== field.value) form.setValue("originCity", "");
+                              field.onChange(v);
+                            }}
                             allowCustomValue
                             placeholder="Ej: Chile"
                             searchPlaceholder="Buscar o escribir país..."
@@ -266,7 +270,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ciudad Origen</FormLabel>
                           <Combobox
-                            options={cities.map((c: any) => ({ value: c.name, label: c.name }))}
+                            options={originCities.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
                             onChange={field.onChange}
                             allowCustomValue
@@ -289,7 +293,10 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                           <Combobox
                             options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
-                            onChange={field.onChange}
+                            onChange={(v) => {
+                              if (v !== field.value) form.setValue("destinationCity", "");
+                              field.onChange(v);
+                            }}
                             allowCustomValue
                             placeholder="Ej: Francia"
                             searchPlaceholder="Buscar o escribir país..."
@@ -306,7 +313,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ciudad Destino *</FormLabel>
                           <Combobox
-                            options={cities.map((c: any) => ({ value: c.name, label: c.name }))}
+                            options={destinationCities.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
                             onChange={field.onChange}
                             allowCustomValue

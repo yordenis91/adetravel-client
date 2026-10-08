@@ -1,15 +1,17 @@
 import React from "react";
-import { Control } from "react-hook-form";
+import { Control, useFormContext, useWatch } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
-import { useCatalog } from "@/hooks/useCatalogs";
+import { useCatalog, useModelsForBrand } from "@/hooks/useCatalogs";
 
 export function ArriendoAutoFields({ control }: { control: Control<any> }) {
   const { data: carTypes } = useCatalog("car-types");
   const { data: carBrands } = useCatalog("car-brands");
-  const { data: carModels } = useCatalog("car-models");
+  const { setValue } = useFormContext();
+  const brand = useWatch({ control, name: "details.carBrand" });
+  const { models: carModels } = useModelsForBrand(brand);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -83,7 +85,10 @@ export function ArriendoAutoFields({ control }: { control: Control<any> }) {
           <Combobox
             options={carBrands.map((b: any) => ({ value: b.name, label: b.name }))}
             value={field.value}
-            onChange={field.onChange}
+            onChange={(v) => {
+              if (v !== field.value) setValue("details.carModel", "");
+              field.onChange(v);
+            }}
             allowCustomValue
             placeholder="Ej: Toyota"
             searchPlaceholder="Buscar o escribir marca..."
