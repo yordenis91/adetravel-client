@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { activityActionLabel } from "@/lib/activity-labels";
 
 interface TimelineItemProps {
   log: any;
@@ -100,7 +101,7 @@ export function TimelineItem({ log, isLast }: TimelineItemProps) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <h4 className="font-bold text-sm text-navy dark:text-white uppercase tracking-tight">
-              {log.action?.replace(/_/g, " ")}
+              {activityActionLabel(log.action)}
             </h4>
             <Badge variant="outline" className={cn("text-[10px] font-bold py-0 h-5", config.bgColor, config.borderColor, config.textColor)}>
               {getDisplayLabel(log.entityType)}

@@ -39,6 +39,7 @@ import { RequestStatusActions } from "./RequestStatusActions";
 import { RequestFormDialog } from "./RequestFormDialog";
 import { ServicesSection } from "@/components/services/ServicesSection";
 import { useProviderOptions } from "@/hooks/useProviderOptions";
+import { activityActionLabel } from "@/lib/activity-labels";
 
 type EventType = "cotizacion" | "pago" | "voucher" | "confirmacion" | "bitacora";
 
@@ -145,7 +146,7 @@ export default function RequestDetailPage() {
     logs.forEach((l: any) => {
       allEvents.push({
         id: l.id, type: "bitacora", date: safeParseDate(l.createdAt),
-        title: l.action?.replace(/_/g, " ") || "Acción", subtitle: l.description,
+        title: activityActionLabel(l.action), subtitle: l.description,
         color: "slate", icon: <ClipboardList className="w-4 h-4" />, originalData: l,
       });
     });
@@ -242,7 +243,7 @@ export default function RequestDetailPage() {
       {kpis && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Servicios", value: kpis.servicesCount, icon: <Briefcase className="w-5 h-5" />, color: "blue" },
+            { label: "Servicios registrados", value: kpis.servicesCount, icon: <Briefcase className="w-5 h-5" />, color: "blue" },
             { label: "Cotizaciones", value: kpis.quotationsCount, icon: <FileText className="w-5 h-5" />, color: "sky" },
             { label: "Vouchers Emitidos", value: kpis.vouchersCount, icon: <Ticket className="w-5 h-5" />, color: "gold" },
             { label: "Total Pagado", value: kpis.totalPaidCLP, icon: <DollarSign className="w-5 h-5" />, color: "emerald" },
