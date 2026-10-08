@@ -50,7 +50,7 @@ export function RequestStatusFlow({ currentStatus }: RequestStatusFlowProps) {
         data-testid="status-flow-scroll"
         className={cn("overflow-x-auto pb-1 sidebar-scroll", isCancelled && "opacity-40 grayscale")}
       >
-        <div className="min-w-full" style={{ width: "max-content", minWidth: "100%" }}>
+        <div style={{ minWidth: steps.length * MIN_STEP_PX }}>
           {/* Cabecera de fases, alineada con las columnas de sus pasos */}
           <div className="grid mb-2" style={{ gridTemplateColumns: gridColumns }}>
             {STATUS_PHASES.map((phase) => (
@@ -81,7 +81,7 @@ export function RequestStatusFlow({ currentStatus }: RequestStatusFlowProps) {
                 return (
                   <li
                     key={step.id}
-                    className="relative z-10 flex flex-col items-center gap-2"
+                    className="relative z-10 flex min-w-0 flex-col items-center gap-2"
                     aria-current={isCurrent ? "step" : undefined}
                   >
                     <div className={cn(
@@ -105,7 +105,7 @@ export function RequestStatusFlow({ currentStatus }: RequestStatusFlowProps) {
                       )}
                     </div>
                     <span className={cn(
-                      "text-[9px] font-bold uppercase tracking-wide text-center leading-tight px-0.5 transition-colors duration-300 hyphens-auto",
+                      "w-full text-[10px] font-semibold text-center leading-tight px-0.5 transition-colors duration-300 hyphens-auto [overflow-wrap:anywhere]",
                       isCurrent ? "text-navy" : "text-muted-foreground"
                     )}>
                       {step.label}
