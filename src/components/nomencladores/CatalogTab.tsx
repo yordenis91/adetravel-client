@@ -10,11 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit2, Power, PowerOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
-  CatalogResource, useCatalog, useCreateCatalogItem, useUpdateCatalogItem, useDeleteCatalogItem,
+  CatalogResource, useCatalog, useCatalogDependents, useCreateCatalogItem, useUpdateCatalogItem, useDeleteCatalogItem,
 } from "@/hooks/useCatalogs";
 
 interface CatalogTabProps {
@@ -22,12 +27,19 @@ interface CatalogTabProps {
   label: string;
   /** Si el catálogo tiene padre (City/Region → Country, CarModel → CarBrand). */
   parent?: { resource: CatalogResource; field: "countryId" | "carBrandId"; label: string };
+  /** Nombre en plural de lo que cuelga de este catálogo (País → "ciudades y regiones"), para los avisos. */
+  childrenLabel?: string;
 }
 
-export function CatalogTab({ resource, label, parent }: CatalogTabProps) {
+export function CatalogTab({ resource, label, parent, childrenLabel }: CatalogTabProps) {
   const { toast } = useToast();
   const [parentFilter, setParentFilter] = useState<string>("all");
-  const { data: items, isLoading } = useCatalog(resource, parentFilter === "all" ? undefined : parentFilter, parent?.field);
+  // Se listan también los inactivos: si no, un registro dado de baja desaparecía sin poder reactivarse
+  // ni explicar por qué "ya existe" al volver a crearlo.
+  const [showInactive, setShowInactive] = useState(true);
+  const { data: allItems, isLoading } = useCatalog(resource, parentFilter === "all" ? undefined : parentFilter, parent?.field, true);
+  const items = showInactive ? allItems : allItems.filter((i) => i.isActive);
+  const inactiveCount = allItems.filter((i) => !i.isActive).length;
   const { data: parentItems } = useCatalog(parent?.resource ?? "countries", undefined, undefined);
 
   const createMutation = useCreateCatalogItem(resource);
@@ -82,11 +94,26 @@ export function CatalogTab({ resource, label, parent }: CatalogTabProps) {
     }
   };
 
-  const handleToggleActive = async (item: any) => {
-    if (item.isActive) {
-      await deleteMutation.mutateAsync(item.id);
-    } else {
-      await updateMutation.mutateAsync({ id: item.id, isActive: true });
+  // Desactivar/reactivar siempre pasa por una confirmación; el aviso de dependientes viene de la API.
+  const [confirm, setConfirm] = useState<{ item: any; action: "disable" | "enable" } | null>(null);
+  const dependents = useCatalogDependents(resource, confirm?.action === "disable" && childrenLabel ? confirm.item.id : null);
+  const dependentsText = dependents?.items.map((d) => `${d.count} ${d.count === 1 ? d.singular : d.label}`).join(" y ");
+
+  const handleConfirm = async () => {
+    if (!confirm) return;
+    const { item, action } = confirm;
+    try {
+      if (action === "disable") {
+        await deleteMutation.mutateAsync({ id: item.id, cascade: (dependents?.total ?? 0) > 0 });
+        toast({ title: `${label} desactivado`, description: dependentsText ? `También se desactivaron ${dependentsText}.` : undefined });
+      } else {
+        await updateMutation.mutateAsync({ id: item.id, isActive: true, cascade: !!childrenLabel });
+        toast({ title: `${label} reactivado` });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: action === "disable" ? "No se pudo desactivar" : "No se pudo reactivar", description: getErrorMessage(err, "Intenta nuevamente.") });
+    } finally {
+      setConfirm(null);
     }
   };
 
@@ -104,9 +131,17 @@ export function CatalogTab({ resource, label, parent }: CatalogTabProps) {
             </SelectContent>
           </Select>
         ) : <div />}
+        <div className="flex items-center gap-4">
+          {inactiveCount > 0 && (
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <Switch checked={showInactive} onCheckedChange={setShowInactive} aria-label="Mostrar inactivos" />
+              Mostrar inactivos ({inactiveCount})
+            </label>
+          )}
         <Button onClick={openCreate} size="sm" className="gap-2 text-xs font-bold uppercase tracking-wider">
           <Plus className="w-4 h-4" /> Agregar
         </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -139,7 +174,7 @@ export function CatalogTab({ resource, label, parent }: CatalogTabProps) {
                     <Button variant="ghost" size="icon" aria-label="Editar elemento" className="h-8 w-8" onClick={() => openEdit(item)}>
                       <Edit2 className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" aria-label={item.isActive ? "Desactivar" : "Activar"} className="h-8 w-8" onClick={() => handleToggleActive(item)}>
+                    <Button variant="ghost" size="icon" aria-label={item.isActive ? "Desactivar" : "Activar"} className="h-8 w-8" onClick={() => setConfirm({ item, action: item.isActive ? "disable" : "enable" })}>
                       {item.isActive ? <PowerOff className="w-3.5 h-3.5 text-rose-500" /> : <Power className="w-3.5 h-3.5 text-emerald-500" />}
                     </Button>
                   </TableCell>
@@ -149,6 +184,33 @@ export function CatalogTab({ resource, label, parent }: CatalogTabProps) {
           </Table>
         </div>
       )}
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => { if (!o) setConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.action === "disable" ? `¿Desactivar ${label.toLowerCase()} "${confirm.item.name}"?` : `¿Reactivar ${label.toLowerCase()} "${confirm?.item.name}"?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.action === "disable" ? (
+                <>
+                  Dejará de aparecer como sugerencia en los formularios. Los registros ya guardados no cambian.
+                  {dependentsText && <strong className="block mt-2 text-rose-600">Tiene {dependentsText} activas asociadas: también se desactivarán.</strong>}
+                </>
+              ) : (
+                <>
+                  Volverá a aparecer en los formularios.
+                  {childrenLabel && <span className="block mt-2">También se reactivarán sus {childrenLabel}.</span>}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm} disabled={confirm?.action === "disable" && !!childrenLabel && !dependents}>{confirm?.action === "disable" ? "Desactivar" : "Reactivar"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
