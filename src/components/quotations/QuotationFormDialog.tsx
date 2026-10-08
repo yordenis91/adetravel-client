@@ -140,16 +140,10 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
         setItems([]);
       }
     } else {
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const random = Math.floor(1000 + Math.random() * 9000);
-      const qNum = `COTIZ-${year}-${month}-${random}`;
-      
       form.reset({
         requestId: "",
         clientId: "",
-        quotationNumber: qNum,
+        quotationNumber: "Se asigna al guardar", // lo genera la API (numeración correlativa)
         validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         status: "Borrador",
         currency: "CLP",
