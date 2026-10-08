@@ -27,6 +27,27 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const TOKEN_KEY = "ade_token";
 
+/** Fallos que se arreglan solos esperando: límite de peticiones (429), error del servidor o de red. */
+export function isTransient(error: unknown): boolean {
+  if (!(error instanceof ApiError)) return true;
+  return error.status === 429 || error.status >= 500;
+}
+
+/**
+ * Reintenta `fn` ante fallos transitorios. Al recargar la página, un 429 en /auth/me dejaba al
+ * usuario sin sesión cargada y la ruta protegida lo mandaba al login (fase 3, defecto D2).
+ */
+export async function withRetry<T>(fn: () => Promise<T>, delays: number[] = [1000, 3000, 7000]): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= delays.length || !isTransient(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+    }
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -41,7 +62,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   //    para que varias peticiones fallidas a la vez no llenen la pantalla de avisos.
   useEffect(() => {
     let lastForbiddenAt = 0;
+    let lastRateLimitedAt = 0;
     setApiEventHandlers({
+      onRateLimited: () => {
+        const now = Date.now();
+        if (now - lastRateLimitedAt < 30_000) return;
+        lastRateLimitedAt = now;
+        toast.warning("Demasiadas peticiones seguidas", {
+          description: "Espera unos segundos y vuelve a intentarlo. Tu sesión sigue abierta.",
+        });
+      },
       onUnauthorized: () => {
         if (!localStorage.getItem(TOKEN_KEY)) return;
         logout();
@@ -77,14 +107,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchMe() {
     try {
-      const currentUser = await auth.me();
+      const currentUser = await withRetry(() => auth.me());
       setUser(currentUser);
     } catch (error) {
       // 401/403 ya cerraron la sesión en el handler de la API. Cualquier otro fallo
-      // (red caída, 5xx) NO debe borrar el token: el usuario sigue teniendo sesión
-      // válida y un simple reintento la recupera.
+      // (red caída, 5xx, 429 tras los reintentos) NO debe borrar el token: el usuario sigue
+      // teniendo sesión válida y un simple reintento la recupera.
       setUser(null);
-      if (!(error instanceof ApiError)) {
+      if (!(error instanceof ApiError) || isTransient(error)) {
         toast.error("No pudimos verificar tu sesión", { description: "Revisa tu conexión e intenta recargar la página." });
       }
     } finally {
