@@ -515,7 +515,7 @@ export function UserPermissionsPanel({ catalog }: { catalog: CatalogEntry[] }) {
                             </div>
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="icon" aria-label="Quitar permiso"
                               className="text-destructive"
                               onClick={() => revokeMutation.mutate(g.permission)}
                             >

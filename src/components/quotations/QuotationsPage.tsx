@@ -220,7 +220,7 @@ export default function QuotationsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar por N° de cotización..." 
+                placeholder="Buscar por N° de cotización..." aria-label="Buscar por N° de cotización" 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm h-10"

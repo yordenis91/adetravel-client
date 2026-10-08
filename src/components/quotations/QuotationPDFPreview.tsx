@@ -100,7 +100,7 @@ export function QuotationPDFPreview({
               {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
               Imprimir / Descargar PDF
             </Button>
-            <Button variant="outline" size="icon" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" size="icon" aria-label="Cerrar vista previa" onClick={() => onOpenChange(false)}>
               <X className="w-4 h-4" />
             </Button>
           </div>

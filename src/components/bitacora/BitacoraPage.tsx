@@ -114,7 +114,7 @@ export default function BitacoraPage() {
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Buscar por descripción, ID o etiqueta..." 
+              placeholder="Buscar por descripción, ID o etiqueta..." aria-label="Buscar por descripción, ID o etiqueta" 
               className="pl-10 h-11 bg-slate-50 dark:bg-navy-light/50 border-none rounded-xl"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

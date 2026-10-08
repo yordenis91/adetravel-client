@@ -86,7 +86,7 @@ export function AlojamientoFields({ control }: { control: Control<any> }) {
               </FormItem>
             )} />
             {fields.length > 1 && (
-              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+              <Button type="button" variant="ghost" size="icon" aria-label="Quitar habitación" onClick={() => remove(index)}>
                 <Trash2 className="w-4 h-4 text-destructive" />
               </Button>
             )}

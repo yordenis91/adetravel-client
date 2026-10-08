@@ -149,7 +149,7 @@ export default function NotificationsPage() {
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar notificaciones..."
+              placeholder="Buscar notificaciones..." aria-label="Buscar notificaciones"
               className="pl-10 bg-white"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

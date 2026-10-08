@@ -144,18 +144,18 @@ export function QuotationsTable({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => onPreviewPDF(quotation)} title="Ver/Descargar PDF">
+                    <Button variant="ghost" size="icon" aria-label="Descargar PDF" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => onPreviewPDF(quotation)} title="Ver/Descargar PDF">
                       <FileDown className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(quotation)} title="Vista Previa">
+                    <Button variant="ghost" size="icon" aria-label="Ver detalle" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(quotation)} title="Vista Previa">
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(quotation)} title="Editar Cotización">
+                    <Button variant="ghost" size="icon" aria-label="Editar" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(quotation)} title="Editar Cotización">
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>

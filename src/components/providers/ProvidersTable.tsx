@@ -204,7 +204,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
                 <div className="flex justify-end gap-1">
                   <Button 
                     variant="ghost" 
-                    size="icon" 
+                    size="icon" aria-label="Ver ficha del proveedor" 
                     className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5"
                     onClick={() => navigate(`/proveedores/${provider.id}`)}
                   >
@@ -212,7 +212,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
                   </Button>
                   <Button 
                     variant="ghost" 
-                    size="icon" 
+                    size="icon" aria-label="Editar" 
                     className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/5"
                     onClick={() => onEdit(provider)}
                   >
@@ -220,7 +220,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                      <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8 text-muted-foreground">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>

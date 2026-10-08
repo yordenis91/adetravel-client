@@ -85,7 +85,7 @@ export default function ConfirmacionesPage() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por N° de confirmación..."
+            placeholder="Buscar por N° de confirmación..." aria-label="Buscar por N° de confirmación"
             className="pl-10 bg-slate-50 border-slate-100 h-10 text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

@@ -198,7 +198,7 @@ export function BirthdayReminder() {
                           <div className="flex gap-1 shrink-0">
                             <Button 
                               variant="ghost" 
-                              size="icon" 
+                              size="icon" aria-label="Vista previa del saludo" 
                               className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                               onClick={() => handlePreview(client)}
                             >
@@ -206,7 +206,7 @@ export function BirthdayReminder() {
                             </Button>
                             <Button 
                               variant="ghost" 
-                              size="icon" 
+                              size="icon" aria-label="Enviar saludo de cumpleaños" 
                               className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                               disabled={sendingStatus !== null}
                               onClick={() => handleSendEmails([client.id], client.id)}

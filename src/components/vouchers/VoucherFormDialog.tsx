@@ -436,7 +436,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                       <Button 
                         type="button" 
                         variant="ghost" 
-                        size="icon" 
+                        size="icon" aria-label="Quitar pasajero" 
                         className="h-10 w-10 text-muted-foreground hover:text-destructive"
                         onClick={() => remove(index)}
                       >

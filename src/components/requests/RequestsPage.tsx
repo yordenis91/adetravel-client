@@ -199,7 +199,7 @@ export default function RequestsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar solicitud o destino..." 
+                placeholder="Buscar solicitud o destino..." aria-label="Buscar solicitud o destino" 
                 className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm h-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

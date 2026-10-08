@@ -72,10 +72,10 @@ export function ConfirmationsTable({ confirmations, isLoading, onView, onEdit }:
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(c)}>
+                  <Button variant="ghost" size="icon" aria-label="Ver detalle" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(c)}>
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(c)}>
+                  <Button variant="ghost" size="icon" aria-label="Editar" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(c)}>
                     <Edit2 className="w-4 h-4" />
                   </Button>
                 </div>
