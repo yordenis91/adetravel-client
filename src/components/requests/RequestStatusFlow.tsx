@@ -48,7 +48,7 @@ export function RequestStatusFlow({ currentStatus }: RequestStatusFlowProps) {
       <div
         ref={scrollRef}
         data-testid="status-flow-scroll"
-        className={cn("overflow-x-auto pb-1 sidebar-scroll", isCancelled && "opacity-40 grayscale")}
+        className={cn("overflow-x-auto pb-1", isCancelled && "opacity-40 grayscale")}
       >
         <div style={{ minWidth: steps.length * MIN_STEP_PX }}>
           {/* Cabecera de fases, alineada con las columnas de sus pasos */}
