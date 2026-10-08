@@ -4,16 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { api, getErrorMessage } from "@/lib/api";
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
-} from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
-} from "@/components/ui/form";
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Combobox } from "@/components/ui/combobox";
@@ -23,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useCreateConfirmation, useUpdateConfirmation } from "@/hooks/useConfirmations";
 import { SERVICE_TYPE_LABELS } from "@/types/service";
 
+import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
+import { Link2, Wallet } from "lucide-react";
 const confirmationSchema = z.object({
   requestId: z.string().min(1, "La solicitud es obligatoria"),
   serviceId: z.string().optional().nullable(),
@@ -134,23 +131,17 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] p-0 flex flex-col">
-        <SheetHeader className="p-8 pb-4">
-          <SheetTitle className="text-2xl font-playfair font-bold text-navy">
-            {isEditing ? "Editar Confirmación" : "Nueva Confirmación"}
-          </SheetTitle>
-          <SheetDescription>Registra la confirmación de reserva emitida por el proveedor.</SheetDescription>
-        </SheetHeader>
+    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Confirmación" : "Nueva Confirmación"} description="Registra la confirmación de reserva emitida por el proveedor." widthClassName="sm:max-w-[600px]">
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-            <ScrollArea className="flex-1 px-8">
-              <div className="space-y-4 pb-10">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <FormSheetBody>
+              <div className="space-y-5">
+                <FormSection tone="blue" icon={Link2} title="Vinculación y referencia">
                 {!requestId && (
                   <FormField control={form.control} name="requestId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Solicitud *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Solicitud *</FormLabel>
                       <Combobox
                         options={requestOptions.options}
                         onSearchChange={requestOptions.onSearchChange}
@@ -171,10 +162,10 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
                 {!isPackage && (
                   <FormField control={form.control} name="serviceId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Servicio (opcional)</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Servicio (opcional)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={!selectedRequestId}>
                         <FormControl>
-                          <SelectTrigger className="bg-slate-50 border-slate-100"><SelectValue placeholder="Toda la solicitud" /></SelectTrigger>
+                          <SelectTrigger className="bg-white"><SelectValue placeholder="Toda la solicitud" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {services.map((s: any) => (
@@ -191,7 +182,7 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
 
                 <FormField control={form.control} name="providerId" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Proveedor *</FormLabel>
+                    <FormLabel className="text-xs font-bold text-navy">Proveedor *</FormLabel>
                     <Combobox
                       options={providerOptions.optionsFor(field.value)}
                       value={field.value}
@@ -206,24 +197,27 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
 
                 <FormField control={form.control} name="providerConfirmationNumber" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">N° de confirmación del proveedor</FormLabel>
-                    <FormControl><Input {...field} className="bg-slate-50 border-slate-100" /></FormControl>
+                    <FormLabel className="text-xs font-bold text-navy">N° de confirmación del proveedor</FormLabel>
+                    <FormControl><Input {...field} className="bg-white" /></FormControl>
                     <FormMessage className="text-[10px]" />
                   </FormItem>
                 )} />
 
-                <div className="grid grid-cols-2 gap-4">
+                </FormSection>
+
+                <FormSection tone="emerald" icon={Wallet} title="Montos, vigencia y notas">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="price" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Precio *</FormLabel>
-                      <FormControl><Input type="number" min={0} step="0.01" {...field} className="bg-slate-50 border-slate-100" /></FormControl>
+                      <FormLabel className="text-xs font-bold text-navy">Precio *</FormLabel>
+                      <FormControl><Input type="number" min={0} step="0.01" {...field} className="bg-white" /></FormControl>
                       <FormMessage className="text-[10px]" />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="exchangeRate" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de cambio</FormLabel>
-                      <FormControl><Input type="number" min={0} step="0.01" {...field} value={field.value ?? ""} className="bg-slate-50 border-slate-100" /></FormControl>
+                      <FormLabel className="text-xs font-bold text-navy">Tipo de cambio</FormLabel>
+                      <FormControl><Input type="number" min={0} step="0.01" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
                       <FormMessage className="text-[10px]" />
                     </FormItem>
                   )} />
@@ -231,34 +225,34 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
 
                 <FormField control={form.control} name="validUntil" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fecha de vigencia</FormLabel>
-                    <FormControl><Input type="date" {...field} className="bg-slate-50 border-slate-100" /></FormControl>
+                    <FormLabel className="text-xs font-bold text-navy">Fecha de vigencia</FormLabel>
+                    <FormControl><Input type="date" {...field} className="bg-white" /></FormControl>
                     <FormMessage className="text-[10px]" />
                   </FormItem>
                 )} />
 
                 <FormField control={form.control} name="notes" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Observaciones</FormLabel>
-                    <FormControl><Textarea {...field} className="bg-slate-50 border-slate-100 min-h-[80px]" /></FormControl>
+                    <FormLabel className="text-xs font-bold text-navy">Observaciones</FormLabel>
+                    <FormControl><Textarea {...field} className="bg-white min-h-[80px]" /></FormControl>
                     <FormMessage className="text-[10px]" />
                   </FormItem>
                 )} />
+                </FormSection>
               </div>
-            </ScrollArea>
+            </FormSheetBody>
 
-            <SheetFooter className="p-8 border-t border-slate-100 bg-slate-50/50">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="text-xs font-bold uppercase tracking-wider">
+            <FormSheetFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting} className="text-xs font-bold uppercase tracking-wider gap-2">
+              <Button type="submit" disabled={form.formState.isSubmitting} className="gap-2">
                 {form.formState.isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isEditing ? "Guardar Cambios" : "Crear Confirmación"}
               </Button>
-            </SheetFooter>
+            </FormSheetFooter>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+      </FormSheet>
   );
 }

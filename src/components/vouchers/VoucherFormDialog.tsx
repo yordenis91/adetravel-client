@@ -2,14 +2,6 @@ import React, { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription,
-  SheetFooter
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,16 +9,14 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
 import { useProviderOptions } from "@/hooks/useProviderOptions";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
@@ -48,6 +38,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { normalizeServiceType, SERVICE_TYPE_SHORT_LABELS, UNIFIED_SERVICE_TYPES } from "@/lib/service-types";
 
+import { StickyNote } from "lucide-react";
+import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
 const formSchema = z.object({
   requestId: z.string().min(1, "La solicitud es requerida"),
   clientId: z.string().min(1, "El cliente es requerido"),
@@ -204,32 +196,21 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
   })();
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[700px] overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="text-2xl font-playfair font-bold">
-            {isEditing ? "Editar Voucher" : "Generar Nuevo Voucher"}
-          </SheetTitle>
-          <SheetDescription>
-            Complete los detalles del servicio para emitir el voucher de confirmación.
-          </SheetDescription>
-        </SheetHeader>
+    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Voucher" : "Generar Nuevo Voucher"} description="Complete los detalles del servicio para emitir el voucher de confirmación." widthClassName="sm:max-w-[700px]">
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <FormSheetBody>
             {/* Section 1: Vinculación */}
-            <div className="space-y-4 p-4 rounded-xl bg-navy/5 border border-navy/10">
-              <h3 className="text-sm font-bold text-navy uppercase tracking-wider flex items-center gap-2">
-                <Hash className="w-4 h-4" /> Vinculación de Servicio
-              </h3>
+            <FormSection tone="slate" icon={Hash} title="Vinculación de Servicio">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="requestId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Solicitud *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Solicitud *</FormLabel>
                       <Combobox
                         options={requestOptions.options}
                         onSearchChange={requestOptions.onSearchChange}
@@ -251,7 +232,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   name="clientId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cliente</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Cliente</FormLabel>
                       <FormControl>
                         <Input disabled value={clientLabel} placeholder="Asignado automáticamente" className="bg-muted" />
                       </FormControl>
@@ -266,7 +247,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 name="providerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Proveedor del Servicio *</FormLabel>
+                    <FormLabel className="text-xs font-bold text-navy">Proveedor del Servicio *</FormLabel>
                     <Combobox
                       options={providerOptions.optionsFor(field.value)}
                       value={field.value}
@@ -279,21 +260,18 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   </FormItem>
                 )}
               />
-            </div>
+            </FormSection>
 
             {/* Section 2: Detalles del Servicio */}
-            <div className="space-y-4 p-4 rounded-xl bg-gold/5 border border-gold/10">
-              <h3 className="text-sm font-bold text-gold-dark uppercase tracking-wider flex items-center gap-2">
-                <Ticket className="w-4 h-4" /> Detalles del Servicio
-              </h3>
+            <FormSection tone="amber" icon={Ticket} title="Detalles del Servicio">
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="serviceType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Tipo *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -316,7 +294,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   name="serviceName"
                   render={({ field }) => (
                     <FormItem className="col-span-2">
-                      <FormLabel>Nombre del Servicio / Hotel *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Nombre del Servicio / Hotel *</FormLabel>
                       <FormControl>
                         <Input placeholder="Ej: Hotel Hyatt Centric Las Condes" {...field} />
                       </FormControl>
@@ -326,13 +304,13 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="checkIn"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fecha Inicio / Check-in *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Fecha Inicio / Check-in *</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -346,7 +324,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   name="checkOut"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fecha Fin / Check-out *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Fecha Fin / Check-out *</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -361,7 +339,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 name="destination"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Destino *</FormLabel>
+                    <FormLabel className="text-xs font-bold text-navy">Destino *</FormLabel>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
                       <FormControl>
@@ -378,7 +356,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 name="serviceDetails"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descripción / Detalles</FormLabel>
+                    <FormLabel className="text-xs font-bold text-navy">Descripción / Detalles</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Ej: Habitación King Superior, Desayuno incluido..." 
@@ -390,24 +368,18 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   </FormItem>
                 )}
               />
-            </div>
+            </FormSection>
 
             {/* Section 3: Pasajeros */}
-            <div className="space-y-4 p-4 rounded-xl bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800/20">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
-                  <User className="w-4 h-4" /> Pasajeros
-                </h3>
-                <Button 
+            <FormSection tone="blue" icon={User} title="Pasajeros" action={<Button 
                   type="button" 
                   variant="outline" 
                   size="sm" 
-                  className="h-8 text-[10px] font-bold uppercase gap-1"
+                  className="h-9 gap-1 bg-white text-xs font-bold"
                   onClick={() => append("")}
                 >
                   <Plus className="w-3 h-3" /> Añadir Pasajero
-                </Button>
-              </div>
+                </Button>}>
               
               <div className="space-y-3">
                 {fields.map((field, index) => (
@@ -442,17 +414,17 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   </p>
                 )}
               </div>
-            </div>
+            </FormSection>
 
-            {/* Section 4: Otros Detalles */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormSection tone="violet" icon={StickyNote} title="Código y notas">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="confirmationCode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Código de Confirmación / Localizador</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Código de Confirmación / Localizador</FormLabel>
                       <FormControl>
                         <Input placeholder="Ej: ABC123XYZ" {...field} />
                       </FormControl>
@@ -466,7 +438,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Estado del Voucher *</FormLabel>
+                      <FormLabel className="text-xs font-bold text-navy">Estado del Voucher *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value} disabled={isEditing}>
                         <FormControl>
                           <SelectTrigger className={isEditing ? "bg-slate-100" : "bg-white"}>
@@ -491,7 +463,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notas Internas</FormLabel>
+                    <FormLabel className="text-xs font-bold text-navy">Notas Internas</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Observaciones adicionales..." 
@@ -504,11 +476,16 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 )}
               />
             </div>
+            </FormSection>
 
-            <SheetFooter className="pt-4">
+          </FormSheetBody>
+            <FormSheetFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
               <Button 
                 type="submit" 
-                className="w-full bg-navy hover:bg-navy-light text-white font-bold h-12"
+                className="bg-navy hover:bg-navy-light text-white font-bold"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting ? (
@@ -522,10 +499,9 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   </>
                 )}
               </Button>
-            </SheetFooter>
+            </FormSheetFooter>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+      </FormSheet>
   );
 }

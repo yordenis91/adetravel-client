@@ -7,16 +7,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  DialogFooter } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,8 +22,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api, extractArrayFromResponse } from "@/lib/api";
 import { toast } from "sonner";
@@ -36,6 +33,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/context/AuthContext";
 
+import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
+import { CalendarClock, ClipboardList, Link2 } from "lucide-react";
 const taskSchema = z.object({
   title: z.string().min(1, "El título es requerido"),
   description: z.string().optional(),
@@ -178,22 +177,18 @@ export function TaskFormDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-playfair font-bold text-navy">
-              {task ? "Editar Tarea" : "Nueva Tarea"}
-            </DialogTitle>
-          </DialogHeader>
+      <FormSheet open={open} onOpenChange={onOpenChange} title={task ? "Editar Tarea" : "Nueva Tarea"} description="Registra un pendiente, asígnalo y vincúlalo a un registro si corresponde." widthClassName="sm:max-w-[500px]">
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+              <FormSheetBody>
+              <FormSection tone="blue" icon={ClipboardList} title="Qué hay que hacer">
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="text-xs font-bold text-navy">
                       Título
                     </FormLabel>
                     <FormControl>
@@ -209,7 +204,7 @@ export function TaskFormDialog({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="text-xs font-bold text-navy">
                       Descripción
                     </FormLabel>
                     <FormControl>
@@ -225,12 +220,15 @@ export function TaskFormDialog({
                 )}
               />
 
+              </FormSection>
+
+              <FormSection tone="emerald" icon={CalendarClock} title="Responsable y plazo">
               <FormField
                 control={form.control}
                 name="assigneeId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="text-xs font-bold text-navy">
                       Asignar a
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || currentUser?.id}>
@@ -255,13 +253,13 @@ export function TaskFormDialog({
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="dueDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <FormLabel className="text-xs font-bold text-navy">
                         Vencimiento
                       </FormLabel>
                       <FormControl>
@@ -277,7 +275,7 @@ export function TaskFormDialog({
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <FormLabel className="text-xs font-bold text-navy">
                         Prioridad
                       </FormLabel>
                       <Select
@@ -316,13 +314,16 @@ export function TaskFormDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              </FormSection>
+
+              <FormSection tone="amber" icon={Link2} title="Vincular a un registro (opcional)">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="relatedEntityType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <FormLabel className="text-xs font-bold text-navy">
                         Vincular a...
                       </FormLabel>
                       <Select
@@ -357,7 +358,7 @@ export function TaskFormDialog({
                   name="relatedEntityId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <FormLabel className="text-xs font-bold text-navy">
                         Registro
                       </FormLabel>
                       <Combobox
@@ -382,23 +383,21 @@ export function TaskFormDialog({
                 />
               </div>
 
-              <DialogFooter className="pt-4 flex items-center justify-between sm:justify-between w-full">
+              </FormSection>
+              </FormSheetBody>
+              <FormSheetFooter>
                 {task ? (
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
-                    className="text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                                        className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 sm:mr-auto"
                     onClick={() => setShowDeleteConfirm(true)}
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Eliminar
+                    <Trash2 className="w-4 h-4 sm:mr-2" />
+                    <span className="sr-only sm:not-sr-only">Eliminar</span>
                   </Button>
-                ) : (
-                  <div />
-                )}
-                <div className="flex gap-2">
-                  <Button
+                ) : null}
+                <Button
                     type="button"
                     variant="outline"
                     onClick={() => onOpenChange(false)}
@@ -409,12 +408,10 @@ export function TaskFormDialog({
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                     {task ? "Guardar cambios" : "Crear Tarea"}
                   </Button>
-                </div>
-              </DialogFooter>
+              </FormSheetFooter>
             </form>
           </Form>
-        </DialogContent>
-      </Dialog>
+        </FormSheet>
 
       <ConfirmDialog
         open={showDeleteConfirm}

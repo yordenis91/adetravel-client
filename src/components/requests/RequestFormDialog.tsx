@@ -2,14 +2,6 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,12 +9,9 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Combobox } from "@/components/ui/combobox";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { api, getErrorMessage } from "@/lib/api";
@@ -31,6 +20,8 @@ import { useCatalog, useCitiesForCountry } from "@/hooks/useCatalogs";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Loader2 } from "lucide-react";
 
+import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
+import { FileText, Plane, StickyNote, Wallet } from "lucide-react";
 const requestSchema = z.object({
   clientId: z.string().min(1, "Cliente es requerido"),
   isPackage: z.boolean().default(false),
@@ -153,34 +144,21 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] p-0 flex flex-col">
-        <SheetHeader className="p-8 pb-4">
-          <SheetTitle className="text-2xl font-playfair font-bold text-navy">
-            {isEditing ? "Editar Solicitud" : "Nueva Solicitud"}
-          </SheetTitle>
-          <SheetDescription>
-            Registra los datos generales del viaje. Los servicios específicos (alojamiento, pasajes, etc.) se agregan luego desde el detalle de la solicitud.
-          </SheetDescription>
-        </SheetHeader>
+    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Solicitud" : "Nueva Solicitud"} description="Registra los datos generales del viaje. Los servicios específicos (alojamiento, pasajes, etc.) se agregan luego desde el detalle de la solicitud." widthClassName="sm:max-w-[600px]">
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-            <ScrollArea className="flex-1 px-8">
-              <div className="space-y-8 pb-10">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <FormSheetBody>
+              <div className="space-y-5">
                 {/* Sección 1: Datos Generales */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">1</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Datos Generales</h3>
-                  </div>
+                <FormSection tone="blue" icon={FileText} title="Datos Generales">
 
                   <FormField
                     control={form.control}
                     name="clientId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cliente Titular *</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Cliente Titular *</FormLabel>
                         <Combobox
                           options={clientOptions.options}
                           onSearchChange={clientOptions.onSearchChange}
@@ -197,15 +175,15 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="requestDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fecha Solicitud *</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Fecha Solicitud *</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="date" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -216,7 +194,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                       name="isPackage"
                       render={({ field }) => (
                         <FormItem className="flex flex-col justify-center gap-2">
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">¿Es Paquete Completo?</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">¿Es Paquete Completo?</FormLabel>
                           <div className="flex items-center gap-2">
                             <FormControl>
                               <Switch
@@ -230,24 +208,19 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* Sección 2: Itinerario */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">2</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Itinerario</h3>
-                  </div>
+                <FormSection tone="emerald" icon={Plane} title="Itinerario">
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="originCountry"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País Origen</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">País Origen</FormLabel>
                           <Combobox
                             options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
@@ -258,7 +231,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                             allowCustomValue
                             placeholder="Ej: Chile"
                             searchPlaceholder="Buscar o escribir país..."
-                            className="bg-slate-50 border-slate-100"
+                            className="bg-white"
                           />
                         </FormItem>
                       )}
@@ -268,7 +241,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                       name="originCity"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ciudad Origen</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Ciudad Origen</FormLabel>
                           <Combobox
                             options={originCities.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
@@ -276,20 +249,20 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                             allowCustomValue
                             placeholder="Ej: Santiago"
                             searchPlaceholder="Buscar o escribir ciudad..."
-                            className="bg-slate-50 border-slate-100"
+                            className="bg-white"
                           />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="destinationCountry"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País Destino *</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">País Destino *</FormLabel>
                           <Combobox
                             options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
@@ -300,7 +273,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                             allowCustomValue
                             placeholder="Ej: Francia"
                             searchPlaceholder="Buscar o escribir país..."
-                            className="bg-slate-50 border-slate-100"
+                            className="bg-white"
                           />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -311,7 +284,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                       name="destinationCity"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ciudad Destino *</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Ciudad Destino *</FormLabel>
                           <Combobox
                             options={destinationCities.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
@@ -319,7 +292,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                             allowCustomValue
                             placeholder="Ej: París"
                             searchPlaceholder="Buscar o escribir ciudad..."
-                            className="bg-slate-50 border-slate-100"
+                            className="bg-white"
                           />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -332,33 +305,28 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                     name="durationDays"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Duración (Días)</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Duración (Días)</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} className="bg-slate-50 border-slate-100" />
+                          <Input type="number" {...field} className="bg-white" />
                         </FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )}
                   />
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* Sección 3: Presupuesto */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">3</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Presupuesto Estimado</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <FormSection tone="amber" icon={Wallet} title="Presupuesto Estimado">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="budgetMin"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mínimo ($)</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Mínimo ($)</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="number" {...field} className="bg-white" />
                           </FormControl>
                         </FormItem>
                       )}
@@ -368,24 +336,19 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                       name="budgetMax"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Máximo ($)</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Máximo ($)</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="number" {...field} className="bg-white" />
                           </FormControl>
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* Sección 4: Descripción */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">4</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Descripción y Notas</h3>
-                  </div>
+                <FormSection tone="violet" icon={StickyNote} title="Descripción y Notas">
                   <FormField
                     control={form.control}
                     name="description"
@@ -395,19 +358,19 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                           <Textarea
                             placeholder="Detalles adicionales, requerimientos especiales, etc."
                             aria-label="Descripción de la solicitud"
-                            className="bg-slate-50 border-slate-100 min-h-[120px]"
+                            className="bg-white min-h-[120px]"
                             {...field}
                           />
                         </FormControl>
                       </FormItem>
                     )}
                   />
-                </div>
+                </FormSection>
               </div>
-            </ScrollArea>
+            </FormSheetBody>
 
-            <SheetFooter className="p-8 border-t border-slate-100 bg-slate-50/50">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <FormSheetFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting} className="min-w-[140px]">
@@ -420,10 +383,9 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                   isEditing ? "Guardar Cambios" : "Crear Solicitud"
                 )}
               </Button>
-            </SheetFooter>
+            </FormSheetFooter>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+      </FormSheet>
   );
 }

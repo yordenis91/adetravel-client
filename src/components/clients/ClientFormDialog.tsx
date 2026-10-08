@@ -2,14 +2,6 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,25 +9,23 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X } from "lucide-react";
 
+import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
+import { IdCard, Landmark, Phone, SlidersHorizontal, User } from "lucide-react";
 const clientSchema = z.object({
   firstName: z.string().min(2, "Nombre es requerido"),
   lastName: z.string().min(2, "Apellido es requerido"),
@@ -188,36 +178,23 @@ const onSubmit = async (values: ClientFormValues) => {
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] p-0 flex flex-col">
-        <SheetHeader className="p-8 pb-4">
-          <SheetTitle className="text-2xl font-playfair font-bold text-navy">
-            {isEditing ? "Editar Cliente" : "Nuevo Cliente"}
-          </SheetTitle>
-          <SheetDescription>
-            Completa la información del titular para el registro de viajes y reservas.
-          </SheetDescription>
-        </SheetHeader>
+    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Cliente" : "Nuevo Cliente"} description="Completa la información del titular para el registro de viajes y reservas." widthClassName="sm:max-w-[600px]">
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-            <ScrollArea className="flex-1 px-8">
-              <div className="space-y-8 pb-10">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <FormSheetBody>
+              <div className="space-y-5">
                 {/* Datos Personales */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">1</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Datos Personales</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <FormSection tone="blue" icon={User} title="Datos Personales">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="firstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombres *</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Nombres *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ej: Juan Pablo" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Ej: Juan Pablo" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -228,22 +205,22 @@ const onSubmit = async (values: ClientFormValues) => {
                       name="lastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Apellidos *</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Apellidos *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ej: Pérez González" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Ej: Pérez González" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="nationality"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nacionalidad</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Nacionalidad</FormLabel>
                           <Combobox
                             options={nationalities.map((n: any) => ({ value: n.name, label: n.name }))}
                             value={field.value}
@@ -251,7 +228,7 @@ const onSubmit = async (values: ClientFormValues) => {
                             allowCustomValue
                             placeholder="Ej: Chilena"
                             searchPlaceholder="Buscar o escribir nacionalidad..."
-                            className="bg-slate-50 border-slate-100"
+                            className="bg-white"
                           />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -262,9 +239,9 @@ const onSubmit = async (values: ClientFormValues) => {
                       name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dirección</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Dirección</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ciudad, Comuna, Calle" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Ciudad, Comuna, Calle" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -272,40 +249,35 @@ const onSubmit = async (values: ClientFormValues) => {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="birthDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fecha de Nacimiento</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Fecha de Nacimiento</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="date" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* Identificación */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">2</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Identificación</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <FormSection tone="emerald" icon={IdCard} title="Identificación">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="rut"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">RUT</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">RUT</FormLabel>
                           <FormControl>
-                            <Input placeholder="12.345.678-9" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="12.345.678-9" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -316,9 +288,9 @@ const onSubmit = async (values: ClientFormValues) => {
                       name="passportNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pasaporte</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Pasaporte</FormLabel>
                           <FormControl>
-                            <Input placeholder="Número de pasaporte" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Número de pasaporte" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -326,15 +298,15 @@ const onSubmit = async (values: ClientFormValues) => {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="passportCountry"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">País Pasaporte</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">País Pasaporte</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ej: Chile" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Ej: Chile" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -345,9 +317,9 @@ const onSubmit = async (values: ClientFormValues) => {
                       name="passportIssueDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">F. Emisión</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">F. Emisión</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="date" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -358,34 +330,29 @@ const onSubmit = async (values: ClientFormValues) => {
                       name="passportExpiry"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">F. Vencimiento</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">F. Vencimiento</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="date" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* Contacto */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">3</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Contacto</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <FormSection tone="amber" icon={Phone} title="Contacto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="correo@ejemplo.com" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="email" placeholder="correo@ejemplo.com" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -396,9 +363,9 @@ const onSubmit = async (values: ClientFormValues) => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Teléfono</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Teléfono</FormLabel>
                           <FormControl>
-                            <Input placeholder="+56 9 1234 5678" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="+56 9 1234 5678" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -410,10 +377,10 @@ const onSubmit = async (values: ClientFormValues) => {
                     name="referralSource"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fuente de Referencia</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Fuente de Referencia</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-slate-50 border-slate-100">
+                            <SelectTrigger className="bg-white">
                               <SelectValue placeholder="Selecciona una fuente" />
                             </SelectTrigger>
                           </FormControl>
@@ -428,26 +395,21 @@ const onSubmit = async (values: ClientFormValues) => {
                       </FormItem>
                     )}
                   />
-                </div>
+                </FormSection>
 
-                <Separator className="bg-slate-100" />
 
                 {/* Información Adicional */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">4</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Preferencias</h3>
-                  </div>
+                <FormSection tone="violet" icon={SlidersHorizontal} title="Preferencias">
                   <FormField
                     control={form.control}
                     name="restrictions"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Restricciones o Preferencias</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Restricciones o Preferencias</FormLabel>
                         <FormControl>
                           <Textarea 
                             placeholder="Dietas especiales, alergias, preferencias de asiento, etc." 
-                            className="bg-slate-50 border-slate-100 min-h-[100px]"
+                            className="bg-white min-h-[100px]"
                             {...field} 
                           />
                         </FormControl>
@@ -455,38 +417,33 @@ const onSubmit = async (values: ClientFormValues) => {
                       </FormItem>
                     )}
                   />
-                </div>
+                </FormSection>
                 
-                <Separator className="bg-slate-100" />
 
                 {/* Datos Bancarios */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">5</span>
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-navy">Datos Bancarios (Reembolsos)</h3>
-                  </div>
+                <FormSection tone="rose" icon={Landmark} title="Datos Bancarios (Reembolsos)">
                   <FormField
                     control={form.control}
                     name="bankName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Banco</FormLabel>
+                        <FormLabel className="text-xs font-bold text-navy">Banco</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nombre del Banco" {...field} className="bg-slate-50 border-slate-100" />
+                          <Input placeholder="Nombre del Banco" {...field} className="bg-white" />
                         </FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="bankAccount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cuenta</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Cuenta</FormLabel>
                           <FormControl>
-                            <Input placeholder="N° de Cuenta" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="N° de Cuenta" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -497,9 +454,9 @@ const onSubmit = async (values: ClientFormValues) => {
                       name="bankAccountHolder"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Titular</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Titular</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nombre Titular" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input placeholder="Nombre Titular" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -513,9 +470,9 @@ const onSubmit = async (values: ClientFormValues) => {
                       name="bankEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Avisos Bancarios</FormLabel>
+                          <FormLabel className="text-xs font-bold text-navy">Email Avisos Bancarios</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="correo-banco@ejemplo.com" {...field} className="bg-slate-50 border-slate-100" />
+                            <Input type="email" placeholder="correo-banco@ejemplo.com" {...field} className="bg-white" />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -523,12 +480,12 @@ const onSubmit = async (values: ClientFormValues) => {
                     />
                   </div>
 
-                </div>
+                </FormSection>
               </div>
-            </ScrollArea>
+            </FormSheetBody>
 
-            <SheetFooter className="p-8 border-t border-slate-100 bg-slate-50/50">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <FormSheetFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting} className="min-w-[120px]">
@@ -541,10 +498,9 @@ const onSubmit = async (values: ClientFormValues) => {
                   isEditing ? "Guardar Cambios" : "Crear Cliente"
                 )}
               </Button>
-            </SheetFooter>
+            </FormSheetFooter>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+      </FormSheet>
   );
 }
