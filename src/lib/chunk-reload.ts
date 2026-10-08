@@ -17,6 +17,12 @@ const CHUNK_ERROR_PATTERNS = [
   /importing a module script failed/i,
   /expected a javascript.*module script/i,
   /NS_ERROR_CORRUPTED_CONTENT/i,
+  // React.lazy sobre un módulo que no llegó: React lee `.default` de un resultado vacío.
+  // Firefox: "can't access property "default", e._result is undefined".
+  // Chrome/Safari: "Cannot read properties of undefined (reading 'default')".
+  // Se exige `default` a propósito: un "Cannot read properties of undefined" cualquiera es un bug real.
+  /_result is undefined/i,
+  /reading '?"?default'?"?\)?$/i,
 ];
 
 export function isChunkLoadError(error: unknown): boolean {
@@ -39,6 +45,15 @@ export function shouldReloadForChunkError(now = Date.now()): boolean {
     return false;
   }
   return true;
+}
+
+/**
+ * Para el ErrorBoundary: si el error es de chunk (p. ej. se desplegó una versión nueva con la pestaña
+ * abierta) recarga sola una vez, en vez de dejar al usuario en la pantalla de error. Si la recarga
+ * no lo arregla, el enfriamiento deja pasar la pantalla de error en vez de recargar en bucle.
+ */
+export function reloadOnChunkError(error: unknown) {
+  if (isChunkLoadError(error) && shouldReloadForChunkError()) window.location.reload();
 }
 
 /** Engancha la recuperación al evento que Vite emite cuando falla la carga de un módulo. */
