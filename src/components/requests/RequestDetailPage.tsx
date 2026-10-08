@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
+import { statusChangedToast } from "@/lib/request-status-feedback";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useRequest, useChangeRequestStatus } from "@/hooks/useRequests";
@@ -197,7 +198,8 @@ export default function RequestDetailPage() {
       ? { id: requestId, status: newStatus, cancellationReason: note }
       : { id: requestId, status: newStatus, notes: note };
     updateStatusMutation.mutate(payload, {
-      onSuccess: () => toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." }),
+      onSuccess: (response: any) => toast(statusChangedToast(response)),
+      onError: (error) => toast({ variant: "destructive", title: "No se pudo cambiar el estado", description: getErrorMessage(error, "Error al actualizar la solicitud.") }),
     });
   };
 

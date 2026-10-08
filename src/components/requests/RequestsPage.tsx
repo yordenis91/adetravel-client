@@ -24,6 +24,8 @@ import { PermissionGuard } from "@/components/PermissionGuard";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { STATUS_PHASES, getStatusLabel } from "@/lib/workflow-status";
 import { ExportMenu } from "@/components/shared/ExportMenu";
+import { getErrorMessage } from "@/lib/api";
+import { statusChangedToast } from "@/lib/request-status-feedback";
 
 export default function RequestsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -84,10 +86,13 @@ export default function RequestsPage() {
     // (ver changeRequestStatus en el backend).
     const payload = newStatus === "CANCELADA" ? { id, status: newStatus, cancellationReason: note } : { id, status: newStatus, notes: note };
     updateStatusMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (response: any) => {
         queryClient.invalidateQueries({ queryKey: ["requests"] });
-        toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." });
-      }
+        toast(statusChangedToast(response));
+      },
+      onError: (error) => {
+        toast({ variant: "destructive", title: "No se pudo cambiar el estado", description: getErrorMessage(error, "Error al actualizar la solicitud.") });
+      },
     });
   };
 
