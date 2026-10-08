@@ -74,6 +74,7 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
             <TableHead className="w-10 px-4 py-4">
               <Checkbox 
                 checked={isAllSelected}
+                aria-label="Seleccionar todos los de esta página"
                 onCheckedChange={onSelectAll}
                 className={cn(
                   "rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary",
@@ -96,6 +97,7 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
               <TableCell className="px-4 py-4">
                 <Checkbox 
                   checked={selectedIds.has(client.id)}
+                  aria-label={`Seleccionar ${`${client.firstName} ${client.lastName}`}`}
                   onCheckedChange={() => onSelectOne(client.id)}
                   className="rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />

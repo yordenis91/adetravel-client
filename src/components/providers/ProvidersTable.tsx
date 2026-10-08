@@ -113,6 +113,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
             <TableHead className="w-10 px-4 py-4">
               <Checkbox
                 checked={isAllSelected}
+                aria-label="Seleccionar todos los de esta página"
                 onCheckedChange={onSelectAll}
                 className={cn(
                   "rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary",
@@ -136,6 +137,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
               <TableCell className="px-4 py-4">
                 <Checkbox
                   checked={selectedIds.has(provider.id)}
+                  aria-label={`Seleccionar ${provider.fantasyName || provider.name}`}
                   onCheckedChange={() => onSelectOne && onSelectOne(provider.id)}
                   className="rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
