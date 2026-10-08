@@ -198,7 +198,7 @@ export default function ProvidersPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar por nombre, tipo, email..." 
+                placeholder="Buscar por nombre, tipo, email..." aria-label="Buscar por nombre, tipo, email" 
                 className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

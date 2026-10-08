@@ -74,6 +74,7 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
             <TableHead className="w-10 px-4 py-4">
               <Checkbox 
                 checked={isAllSelected}
+                aria-label="Seleccionar todos los de esta página"
                 onCheckedChange={onSelectAll}
                 className={cn(
                   "rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary",
@@ -96,6 +97,7 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
               <TableCell className="px-4 py-4">
                 <Checkbox 
                   checked={selectedIds.has(client.id)}
+                  aria-label={`Seleccionar ${`${client.firstName} ${client.lastName}`}`}
                   onCheckedChange={() => onSelectOne(client.id)}
                   className="rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
@@ -151,7 +153,7 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
                 <div className="flex justify-end gap-1">
                   <Button 
                     variant="ghost" 
-                    size="icon" 
+                    size="icon" aria-label="Ver ficha del cliente" 
                     className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5"
                     onClick={() => navigate(`/clientes/${client.id}/timeline`)}
                   >
@@ -159,7 +161,7 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
                   </Button>
                   <Button 
                     variant="ghost" 
-                    size="icon" 
+                    size="icon" aria-label="Editar" 
                     className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/5"
                     onClick={() => onEdit(client)}
                   >
@@ -167,7 +169,7 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                      <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8 text-muted-foreground">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>

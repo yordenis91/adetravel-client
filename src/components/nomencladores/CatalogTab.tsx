@@ -135,10 +135,10 @@ export function CatalogTab({ resource, label, parent }: CatalogTabProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
+                    <Button variant="ghost" size="icon" aria-label="Editar elemento" className="h-8 w-8" onClick={() => openEdit(item)}>
                       <Edit2 className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(item)}>
+                    <Button variant="ghost" size="icon" aria-label={item.isActive ? "Desactivar" : "Activar"} className="h-8 w-8" onClick={() => handleToggleActive(item)}>
                       {item.isActive ? <PowerOff className="w-3.5 h-3.5 text-rose-500" /> : <Power className="w-3.5 h-3.5 text-emerald-500" />}
                     </Button>
                   </TableCell>

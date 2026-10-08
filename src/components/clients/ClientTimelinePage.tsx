@@ -385,7 +385,7 @@ export default function ClientTimelinePage() {
                 selectedEvent.color === "gold" && "bg-amber-500",
                 selectedEvent.color === "slate" && "bg-slate-700"
               )}>
-                <Button variant="ghost" size="icon" className="absolute right-4 top-4 text-white hover:bg-white/20" onClick={() => setSelectedEvent(null)}>
+                <Button variant="ghost" size="icon" aria-label="Cerrar" className="absolute right-4 top-4 text-white hover:bg-white/20" onClick={() => setSelectedEvent(null)}>
                   <X className="w-5 h-5" />
                 </Button>
                 <div className="flex items-center gap-3">

@@ -38,7 +38,7 @@ export default function ServicesPage() {
           <div className="relative flex-1 md:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por N° servicio o solicitud..."
+              placeholder="Buscar por N° servicio o solicitud..." aria-label="Buscar por N° servicio o solicitud"
               className="pl-10 bg-slate-50 border-slate-100 h-10 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

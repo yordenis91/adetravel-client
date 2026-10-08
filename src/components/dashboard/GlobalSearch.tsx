@@ -53,7 +53,7 @@ export function GlobalSearch() {
         <Search className="w-4 h-4 text-muted-foreground shrink-0" />
         <input 
           type="text" 
-          placeholder="Buscar clientes, pagos, vouchers..." 
+          placeholder="Buscar clientes, pagos, vouchers..." aria-label="Buscar clientes, pagos, vouchers" 
           className="bg-transparent border-none outline-none text-xs w-full placeholder:text-muted-foreground"
           value={searchTerm}
           onChange={(e) => {

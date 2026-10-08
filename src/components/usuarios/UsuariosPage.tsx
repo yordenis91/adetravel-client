@@ -249,7 +249,7 @@ export default function UsuariosPage() {
         <CardHeader className="pb-0 border-b border-slate-100 bg-slate-50/30">
           <div className="relative w-full md:w-96 pb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nombre o correo..." className="pl-10 bg-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Buscar por nombre o correo..." aria-label="Buscar por nombre o correo" className="pl-10 bg-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -314,7 +314,7 @@ export default function UsuariosPage() {
                     <TableCell className="px-6 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="hover:bg-navy/5 text-navy/50">
+                          <Button variant="ghost" size="icon" aria-label="Más acciones" className="hover:bg-navy/5 text-navy/50">
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>

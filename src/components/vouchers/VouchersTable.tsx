@@ -167,19 +167,19 @@ export function VouchersTable({
                     <div className="flex items-center justify-end gap-1">
                       <Button 
                         variant="ghost" 
-                        size="icon" 
+                        size="icon" aria-label="Ver PDF" 
                         className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                         onClick={() => onPreviewPDF(voucher)}
                         title="Ver PDF"
                       >
                         <Printer className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Vista Previa">
+                      <Button variant="ghost" size="icon" aria-label="Vista previa" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Vista Previa">
                         <Eye className="w-4 h-4" />
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8">
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>

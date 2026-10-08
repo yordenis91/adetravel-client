@@ -417,7 +417,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                             <Button 
                               type="button" 
                               variant="ghost" 
-                              size="icon" 
+                              size="icon" aria-label="Quitar línea" 
                               className="h-9 w-9 text-rose-400 hover:text-rose-600 hover:bg-rose-50"
                               onClick={() => removeItem(item.id)}
                             >
