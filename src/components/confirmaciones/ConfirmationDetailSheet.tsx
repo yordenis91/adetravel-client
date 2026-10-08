@@ -13,17 +13,16 @@ interface ConfirmationDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   confirmation: any;
-  requests: any[];
-  providers: any[];
   onEdit: (c: any) => void;
 }
 
-export function ConfirmationDetailSheet({ open, onOpenChange, confirmation, requests, providers, onEdit }: ConfirmationDetailSheetProps) {
+export function ConfirmationDetailSheet({ open, onOpenChange, confirmation, onEdit }: ConfirmationDetailSheetProps) {
   const navigate = useNavigate();
   if (!confirmation) return null;
 
-  const request = requests.find((r: any) => r.id === confirmation.requestId);
-  const provider = providers.find((p: any) => p.id === confirmation.providerId);
+  // Solicitud y proveedor vienen incrustados en la confirmación (GET /confirmations).
+  const request = confirmation.request;
+  const provider = confirmation.provider;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

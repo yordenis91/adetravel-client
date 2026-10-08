@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import { FileText, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getStatusColor, getStatusLabel } from "@/lib/workflow-status";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 export function RecentRequests() {
   const { data: responseData, isLoading } = useQuery({
@@ -62,11 +63,11 @@ export function RecentRequests() {
           </Button>
         </div>
       ) : (
-        <Table>
+        <Table stackOnMobile>
           <TableHeader className="bg-slate-50/50 border-b border-gray-100">
             <TableRow className="hover:bg-transparent border-none">
               <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600">ID</TableHead>
-              <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600">Servicios</TableHead>
+              <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600">Servicios solicitados</TableHead>
               <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600">Estado</TableHead>
               <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600 text-right">Fecha</TableHead>
             </TableRow>
@@ -81,7 +82,7 @@ export function RecentRequests() {
                   <div className="flex gap-1 flex-wrap">
                     {req.services?.slice(0, 2).map((s: string) => (
                       <span key={s} className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded-md text-slate-600 font-medium">
-                        {s}
+                        {serviceTypeLabel(s)}
                       </span>
                     ))}
                     {req.services?.length > 2 && (

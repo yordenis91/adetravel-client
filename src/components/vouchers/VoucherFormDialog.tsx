@@ -28,6 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
+import { useProviderOptions } from "@/hooks/useProviderOptions";
+import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Ticket, 
@@ -44,6 +46,7 @@ import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { normalizeServiceType, SERVICE_TYPE_SHORT_LABELS, UNIFIED_SERVICE_TYPES } from "@/lib/service-types";
 
 const formSchema = z.object({
   requestId: z.string().min(1, "La solicitud es requerida"),
@@ -72,33 +75,21 @@ interface VoucherFormDialogProps {
   voucher?: any;
 }
 
-const SERVICE_TYPES = [
-  "HOTEL", "AÉREO", "TOUR", "TRANSFER", "SEGURO", "RESTAURANT", "OTRO"
-];
 
 export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!voucher;
 
-  const { data: requestsResponseData = [] } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'),
-  });
+  // Solicitudes buscadas en el servidor (antes solo las 20 más recientes); la elegida se pide por id.
+  const requestOptions = useRemoteOptions(
+    "requests",
+    "/requests",
+    (req: any) => ({ value: req.id, label: `${req.requestNumber} | ${req.destinationCity || ""}` }),
+    { enabled: open }
+  );
 
-  const { data: clientsResponseData = [] } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => api.get('/clients'),
-  });
-
-  const { data: providersResponseData = [] } = useQuery({
-    queryKey: ["providers"],
-    queryFn: () => api.get('/providers'),
-  });
-
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
-  const providers = Array.isArray(providersResponseData) ? providersResponseData : (providersResponseData as any)?.data || [];
+  const providerOptions = useProviderOptions(open);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -107,7 +98,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
       clientId: "",
       providerId: "",
       voucherNumber: "",
-      serviceType: "HOTEL",
+      serviceType: "ALOJAMIENTO",
       serviceName: "",
       serviceDetails: "",
       checkIn: format(new Date(), "yyyy-MM-dd"),
@@ -134,7 +125,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
         clientId: voucher.clientId || "",
         providerId: voucher.providerId || "",
         voucherNumber: voucher.voucherNumber || "",
-        serviceType: voucher.serviceType || "HOTEL",
+        serviceType: voucher.serviceType ? normalizeServiceType(voucher.serviceType) : "ALOJAMIENTO",
         serviceName: voucher.serviceName || "",
         serviceDetails: voucher.serviceDetails || "",
         checkIn: voucher.checkIn || format(new Date(), "yyyy-MM-dd"),
@@ -148,15 +139,12 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
         notes: voucher.notes || "",
       });
     } else {
-      const year = new Date().getFullYear();
-      const month = String(new Date().getMonth() + 1).padStart(2, '0');
-      const random = Math.floor(1000 + Math.random() * 9000);
       form.reset({
         requestId: "",
         clientId: "",
         providerId: "",
-        voucherNumber: `VCH-${year}-${month}-${random}`,
-        serviceType: "HOTEL",
+        voucherNumber: "Se asigna al guardar", // lo genera la API (numeración correlativa)
+        serviceType: "ALOJAMIENTO",
         serviceName: "",
         serviceDetails: "",
         checkIn: format(new Date(), "yyyy-MM-dd"),
@@ -194,15 +182,26 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
   };
 
   const selectedRequestId = form.watch("requestId");
+  const { data: selectedRequestResponse } = useQuery({
+    queryKey: ["requests", selectedRequestId],
+    queryFn: () => api.get(`/requests/${selectedRequestId}`),
+    enabled: open && !!selectedRequestId,
+  });
+  const selectedRequest = (selectedRequestResponse as any)?.data;
+
+  // Cliente y destino salen de la solicitud, pero solo al elegir otra: al editar no se pisa el
+  // destino ya guardado en el voucher.
   useEffect(() => {
-    if (selectedRequestId) {
-      const request = requests.find((r: any) => r.id === selectedRequestId);
-      if (request) {
-        form.setValue("clientId", request.clientId);
-        form.setValue("destination", request.destinationCity || "");
-      }
+    if (selectedRequest && (!isEditing || selectedRequest.id !== voucher?.requestId)) {
+      form.setValue("clientId", selectedRequest.clientId);
+      form.setValue("destination", selectedRequest.destinationCity || "");
     }
-  }, [selectedRequestId, requests, form]);
+  }, [selectedRequest, form, isEditing, voucher?.requestId]);
+
+  const clientLabel = (() => {
+    const c = selectedRequest?.client ?? voucher?.client;
+    return c ? `${c.firstName} ${c.lastName ?? ""}`.trim() : "";
+  })();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -232,7 +231,10 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                     <FormItem>
                       <FormLabel>Solicitud *</FormLabel>
                       <Combobox
-                        options={requests.map((req: any) => ({ value: req.id, label: `${req.requestNumber} | ${req.destinationCity || ""}` }))}
+                        options={requestOptions.options}
+                        onSearchChange={requestOptions.onSearchChange}
+                        loading={requestOptions.loading}
+                        selectedLabel={(selectedRequest ?? voucher?.request)?.requestNumber}
                         value={field.value}
                         onChange={field.onChange}
                         placeholder="Seleccione solicitud"
@@ -250,20 +252,9 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cliente</FormLabel>
-                      <Select disabled value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-muted">
-                            <SelectValue placeholder="Asignado automáticamente" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clients.map((client: any) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.firstName} {client.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input disabled value={clientLabel} placeholder="Asignado automáticamente" className="bg-muted" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -277,7 +268,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   <FormItem>
                     <FormLabel>Proveedor del Servicio *</FormLabel>
                     <Combobox
-                      options={providers.map((provider: any) => ({ value: provider.id, label: provider.fantasyName || provider.name }))}
+                      options={providerOptions.optionsFor(field.value)}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Seleccione el proveedor / hotel / operador"
@@ -310,8 +301,8 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {SERVICE_TYPES.map((type) => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          {UNIFIED_SERVICE_TYPES.map((type) => (
+                            <SelectItem key={type} value={type}>{SERVICE_TYPE_SHORT_LABELS[type]}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -371,12 +362,12 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Destino *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                      <FormControl>
                         <Input className="pl-10" placeholder="Ciudad, País" {...field} />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -427,7 +418,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                       render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormControl>
-                            <Input placeholder="Nombre Completo del Pasajero" {...field} />
+                            <Input placeholder="Nombre Completo del Pasajero" aria-label={`Pasajero ${index + 1}`} {...field} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -436,7 +427,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                       <Button 
                         type="button" 
                         variant="ghost" 
-                        size="icon" 
+                        size="icon" aria-label="Quitar pasajero" 
                         className="h-10 w-10 text-muted-foreground hover:text-destructive"
                         onClick={() => remove(index)}
                       >

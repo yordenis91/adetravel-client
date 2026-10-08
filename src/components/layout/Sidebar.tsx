@@ -87,6 +87,13 @@ const iconMap: Record<string, any> = {
   "Tareas": ClipboardList,
 };
 
+const AGENCY_ROLE_LABELS: Record<string, string> = {
+  GERENTE: "Gerente",
+  FINANZAS: "Finanzas",
+  OPERACIONES: "Operaciones",
+  AGENTE_VENTAS: "Agente de ventas",
+};
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { logout, hasPermission } = useAuth();
@@ -132,8 +139,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       "fixed left-0 top-0 h-screen w-64 bg-navy text-sidebar-foreground flex flex-col z-50 transition-transform duration-300 ease-in-out lg:translate-x-0",
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
-      <div className="p-6">
-        <div className="flex items-center mb-8">
+      {/* El menú ocupa todo el alto libre entre el logo y el pie, con desplazamiento visible: antes
+          tenía un alto fijo (100vh - 200px) y en 1440×900 quedaban 7 opciones fuera de la vista. */}
+      <div className="px-6 pt-6 flex-1 min-h-0 flex flex-col">
+        <div className="flex items-center mb-6 shrink-0">
           <img
             src="/cropped-logo-png-2.png"
             alt="ADE Travel Logo"
@@ -141,10 +150,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           />
         </div>
 
-        <nav ref={navRef} className="space-y-8 overflow-y-auto max-h-[calc(100vh-200px)] hide-scrollbar">
+        <nav ref={navRef} aria-label="Menú principal" className="flex-1 min-h-0 space-y-5 overflow-y-auto pb-4 pr-1 sidebar-scroll">
           {navSections.map((section) => (
             <div key={section.title}>
-              <h2 className="text-[10px] uppercase tracking-widest text-sidebar-foreground/40 font-bold mb-4 px-4">
+              <h2 className="text-[10px] uppercase tracking-widest text-sidebar-foreground/40 font-bold mb-2 px-4">
                 {section.title}
               </h2>
               <div className="space-y-1">
@@ -177,32 +186,34 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
       </div>
 
-      <div className="mt-auto p-6 border-t border-sidebar-border bg-navy-dark/50">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary text-[10px] font-bold">
+      <div className="shrink-0 px-6 py-4 border-t border-sidebar-border bg-navy-dark/50">
+        {/* Pie compacto (una fila): deja más alto libre al menú. */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 shrink-0 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary text-[10px] font-bold">
             {me?.fullName ? me.fullName.split(' ').map((n: any) => n[0]).join('').slice(0, 2).toUpperCase() : 'AD'}
           </div>
-          <div className="flex flex-col overflow-hidden">
+          <div className="flex flex-col overflow-hidden flex-1">
             <span className="text-xs font-semibold truncate">{me?.fullName || 'Admin ADE'}</span>
             <span className="text-[10px] text-sidebar-foreground/50 truncate">
-              {me?.role === 'ADMINISTRADOR' ? 'Administrador' : 'Agente'}
+              {me?.role === 'ADMINISTRADOR' ? 'Administrador' : (AGENCY_ROLE_LABELS[me?.agencyRole ?? ''] ?? 'Usuario')}
             </span>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            className="h-8 w-8 shrink-0 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              if (onClose) onClose();
+              logout();
+              window.location.href = "/auth/login";
+            }}
+          >
+            <LogOut className="w-4 h-4" aria-hidden="true" />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
-          onClick={() => {
-            if (onClose) onClose();
-            logout();
-            window.location.href = "/auth/login";
-          }}
-        >
-          <LogOut className="w-4 h-4" />
-          <span className="text-xs">Cerrar Sesión</span>
-        </Button>
-        <div className="mt-3 flex items-center justify-center gap-3 text-[10px] text-sidebar-foreground/40">
+        <div className="mt-2 flex items-center justify-center gap-3 text-[10px] text-sidebar-foreground/40">
           <Link to="/legal/terminos-de-servicio" className="hover:text-sidebar-foreground/70 transition-colors">
             Términos
           </Link>

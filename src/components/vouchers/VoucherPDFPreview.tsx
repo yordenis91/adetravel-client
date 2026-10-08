@@ -21,8 +21,9 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 interface VoucherPDFPreviewProps {
   open: boolean;
@@ -84,7 +85,7 @@ export function VoucherPDFPreview({
       toast({
         variant: "destructive",
         title: "Error al generar el PDF",
-        description: error instanceof Error ? error.message : "Intenta nuevamente.",
+        description: getErrorMessage(error, "Intenta nuevamente."),
       });
     } finally {
       setIsDownloading(false);
@@ -104,7 +105,7 @@ export function VoucherPDFPreview({
               {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
               Imprimir / Descargar PDF
             </Button>
-            <Button variant="outline" size="icon" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" size="icon" aria-label="Cerrar vista previa" onClick={() => onOpenChange(false)}>
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -154,7 +155,7 @@ export function VoucherPDFPreview({
             {/* Service Card */}
             <div className="service-card bg-[#f0f4f8] p-8 rounded-xl mb-8 relative">
               <div className="service-type-badge inline-block px-3 py-1 bg-[#0F1E3C] text-white text-[9px] font-bold rounded mb-3">
-                {voucher.serviceType}
+                {serviceTypeLabel(voucher.serviceType)}
               </div>
               <h2 className="service-name text-2xl font-extrabold text-[#0F1E3C] mb-4">
                 {voucher.serviceName}

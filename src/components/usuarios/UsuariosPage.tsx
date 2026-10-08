@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { UserRoleBadge } from "./UserRoleBadge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { validateUserForm, type UserFormErrors } from "@/lib/user-form";
 
 const AGENCY_ROLES = [
   { value: "GERENTE", label: "Gerente" },
@@ -34,6 +35,8 @@ export default function UsuariosPage() {
   // Estados para Edición
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState({ id: "", fullName: "", email: "", newPassword: "" });
+  const [createErrors, setCreateErrors] = useState<UserFormErrors>({});
+  const [editErrors, setEditErrors] = useState<UserFormErrors>({});
 
   const queryClient = useQueryClient();
 
@@ -123,12 +126,19 @@ export default function UsuariosPage() {
 
   const handleEditUser = (e: React.FormEvent) => {
     e.preventDefault();
-    editUserMutation.mutate(editingUser);
+    const errors = validateUserForm(
+      { fullName: editingUser.fullName, email: editingUser.email, password: editingUser.newPassword },
+      { passwordOptional: true }
+    );
+    setEditErrors(errors);
+    if (Object.keys(errors).length === 0) editUserMutation.mutate(editingUser);
   };
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
-    createUserMutation.mutate(newUser);
+    const errors = validateUserForm(newUser);
+    setCreateErrors(errors);
+    if (Object.keys(errors).length === 0) createUserMutation.mutate(newUser);
   };
 
   const copySignupUrl = () => {
@@ -153,7 +163,7 @@ export default function UsuariosPage() {
         </div>
         
         {/* 🔥 NUEVO: Modal de Creación de Usuario */}
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <Dialog open={isCreateModalOpen} onOpenChange={(o) => { setIsCreateModalOpen(o); setCreateErrors({}); }}>
           <DialogTrigger asChild>
             <Button className="bg-navy hover:bg-navy-dark text-white gap-2 font-bold shadow-md">
               <Plus className="w-4 h-4" /> Crear Usuario
@@ -166,23 +176,26 @@ export default function UsuariosPage() {
                 Ingresa los datos del nuevo empleado. Se le enviará un correo de bienvenida.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleCreateUser} className="space-y-4 py-4">
+            <form onSubmit={handleCreateUser} noValidate className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Nombre Completo</label>
-                <Input required placeholder="Ej: Ana López" value={newUser.fullName} onChange={e => setNewUser({...newUser, fullName: e.target.value})} />
+                <label htmlFor="new-user-name" className="text-sm font-bold text-navy">Nombre Completo</label>
+                <Input id="new-user-name" aria-invalid={!!createErrors.fullName} aria-describedby={createErrors.fullName ? "new-user-name-error" : undefined} placeholder="Ej: Ana López" value={newUser.fullName} onChange={e => setNewUser({...newUser, fullName: e.target.value})} />
+                {createErrors.fullName && <p id="new-user-name-error" className="text-sm font-medium text-destructive">{createErrors.fullName}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Correo Electrónico</label>
-                <Input required type="email" placeholder="ana@adetravel.com" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
+                <label htmlFor="new-user-email" className="text-sm font-bold text-navy">Correo Electrónico</label>
+                <Input id="new-user-email" type="email" aria-invalid={!!createErrors.email} aria-describedby={createErrors.email ? "new-user-email-error" : undefined} placeholder="ana@adetravel.com" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
+                {createErrors.email && <p id="new-user-email-error" className="text-sm font-medium text-destructive">{createErrors.email}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Contraseña Temporal</label>
-                <Input required type="password" placeholder="8+ caracteres, mayúscula, número y símbolo (!@#$%^&*)" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} />
+                <label htmlFor="new-user-password" className="text-sm font-bold text-navy">Contraseña Temporal</label>
+                <Input id="new-user-password" type="password" aria-invalid={!!createErrors.password} aria-describedby={createErrors.password ? "new-user-password-error" : undefined} placeholder="8+ caracteres, mayúscula, número y símbolo (!@#$%^&*)" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} />
+                {createErrors.password && <p id="new-user-password-error" className="text-sm font-medium text-destructive">{createErrors.password}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Rol en la Agencia</label>
+                <label htmlFor="new-user-role" className="text-sm font-bold text-navy">Rol en la Agencia</label>
                 <Select value={newUser.agencyRole} onValueChange={val => setNewUser({...newUser, agencyRole: val})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="new-user-role"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {AGENCY_ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
                   </SelectContent>
@@ -199,7 +212,7 @@ export default function UsuariosPage() {
         </Dialog>
 
         {/* 🔥 NUEVO: Modal de Edición de Usuario */}
-        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <Dialog open={isEditModalOpen} onOpenChange={(o) => { setIsEditModalOpen(o); setEditErrors({}); }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle className="text-xl font-playfair font-bold text-navy">Editar Perfil de Usuario</DialogTitle>
@@ -207,23 +220,28 @@ export default function UsuariosPage() {
                 Actualiza los datos personales o resetea la contraseña de este empleado.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleEditUser} className="space-y-4 py-4">
+            <form onSubmit={handleEditUser} noValidate className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Nombre Completo</label>
-                <Input required value={editingUser.fullName} onChange={e => setEditingUser({...editingUser, fullName: e.target.value})} />
+                <label htmlFor="edit-user-name" className="text-sm font-bold text-navy">Nombre Completo</label>
+                <Input id="edit-user-name" aria-invalid={!!editErrors.fullName} aria-describedby={editErrors.fullName ? "edit-user-name-error" : undefined} value={editingUser.fullName} onChange={e => setEditingUser({...editingUser, fullName: e.target.value})} />
+                {editErrors.fullName && <p id="edit-user-name-error" className="text-sm font-medium text-destructive">{editErrors.fullName}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Correo Electrónico</label>
-                <Input required type="email" value={editingUser.email} onChange={e => setEditingUser({...editingUser, email: e.target.value})} />
+                <label htmlFor="edit-user-email" className="text-sm font-bold text-navy">Correo Electrónico</label>
+                <Input id="edit-user-email" type="email" aria-invalid={!!editErrors.email} aria-describedby={editErrors.email ? "edit-user-email-error" : undefined} value={editingUser.email} onChange={e => setEditingUser({...editingUser, email: e.target.value})} />
+                {editErrors.email && <p id="edit-user-email-error" className="text-sm font-medium text-destructive">{editErrors.email}</p>}
               </div>
               <div className="space-y-2 relative">
-                <label className="text-sm font-bold text-navy">Nueva Contraseña (Opcional)</label>
-                <Input 
+                <label htmlFor="edit-user-password" className="text-sm font-bold text-navy">Nueva Contraseña (Opcional)</label>
+                <Input id="edit-user-password" 
+                  aria-invalid={!!editErrors.password}
+                  aria-describedby={editErrors.password ? "edit-user-password-error" : undefined}
                   type="password" 
                   placeholder="Dejar en blanco para no cambiar" 
                   value={editingUser.newPassword} 
                   onChange={e => setEditingUser({...editingUser, newPassword: e.target.value})} 
                 />
+                {editErrors.password && <p id="edit-user-password-error" className="text-sm font-medium text-destructive">{editErrors.password}</p>}
                 <p className="text-[10px] text-muted-foreground mt-1">
                   Si escribes algo aquí, la contraseña anterior quedará invalidada.
                 </p>
@@ -249,12 +267,12 @@ export default function UsuariosPage() {
         <CardHeader className="pb-0 border-b border-slate-100 bg-slate-50/30">
           <div className="relative w-full md:w-96 pb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nombre o correo..." className="pl-10 bg-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Buscar por nombre o correo..." aria-label="Buscar por nombre o correo" className="pl-10 bg-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table stackOnMobile>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-b border-slate-100">
                   <TableHead className="font-bold text-navy px-6 py-4">Usuario</TableHead>
@@ -314,7 +332,7 @@ export default function UsuariosPage() {
                     <TableCell className="px-6 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="hover:bg-navy/5 text-navy/50">
+                          <Button variant="ghost" size="icon" aria-label="Más acciones" className="hover:bg-navy/5 text-navy/50">
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -324,6 +342,7 @@ export default function UsuariosPage() {
                           <DropdownMenuItem className="cursor-pointer" 
                           onClick={() => {
                             setEditingUser({ id: user.id, fullName: user.fullName, email: user.email, newPassword: "" });
+                            setEditErrors({});
                             setIsEditModalOpen(true);
                           }}>
                             <Edit className="w-4 h-4 mr-2" /> Editar Perfil

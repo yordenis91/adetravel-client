@@ -107,12 +107,13 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-muted/50">
           <TableRow className="hover:bg-transparent border-gray-100">
             <TableHead className="w-10 px-4 py-4">
               <Checkbox
                 checked={isAllSelected}
+                aria-label="Seleccionar todos los de esta página"
                 onCheckedChange={onSelectAll}
                 className={cn(
                   "rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary",
@@ -136,6 +137,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
               <TableCell className="px-4 py-4">
                 <Checkbox
                   checked={selectedIds.has(provider.id)}
+                  aria-label={`Seleccionar ${provider.fantasyName || provider.name}`}
                   onCheckedChange={() => onSelectOne && onSelectOne(provider.id)}
                   className="rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
@@ -204,7 +206,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
                 <div className="flex justify-end gap-1">
                   <Button 
                     variant="ghost" 
-                    size="icon" 
+                    size="icon" aria-label="Ver ficha del proveedor" 
                     className="h-8 w-8 text-muted-foreground hover:text-navy hover:bg-navy/5"
                     onClick={() => navigate(`/proveedores/${provider.id}`)}
                   >
@@ -212,7 +214,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
                   </Button>
                   <Button 
                     variant="ghost" 
-                    size="icon" 
+                    size="icon" aria-label="Editar" 
                     className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/5"
                     onClick={() => onEdit(provider)}
                   >
@@ -220,7 +222,7 @@ export function ProvidersTable({ providers, isLoading, onEdit, onDelete, selecte
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                      <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8 text-muted-foreground">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>

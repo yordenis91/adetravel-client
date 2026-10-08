@@ -2,18 +2,51 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Table = React.forwardRef<
-  HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
-  </div>
-))
+interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
+  /**
+   * En pantallas estrechas (< 768 px) cada fila se muestra como una tarjeta, con el nombre de la
+   * columna delante de cada valor, en lugar de recortar las últimas columnas (estado, acciones).
+   */
+  stackOnMobile?: boolean
+}
+
+/** Copia el texto de cada cabecera en `data-label` de las celdas de su columna (lo usa el CSS). */
+function useColumnLabels(tableRef: React.RefObject<HTMLTableElement>, enabled: boolean) {
+  React.useLayoutEffect(() => {
+    const table = tableRef.current
+    if (!enabled || !table) return
+    const apply = () => {
+      const labels = Array.from(table.querySelectorAll("thead th")).map((th) => th.textContent?.trim() ?? "")
+      table.querySelectorAll("tbody tr").forEach((row) => {
+        Array.from(row.children).forEach((cell, index) => {
+          const label = (cell as HTMLTableCellElement).colSpan > 1 ? "" : labels[index] ?? ""
+          if (cell.getAttribute("data-label") !== label) cell.setAttribute("data-label", label)
+        })
+      })
+    }
+    apply()
+    const observer = new MutationObserver(apply)
+    observer.observe(table, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [tableRef, enabled])
+}
+
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, stackOnMobile = false, ...props }, ref) => {
+    const innerRef = React.useRef<HTMLTableElement>(null)
+    React.useImperativeHandle(ref, () => innerRef.current as HTMLTableElement)
+    useColumnLabels(innerRef, stackOnMobile)
+    return (
+      <div className="relative w-full overflow-auto">
+        <table
+          ref={innerRef}
+          className={cn("w-full caption-bottom text-sm", stackOnMobile && "table-stack", className)}
+          {...props}
+        />
+      </div>
+    )
+  }
+)
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<

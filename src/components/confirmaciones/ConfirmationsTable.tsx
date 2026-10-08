@@ -10,17 +10,16 @@ import { es } from "date-fns/locale";
 
 interface ConfirmationsTableProps {
   confirmations: any[];
-  requests: any[];
-  providers: any[];
   isLoading: boolean;
   onView: (c: any) => void;
   onEdit: (c: any) => void;
 }
 
-export function ConfirmationsTable({ confirmations, requests, providers, isLoading, onView, onEdit }: ConfirmationsTableProps) {
-  const getRequestNumber = (id: string) => requests.find((r) => r.id === id)?.requestNumber || id?.substring(0, 8);
-  const getProviderName = (id: string) => {
-    const p = providers.find((pv) => pv.id === id);
+// Solicitud y proveedor vienen incrustados en cada confirmación (GET /confirmations).
+export function ConfirmationsTable({ confirmations, isLoading, onView, onEdit }: ConfirmationsTableProps) {
+  const getRequestNumber = (c: any) => c.request?.requestNumber || c.requestId?.substring(0, 8);
+  const getProviderName = (c: any) => {
+    const p = c.provider;
     return p ? (p.fantasyName || p.name) : "—";
   };
 
@@ -48,7 +47,7 @@ export function ConfirmationsTable({ confirmations, requests, providers, isLoadi
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
             <TableHead className="text-xs font-bold uppercase tracking-wider">N° Confirmación</TableHead>
@@ -64,8 +63,8 @@ export function ConfirmationsTable({ confirmations, requests, providers, isLoadi
           {confirmations.map((c) => (
             <TableRow key={c.id} className="hover:bg-slate-50/50 transition-colors">
               <TableCell className="font-mono text-xs font-bold text-primary">{c.confirmationNumber}</TableCell>
-              <TableCell className="font-mono text-xs">{getRequestNumber(c.requestId)}</TableCell>
-              <TableCell className="text-sm">{getProviderName(c.providerId)}</TableCell>
+              <TableCell className="font-mono text-xs">{getRequestNumber(c)}</TableCell>
+              <TableCell className="text-sm">{getProviderName(c)}</TableCell>
               <TableCell className="text-xs text-muted-foreground">{c.providerConfirmationNumber || "—"}</TableCell>
               <TableCell className="text-xs font-bold text-navy">{Number(c.price).toLocaleString("es-CL")}</TableCell>
               <TableCell className="text-xs text-muted-foreground">
@@ -73,10 +72,10 @@ export function ConfirmationsTable({ confirmations, requests, providers, isLoadi
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(c)}>
+                  <Button variant="ghost" size="icon" aria-label="Ver detalle" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(c)}>
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(c)}>
+                  <Button variant="ghost" size="icon" aria-label="Editar" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(c)}>
                     <Edit2 className="w-4 h-4" />
                   </Button>
                 </div>

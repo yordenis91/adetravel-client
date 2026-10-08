@@ -3,13 +3,12 @@ import App from "./App.tsx";
 import "./index.css";
 import * as Sentry from "@sentry/react";
 import { installChunkReloadHandler } from "./lib/chunk-reload";
+import { scrubBreadcrumb, scrubEvent } from "./lib/sentry-scrub";
 
 // Tras un despliegue nuevo, las pestañas con la versión vieja piden módulos que ya no existen.
 installChunkReloadHandler();
 
 const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-console.log("SENTRY CONFIGURADO:", !!import.meta.env.VITE_SENTRY_DSN);
 
 // 🔥 1. Inicializamos Sentry de forma segura
 if (import.meta.env.VITE_SENTRY_DSN) {
@@ -17,7 +16,14 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     dsn: import.meta.env.VITE_SENTRY_DSN,
     
     // Entornos: Ayuda a separar errores de pruebas y de producción
-    environment: import.meta.env.PROD ? "production" : "development",
+    environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || (import.meta.env.PROD ? "production" : "development"),
+
+    // Sin datos personales: ni IP ni cuerpos; correos, RUT y tokens enmascarados y URL sin query
+    // (ver src/lib/sentry-scrub.ts).
+    sendDefaultPii: false,
+    beforeSend: (event) => scrubEvent(event),
+    beforeSendTransaction: (event) => scrubEvent(event),
+    beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb),
 
     // Integraciones recomendadas para monitorear rendimiento
     integrations: [
@@ -26,6 +32,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
         // La app maneja PII (pasaportes, datos bancarios): las grabaciones
         // de sesión deben ocultar texto y bloquear medios por defecto.
         maskAllText: true,
+        maskAllInputs: true,
         blockAllMedia: true,
       }),
     ],

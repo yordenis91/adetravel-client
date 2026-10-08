@@ -36,11 +36,13 @@ import { es } from "date-fns/locale";
 import { STATUS_LABELS, VALID_TRANSITIONS, WorkflowStatus } from "@/lib/workflow-status";
 
 import { PermissionGuard } from "@/components/PermissionGuard";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 interface RequestsTableProps {
   requests: any[];
   isLoading: boolean;
-  clients: any[];
+  /** Opcional: si no se pasa, se usa el cliente incrustado en cada solicitud. */
+  clients?: any[];
   onEdit: (request: any) => void;
   onView: (request: any) => void;
   onStatusChange: (id: string, newStatus: string, note?: string) => void;
@@ -49,7 +51,7 @@ interface RequestsTableProps {
 export function RequestsTable({
   requests,
   isLoading,
-  clients,
+  clients = [],
   onEdit,
   onView,
   onStatusChange
@@ -101,13 +103,13 @@ export function RequestsTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
             <TableHead className="text-xs font-bold uppercase tracking-wider">ID</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Cliente</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Destino</TableHead>
-            <TableHead className="text-xs font-bold uppercase tracking-wider">Servicios</TableHead>
+            <TableHead className="text-xs font-bold uppercase tracking-wider">Servicios solicitados</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Presupuesto</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Estado</TableHead>
             <TableHead className="text-xs font-bold uppercase tracking-wider">Fecha</TableHead>
@@ -137,7 +139,7 @@ export function RequestsTable({
                 <div className="flex items-center gap-1">
                   {request.services?.slice(0, 2).map((s: string) => (
                     <Badge key={s} variant="secondary" className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-600 border-none">
-                      {s}
+                      {serviceTypeLabel(s)}
                     </Badge>
                   ))}
                   {request.services?.length > 2 && (
@@ -163,16 +165,16 @@ export function RequestsTable({
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1 ">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(request)}>
+                  <Button variant="ghost" size="icon" aria-label="Ver detalle" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(request)}>
                     <Eye className="w-4 h-4" />
                   </Button>
                   <PermissionGuard permission="MANAGE_REQUESTS">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(request)}>
+                  <Button variant="ghost" size="icon" aria-label="Editar" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(request)}>
                     <Edit2 className="w-4 h-4" />
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8">
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>

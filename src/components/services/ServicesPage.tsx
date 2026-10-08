@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { useServices } from "@/hooks/useServices";
+import { usePagedList } from "@/hooks/usePagedList";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { ListPagination } from "@/components/shared/ListPagination";
+import { ListError } from "@/components/shared/ListError";
 import { ServicesTable } from "./ServicesTable";
 import { Input } from "@/components/ui/input";
 import { Search, Package2 } from "lucide-react";
@@ -15,23 +16,11 @@ export default function ServicesPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const { data: services, isLoading } = useServices({
-    type: typeFilter === "all" ? undefined : typeFilter,
-    status: statusFilter === "all" ? undefined : statusFilter,
-  });
-
-  const { data: requestsData } = useQuery({ queryKey: ["requests-all"], queryFn: () => api.get("/requests?limit=1000") });
-  const requests = Array.isArray(requestsData) ? requestsData : (requestsData as any)?.data || [];
-
-  const { data: providersData } = useQuery({ queryKey: ["providers-all"], queryFn: () => api.get("/providers") });
-  const providers = Array.isArray(providersData) ? providersData : (providersData as any)?.data || [];
-
-  const filteredServices = services.filter((s: any) => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    const requestNumber = requests.find((r: any) => r.id === s.requestId)?.requestNumber || "";
-    return s.serviceNumber?.toLowerCase().includes(search) || requestNumber.toLowerCase().includes(search);
-  });
+  // Paginado, filtros y búsqueda (N° de servicio o de solicitud) en el servidor. Antes se pedían
+  // todas las solicitudes con limit=1000 (la API responde 400 por encima de 100) solo para
+  // mostrar su número, que ya viene en cada servicio.
+  const search = useDebouncedValue(searchTerm.trim());
+  const list = usePagedList("services", "/services", { type: typeFilter, status: statusFilter, search });
 
   return (
     <div className="space-y-6">
@@ -49,7 +38,7 @@ export default function ServicesPage() {
           <div className="relative flex-1 md:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por N° servicio o solicitud..."
+              placeholder="Buscar por N° servicio o solicitud..." aria-label="Buscar por N° servicio o solicitud"
               className="pl-10 bg-slate-50 border-slate-100 h-10 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -72,11 +61,11 @@ export default function ServicesPage() {
           </div>
           <ExportMenu
             filename="servicios_adetravel"
-            data={filteredServices.map((s: any) => ({
+            data={list.rows.map((s: any) => ({
               numero: s.serviceNumber,
               tipo: SERVICE_TYPE_LABELS[s.type as keyof typeof SERVICE_TYPE_LABELS] || s.type,
-              solicitud: requests.find((r: any) => r.id === s.requestId)?.requestNumber || "",
-              proveedor: providers.find((p: any) => p.id === s.providerId)?.fantasyName || providers.find((p: any) => p.id === s.providerId)?.name || "",
+              solicitud: s.request?.requestNumber || "",
+              proveedor: s.provider?.fantasyName || s.provider?.name || "",
               estado: getStatusLabel(s.status),
               precio: s.price,
             }))}
@@ -91,7 +80,14 @@ export default function ServicesPage() {
           />
         </div>
 
-        <ServicesTable services={filteredServices} requests={requests} providers={providers} isLoading={isLoading} />
+        {list.isError ? (
+          <ListError error={list.error} onRetry={() => list.refetch()} what="los servicios" />
+        ) : (
+          <>
+            <ServicesTable services={list.rows} isLoading={list.isLoading} />
+            <ListPagination page={list.page} limit={list.limit} total={list.total} onPageChange={list.setPage} isFetching={list.isFetching} />
+          </>
+        )}
       </div>
     </div>
   );

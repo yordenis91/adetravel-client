@@ -177,7 +177,7 @@ export default function TasksPage() {
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar tareas..."
+              placeholder="Buscar tareas..." aria-label="Buscar tareas"
               className="pl-10 bg-white"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -338,7 +338,7 @@ export default function TasksPage() {
                   )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="rounded-full">
+                      <Button variant="ghost" size="icon" aria-label="Más acciones" className="rounded-full">
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>

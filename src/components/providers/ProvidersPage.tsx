@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useListTotal, usePagedList } from "@/hooks/usePagedList";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { ListPagination } from "@/components/shared/ListPagination";
+import { ListError } from "@/components/shared/ListError";
 import { ProvidersTable } from "./ProvidersTable";
 import { ProviderFormDialog } from "./ProviderFormDialog";
 import { Button } from "@/components/ui/button";
@@ -12,7 +16,6 @@ import {
   Building2, 
   CheckCircle2, 
   XCircle, 
-  Filter,
   Download,
   ChevronDown
 } from "lucide-react";
@@ -50,28 +53,16 @@ export default function ProvidersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: responseData = [], isLoading} = useQuery({
-    queryKey: ["providers", activeTab],
-    queryFn: async () => {
-      if (activeTab === "active") return await api.get('/providers?isActive=true&sortBy=-created_at');
-      if (activeTab === "inactive") return await api.get('/providers?isActive=false&sortBy=-created_at');
-      return await api.get('/providers?sortBy=-created_at');
-    }
-  });
+  // Paginado, búsqueda (nombre y correo) y filtro por tipo en el servidor.
+  const search = useDebouncedValue(searchTerm.trim());
+  const isActiveParam = activeTab === "active" ? "true" : activeTab === "inactive" ? "false" : undefined;
+  const list = usePagedList("providers", "/providers", { isActive: isActiveParam, businessType: typeFilter, search });
+  const filteredProviders = list.rows;
+  const isLoading = list.isLoading;
 
-  const providers = Array.isArray(responseData) ? responseData : (responseData as any)?.data || [];
-
-  const filteredProviders = providers.filter((p: any) => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = (
-      p.name?.toLowerCase().includes(searchLower) ||
-      p.fantasyName?.toLowerCase().includes(searchLower) ||
-      p.email?.toLowerCase().includes(searchLower) ||
-      p.businessType?.toLowerCase().includes(searchLower)
-    );
-    const matchesType = typeFilter === "all" || p.businessType === typeFilter;
-    return matchesSearch && matchesType;
-  });
+  const totalProviders = useListTotal("providers", "/providers");
+  const activeProviders = useListTotal("providers", "/providers", { isActive: "true" });
+  const inactiveProviders = useListTotal("providers", "/providers", { isActive: "false" });
 
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/providers/${id}`, { isActive: false }),
@@ -170,7 +161,7 @@ export default function ProvidersPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Proveedores</p>
-            <p className="text-2xl font-playfair font-bold text-navy">{providers.length}</p>
+            <p className="text-2xl font-playfair font-bold text-navy">{totalProviders ?? "—"}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
@@ -179,7 +170,7 @@ export default function ProvidersPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Activos</p>
-            <p className="text-2xl font-playfair font-bold text-navy">{providers.filter((p: any) => p.isActive).length}</p>
+            <p className="text-2xl font-playfair font-bold text-navy">{activeProviders ?? "—"}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
@@ -188,7 +179,7 @@ export default function ProvidersPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Inactivos</p>
-            <p className="text-2xl font-playfair font-bold text-navy">{providers.filter((p: any) => !p.isActive).length}</p>
+            <p className="text-2xl font-playfair font-bold text-navy">{inactiveProviders ?? "—"}</p>
           </div>
         </div>
       </div>
@@ -207,7 +198,7 @@ export default function ProvidersPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar por nombre, tipo, email..." 
+                placeholder="Buscar por nombre, tipo, email..." aria-label="Buscar por nombre, tipo, email" 
                 className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -232,22 +223,25 @@ export default function ProvidersPage() {
                 <SelectItem value="OTHER">Otro</SelectItem>
               </SelectContent>
             </Select>
-
-            <Button variant="outline" size="icon" className="shrink-0 bg-slate-50 border-slate-100">
-              <Filter className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
-        <ProvidersTable 
-          providers={filteredProviders} 
-          isLoading={isLoading} 
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          selectedIds={selectedIds}
-          onSelectOne={handleSelectOne}
-          onSelectAll={handleSelectAll}
-        />
+        {list.isError ? (
+          <ListError error={list.error} onRetry={() => list.refetch()} what="los proveedores" />
+        ) : (
+          <>
+            <ProvidersTable
+              providers={filteredProviders}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              selectedIds={selectedIds}
+              onSelectOne={handleSelectOne}
+              onSelectAll={handleSelectAll}
+            />
+            <ListPagination page={list.page} limit={list.limit} total={list.total} onPageChange={list.setPage} isFetching={list.isFetching} />
+          </>
+        )}
       </div>
 
       <ProviderFormDialog 

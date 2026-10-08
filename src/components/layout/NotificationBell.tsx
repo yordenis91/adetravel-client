@@ -44,7 +44,7 @@ export function NotificationBell() {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" size="icon" aria-label="Notificaciones" className="relative h-8 w-8 rounded-full">
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
             <Badge className="absolute -top-1 -right-1 text-[10px] h-5 w-5 rounded-full flex items-center justify-center bg-red-600 text-white">

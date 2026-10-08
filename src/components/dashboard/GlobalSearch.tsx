@@ -6,6 +6,7 @@ import { Search, Users, Briefcase, FileText, CreditCard, Ticket, Loader2, X } fr
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 export function GlobalSearch() {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ export function GlobalSearch() {
         <Search className="w-4 h-4 text-muted-foreground shrink-0" />
         <input 
           type="text" 
-          placeholder="Buscar clientes, pagos, vouchers..." 
+          placeholder="Buscar clientes, pagos, vouchers..." aria-label="Buscar clientes, pagos, vouchers" 
           className="bg-transparent border-none outline-none text-xs w-full placeholder:text-muted-foreground"
           value={searchTerm}
           onChange={(e) => {
@@ -176,7 +177,7 @@ export function GlobalSearch() {
                       >
                         <div>
                           <p className="text-sm font-bold text-navy group-hover:text-emerald-700">{v.voucherNumber || v.confirmationCode}</p>
-                          <p className="text-[10px] text-muted-foreground">{v.serviceName || v.serviceType} {v.destination ? `· ${v.destination}` : ''}</p>
+                          <p className="text-[10px] text-muted-foreground">{v.serviceName || serviceTypeLabel(v.serviceType)} {v.destination ? `· ${v.destination}` : ''}</p>
                         </div>
                         <Badge variant="outline" className="text-[9px] uppercase">{v.status}</Badge>
                       </button>

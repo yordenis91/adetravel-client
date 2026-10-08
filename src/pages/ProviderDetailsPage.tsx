@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 export default function ProviderDetailsPage() {
   const { providerId } = useParams<{ providerId: string }>();
@@ -28,7 +29,7 @@ export default function ProviderDetailsPage() {
 
   const { data: vouchersData, isLoading: isVouchersLoading } = useQuery({
     queryKey: ["vouchers", { providerId }],
-    queryFn: () => api.get(`/vouchers?providerId=${providerId}`),
+    queryFn: () => api.get(`/vouchers?providerId=${providerId}&limit=100`),
     enabled: !!providerId,
   });
 
@@ -223,7 +224,7 @@ export default function ProviderDetailsPage() {
                   {vouchers.map((v: any) => (
                     <tr key={v.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4 font-medium text-navy">{v.voucherNumber || v.code || v.id.slice(0,8)}</td>
-                      <td className="px-6 py-4">{v.serviceType || "—"}</td>
+                      <td className="px-6 py-4">{serviceTypeLabel(v.serviceType) || "—"}</td>
                       <td className="px-6 py-4">{v.amount ? `$${v.amount}` : "—"}</td>
                       <td className="px-6 py-4">
                         <Badge variant="outline" className="text-[9px] uppercase tracking-wider">

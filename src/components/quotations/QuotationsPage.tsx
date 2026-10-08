@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useListTotal, usePagedList } from "@/hooks/usePagedList";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { ListPagination } from "@/components/shared/ListPagination";
+import { ListError } from "@/components/shared/ListError";
 import { QuotationsTable } from "./QuotationsTable";
 import { QuotationFormDialog } from "./QuotationFormDialog";
 import { QuotationDetailSheet } from "./QuotationDetailSheet";
@@ -35,19 +39,12 @@ export default function QuotationsPage() {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [pdfQuotation, setPdfQuotation] = useState<any>(null);
 
-  const { data: quotationsResponseData = [], isLoading: loadingQuotations} = useQuery({
-    queryKey: ["quotations"],
-    queryFn: () => api.get('/quotations'),
-  });
-
-  const { data: requestsResponseData = [], isLoading: loadingRequests } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'),
-  });
-
-  const { data: clientsResponseData = [], isLoading: loadingClients } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => api.get('/clients'),
+  // Paginado, búsqueda (N° de cotización) y pestañas de estado en el servidor. Cliente y solicitud
+  // vienen incrustados en cada cotización: no hace falta pedir sus listas.
+  const debouncedSearch = useDebouncedValue(search.trim());
+  const list = usePagedList("quotations", "/quotations", {
+    status: statusTab === "Todas" ? undefined : statusTab.toUpperCase(),
+    search: debouncedSearch,
   });
 
   const formatStatus = (s?: string) => {
@@ -55,29 +52,29 @@ export default function QuotationsPage() {
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
   };
 
-  const rawQuotations = Array.isArray(quotationsResponseData) ? quotationsResponseData : (quotationsResponseData as any)?.data || [];
-  const quotations = rawQuotations.map((q: any) => ({
+  const quotations = list.rows.map((q: any) => ({
     ...q,
     status: formatStatus(q.status)
   }));
 
-  // Deep-link desde el buscador global: /cotizaciones?view=<quotationId>.
+  // Deep-link desde el buscador global: /cotizaciones?view=<quotationId>. Se pide por id: la
+  // cotización puede no estar en la página visible.
   useEffect(() => {
     const viewId = searchParams.get("view");
-    if (viewId && quotations.length > 0) {
-      const found = quotations.find((q: any) => q.id === viewId);
-      if (found) {
-        setViewedQuotation(found);
-        setIsDetailOpen(true);
-      }
-      searchParams.delete("view");
-      setSearchParams(searchParams, { replace: true });
-    }
-  }, [searchParams, setSearchParams, quotations]);
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+    if (!viewId) return;
+    searchParams.delete("view");
+    setSearchParams(searchParams, { replace: true });
+    api.get(`/quotations/${viewId}`)
+      .then((res: any) => {
+        if (res?.data) {
+          setViewedQuotation({ ...res.data, status: formatStatus(res.data.status) });
+          setIsDetailOpen(true);
+        }
+      })
+      .catch(() => toast({ title: "Cotización no encontrada", variant: "destructive" }));
+  }, [searchParams, setSearchParams]);
 
-  const isLoading = loadingClients || loadingRequests || loadingQuotations;
+  const isLoading = list.isLoading;
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string, status: string }) => 
@@ -141,20 +138,14 @@ export default function QuotationsPage() {
     setPdfOpen(true);
   };
 
-  const filteredQuotations = quotations.filter((q) => {
-    const client = clients.find(c => c.id === q.clientId);
-    const clientName = client ? `${client.firstName} ${client.lastName}` : "";
-    const matchesSearch = (q.quotationNumber?.toLowerCase() || "").includes(search.toLowerCase()) ||
-                          clientName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusTab === "Todas" || q.status === statusTab;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredQuotations = quotations;
 
+  // Contadores sobre todas las cotizaciones, no solo la página visible.
   const stats = {
-    total: quotations.length,
-    borrador: quotations.filter(q => q.status === "Borrador").length,
-    enviadas: quotations.filter(q => q.status === "Enviada").length,
-    aceptadas: quotations.filter(q => q.status === "Aceptada").length,
+    total: useListTotal("quotations", "/quotations") ?? 0,
+    borrador: useListTotal("quotations", "/quotations", { status: "BORRADOR" }) ?? 0,
+    enviadas: useListTotal("quotations", "/quotations", { status: "ENVIADA" }) ?? 0,
+    aceptadas: useListTotal("quotations", "/quotations", { status: "ACEPTADA" }) ?? 0,
   };
 
   return (
@@ -229,29 +220,31 @@ export default function QuotationsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar por N° o Cliente..." 
+                placeholder="Buscar por N° de cotización..." aria-label="Buscar por N° de cotización" 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm h-10"
               />
             </div>
-            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
-              <Filter className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
-        <QuotationsTable 
-          quotations={filteredQuotations} 
-          requests={requests}
-          clients={clients}
-          isLoading={isLoading} 
-          onEdit={handleEdit}
-          onView={handleView}
-          onStatusChange={handleStatusChange}
-          onPreviewPDF={handlePreviewPDF}
-          onDuplicate={handleDuplicate}
-        />
+        {list.isError ? (
+          <ListError error={list.error} onRetry={() => list.refetch()} what="las cotizaciones" />
+        ) : (
+          <>
+            <QuotationsTable
+              quotations={filteredQuotations}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onView={handleView}
+              onStatusChange={handleStatusChange}
+              onPreviewPDF={handlePreviewPDF}
+              onDuplicate={handleDuplicate}
+            />
+            <ListPagination page={list.page} limit={list.limit} total={list.total} onPageChange={list.setPage} isFetching={list.isFetching} />
+          </>
+        )}
       </div>
 
       <QuotationFormDialog 
@@ -265,8 +258,8 @@ export default function QuotationsPage() {
         open={isDetailOpen} 
         onOpenChange={setIsDetailOpen}
         quotation={viewedQuotation}
-        request={requests.find(r => r.id === viewedQuotation?.requestId)}
-        client={clients.find(c => c.id === viewedQuotation?.clientId)}
+        request={viewedQuotation?.request}
+        client={viewedQuotation?.client}
         onEdit={handleEdit}
         onStatusChange={handleStatusChange}
       />
@@ -275,8 +268,8 @@ export default function QuotationsPage() {
         open={pdfOpen}
         onOpenChange={setPdfOpen}
         quotation={pdfQuotation}
-        client={clients.find(c => c.id === pdfQuotation?.clientId)}
-        request={requests.find(r => r.id === pdfQuotation?.requestId)}
+        client={pdfQuotation?.client}
+        request={pdfQuotation?.request}
       />
     </div>
   );

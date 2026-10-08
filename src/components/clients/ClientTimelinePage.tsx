@@ -17,6 +17,8 @@ import { format, isAfter, subDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { isWorkflowStatus, getStatusColor as getWorkflowStatusColor } from "@/lib/workflow-status";
+import { serviceTypeLabel } from "@/lib/service-types";
+import { activityActionLabel } from "@/lib/activity-labels";
 
 type EventType = "solicitud" | "cotizacion" | "pago" | "voucher" | "bitacora" | "tarea";
 
@@ -50,25 +52,25 @@ export default function ClientTimelinePage() {
 
   const { data: requestsData = [], isLoading: isRequestsLoading } = useQuery({
     queryKey: ["client-requests", clientId],
-    queryFn: () => api.get(`/requests?clientId=${clientId}`),
+    queryFn: () => api.get(`/requests?clientId=${clientId}&limit=100`),
     enabled: !!clientId
   });
 
   const { data: quotationsData = [], isLoading: isQuotationsLoading } = useQuery({
     queryKey: ["client-quotations", clientId],
-    queryFn: () => api.get(`/quotations?clientId=${clientId}`),
+    queryFn: () => api.get(`/quotations?clientId=${clientId}&limit=100`),
     enabled: !!clientId
   });
 
   const { data: paymentsData = [], isLoading: isPaymentsLoading } = useQuery({
     queryKey: ["client-payments", clientId],
-    queryFn: () => api.get(`/payments?clientId=${clientId}`),
+    queryFn: () => api.get(`/payments?clientId=${clientId}&limit=100`),
     enabled: !!clientId
   });
 
   const { data: vouchersData = [], isLoading: isVouchersLoading } = useQuery({
     queryKey: ["client-vouchers", clientId],
-    queryFn: () => api.get(`/vouchers?clientId=${clientId}`),
+    queryFn: () => api.get(`/vouchers?clientId=${clientId}&limit=100`),
     enabled: !!clientId
   });
 
@@ -133,7 +135,7 @@ export default function ClientTimelinePage() {
     vouchers.forEach((v: any) => {
       allEvents.push({
         id: v.id, type: "voucher", date: safeParseDate(v.createdAt),
-        title: `Voucher ${v.voucherNumber || ''}`, subtitle: `${v.serviceType}: ${v.serviceName}`,
+        title: `Voucher ${v.voucherNumber || ''}`, subtitle: [serviceTypeLabel(v.serviceType), v.serviceName].filter(Boolean).join(": "),
         status: v.status, color: "gold", icon: <Ticket className="w-4 h-4" />, originalData: v
       });
     });
@@ -159,7 +161,7 @@ export default function ClientTimelinePage() {
     logs.forEach((l: any) => {
       allEvents.push({
         id: l.id, type: "bitacora", date: safeParseDate(l.createdAt),
-        title: l.action?.replace(/_/g, " ") || 'Acción', description: l.description, 
+        title: activityActionLabel(l.action), description: l.description, 
         color: "slate", icon: <ClipboardList className="w-4 h-4" />, originalData: l
       });
     });
@@ -385,7 +387,7 @@ export default function ClientTimelinePage() {
                 selectedEvent.color === "gold" && "bg-amber-500",
                 selectedEvent.color === "slate" && "bg-slate-700"
               )}>
-                <Button variant="ghost" size="icon" className="absolute right-4 top-4 text-white hover:bg-white/20" onClick={() => setSelectedEvent(null)}>
+                <Button variant="ghost" size="icon" aria-label="Cerrar" className="absolute right-4 top-4 text-white hover:bg-white/20" onClick={() => setSelectedEvent(null)}>
                   <X className="w-5 h-5" />
                 </Button>
                 <div className="flex items-center gap-3">
@@ -503,7 +505,7 @@ function renderEventDetails(event: TimelineEvent) {
     case "voucher":
       return (
         <>
-          <DetailRow label="Tipo de Servicio" value={data.serviceType} />
+          <DetailRow label="Tipo de Servicio" value={serviceTypeLabel(data.serviceType)} />
           <DetailRow label="Nombre del Servicio" value={data.serviceName} fullWidth />
           <DetailRow label="Check-In" value={data.checkIn} />
           <DetailRow label="Check-Out" value={data.checkOut} />

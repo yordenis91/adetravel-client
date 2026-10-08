@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface QuotationPDFPreviewProps {
@@ -79,7 +79,7 @@ export function QuotationPDFPreview({
       toast({
         variant: "destructive",
         title: "Error al generar el PDF",
-        description: error instanceof Error ? error.message : "Intenta nuevamente.",
+        description: getErrorMessage(error, "Intenta nuevamente."),
       });
     } finally {
       setIsDownloading(false);
@@ -100,7 +100,7 @@ export function QuotationPDFPreview({
               {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
               Imprimir / Descargar PDF
             </Button>
-            <Button variant="outline" size="icon" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" size="icon" aria-label="Cerrar vista previa" onClick={() => onOpenChange(false)}>
               <X className="w-4 h-4" />
             </Button>
           </div>

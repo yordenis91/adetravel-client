@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Eye, EyeOff, KeyRound, Loader2, Save, ShieldCheck, UserCircle2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -111,13 +112,19 @@ export default function PerfilPage() {
     },
   });
 
+  const { replaceToken } = useAuth();
+
   const updatePasswordMutation = useMutation({
     mutationFn: (values: PasswordFormValues) =>
       api.patch("/auth/me", {
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       }),
-    onSuccess: () => {
+    onSuccess: (response: any) => {
+      // Cambiar la contraseña cierra todas las sesiones en la API; la respuesta trae un token
+      // nuevo para que esta siga abierta.
+      const newToken = response?.data?.token;
+      if (newToken) replaceToken(newToken);
       passwordForm.reset({ currentPassword: "", newPassword: "", confirmPassword: "" });
       toast({ title: "Contraseña actualizada", description: "Tu contraseña se cambió correctamente." });
     },
@@ -275,6 +282,7 @@ export default function PerfilPage() {
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword((v) => !v)}
+                    aria-label={showCurrentPassword ? "Ocultar contraseña actual" : "Mostrar contraseña actual"}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
                     {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -301,6 +309,7 @@ export default function PerfilPage() {
                   <button
                     type="button"
                     onClick={() => setShowNewPassword((v) => !v)}
+                    aria-label={showNewPassword ? "Ocultar contraseña nueva" : "Mostrar contraseña nueva"}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
                     {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

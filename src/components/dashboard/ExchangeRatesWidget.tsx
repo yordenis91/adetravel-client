@@ -46,8 +46,8 @@ export function ExchangeRatesWidget({ exchangeRates = [], autoSync = false, inte
               </div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tasas de Cambio</h3>
             </div>
-            <Link to="/configuracion?tab=divisas" aria-label="Configurar tasas de cambio">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100">
+            <Link to="/configuracion?tab=divisas">
+              <Button variant="ghost" size="icon" aria-label="Configurar tipos de cambio" className="h-8 w-8 rounded-full hover:bg-slate-100">
                 <Settings className="w-4 h-4 text-slate-400" />
               </Button>
             </Link>

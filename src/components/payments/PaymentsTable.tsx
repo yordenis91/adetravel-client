@@ -39,8 +39,6 @@ import { es } from "date-fns/locale";
 
 interface PaymentsTableProps {
   payments: any[];
-  requests: any[];
-  clients: any[];
   isLoading: boolean;
   onEdit: (payment: any) => void;
   onDelete: (paymentId: string) => void;
@@ -64,10 +62,8 @@ const methodLabels: Record<string, string> = {
 };
 
 export function PaymentsTable({ 
-  payments, 
-  requests, 
-  clients, 
-  isLoading, 
+  payments,
+  isLoading,
   onEdit, 
   onDelete,
   onStatusChange
@@ -114,7 +110,7 @@ export function PaymentsTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100 bg-white">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
             <TableHead className="text-xs font-bold uppercase tracking-wider">N° Pago</TableHead>
@@ -129,8 +125,9 @@ export function PaymentsTable({
         </TableHeader>
         <TableBody>
           {payments.map((payment) => {
-            const client = clients.find((c) => c.id === payment.clientId);
-            const request = requests.find((r) => r.id === payment.requestId);
+            // Cliente y solicitud vienen incrustados en cada pago (GET /payments).
+            const client = payment.client;
+            const request = payment.request;
             const MethodIcon = methodIcons[payment.method] || Banknote;
 
             return (
@@ -190,12 +187,12 @@ export function PaymentsTable({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(payment)} title="Editar Pago">
+                    <Button variant="ghost" size="icon" aria-label="Editar" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(payment)} title="Editar Pago">
                       <Edit className="w-4 h-4" />
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>

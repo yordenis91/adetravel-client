@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { useRequests, useChangeRequestStatus } from "@/hooks/useRequests";
+import { useQueryClient } from "@tanstack/react-query";
+import { useChangeRequestStatus, useRequestStats } from "@/hooks/useRequests";
+import { usePagedList } from "@/hooks/usePagedList";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { ListPagination } from "@/components/shared/ListPagination";
+import { ListError } from "@/components/shared/ListError";
 import { RequestsTable } from "./RequestsTable";
 import { RequestFormDialog } from "./RequestFormDialog";
 import { Button } from "@/components/ui/button";
@@ -13,16 +16,16 @@ import {
   Inbox,
   Calculator,
   CheckCircle,
-  Trophy,
-  Filter
+  Trophy
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { STATUS_PHASES, getStatusLabel } from "@/lib/workflow-status";
 import { ExportMenu } from "@/components/shared/ExportMenu";
+import { getErrorMessage } from "@/lib/api";
+import { statusChangedToast } from "@/lib/request-status-feedback";
 
 export default function RequestsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -44,39 +47,22 @@ export default function RequestsPage() {
   const { toast } = useToast();
 
 
-  // El filtrado por estado se hace en el cliente (ver `filteredRequests`) porque los tabs
-  // agrupan varios estados por fase (STATUS_PHASES) y el backend solo soporta un único valor
-  // de `status` por consulta. Los datos fluyen crudos (MAYÚSCULAS) desde la API, sin transformar.
-  const { data: requestsResponseData, isLoading: isRequestsLoading } = useRequests({});
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-
-  // La lista de clientes solo se pide con VIEW_CLIENTS; sin él la tabla usa el cliente
-  // que ya viene incrustado en cada solicitud.
-  const { hasPermission } = useAuth();
-  const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
-    queryKey: ["clients-all"],
-    queryFn: async () => await api.get('/clients'),
-    enabled: hasPermission("VIEW_CLIENTS"),
-  });
-
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
-
-  const matchesTab = (status: string) => {
-    if (activeTab === "all") return true;
-    if (activeTab === "VENDIDA" || activeTab === "CANCELADA") return status === activeTab;
+  // Paginado, búsqueda y pestañas en el servidor: cada pestaña agrupa los estados de su fase
+  // (STATUS_PHASES) y la API acepta varios separados por comas. El cliente incrustado en cada
+  // solicitud basta para la tabla (sin pedir la lista de clientes).
+  const tabStatuses = (() => {
+    if (activeTab === "all") return undefined;
+    if (activeTab === "VENDIDA" || activeTab === "CANCELADA") return activeTab;
     const phase = STATUS_PHASES.find((p) => p.label === activeTab);
-    return phase ? (phase.statuses as string[]).includes(status) : true;
-  };
+    return phase ? (phase.statuses as string[]).join(",") : undefined;
+  })();
+  const search = useDebouncedValue(searchTerm.trim());
+  const list = usePagedList("requests", "/requests", { status: tabStatuses, search });
+  const filteredRequests = list.rows;
 
-  const filteredRequests = requests.filter((req: any) => {
-    if (!matchesTab(req.status)) return false;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      req.requestNumber?.toLowerCase().includes(searchLower) ||
-      req.destinationCity?.toLowerCase().includes(searchLower) ||
-      req.destinationCountry?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Contadores sobre todas las solicitudes (antes se contaban solo las 20 de la primera página).
+  const { data: statsData } = useRequestStats();
+  const stats: Record<string, number> = (statsData as any)?.stats ?? {};
 
   const updateStatusMutation = useChangeRequestStatus();
 
@@ -100,20 +86,21 @@ export default function RequestsPage() {
     // (ver changeRequestStatus en el backend).
     const payload = newStatus === "CANCELADA" ? { id, status: newStatus, cancellationReason: note } : { id, status: newStatus, notes: note };
     updateStatusMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (response: any) => {
         queryClient.invalidateQueries({ queryKey: ["requests"] });
-        toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." });
-      }
+        toast(statusChangedToast(response));
+      },
+      onError: (error) => {
+        toast({ variant: "destructive", title: "No se pudo cambiar el estado", description: getErrorMessage(error, "Error al actualizar la solicitud.") });
+      },
     });
   };
 
-  const getStats = (status: string) => {
-    return requests.filter((r: any) => r.status === status).length;
-  };
+  const getStats = (status: string) => stats[status] ?? 0;
   const getPhaseStats = (phaseLabel: string) => {
     const phase = STATUS_PHASES.find((p) => p.label === phaseLabel);
     if (!phase) return 0;
-    return requests.filter((r: any) => (phase.statuses as string[]).includes(r.status)).length;
+    return (phase.statuses as string[]).reduce((sum, st) => sum + (stats[st] ?? 0), 0);
   };
 
   return (
@@ -128,10 +115,7 @@ export default function RequestsPage() {
             filename="solicitudes_adetravel"
             data={filteredRequests.map((r: any) => ({
               numero: r.requestNumber,
-              cliente: (() => {
-                const c = clients.find((cl: any) => cl.id === r.clientId) ?? r.client;
-                return c ? `${c.firstName} ${c.lastName || ""}`.trim() : "";
-              })(),
+              cliente: r.client ? `${r.client.firstName} ${r.client.lastName || ""}`.trim() : "",
               destino: [r.destinationCity, r.destinationCountry].filter(Boolean).join(", "),
               estado: getStatusLabel(r.status),
               fecha: r.requestDate,
@@ -160,7 +144,7 @@ export default function RequestsPage() {
           </div>
           <div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total</p>
-            <p className="text-xl font-playfair font-bold text-navy">{requests.length}</p>
+            <p className="text-xl font-playfair font-bold text-navy">{(statsData as any)?.total ?? list.total}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-3 shadow-sm">
@@ -220,33 +204,35 @@ export default function RequestsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar solicitud o destino..." 
+                placeholder="Buscar solicitud o destino..." aria-label="Buscar solicitud o destino" 
                 className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm h-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
-              <Filter className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
-        <RequestsTable 
-          requests={filteredRequests} 
-          isLoading={isRequestsLoading || isClientsLoading} 
-          clients={clients}
-          onEdit={handleEdit}
-          onView={handleView}
-          onStatusChange={handleStatusChange}
-        />
+        {list.isError ? (
+          <ListError error={list.error} onRetry={() => list.refetch()} what="las solicitudes" />
+        ) : (
+          <>
+            <RequestsTable
+              requests={filteredRequests}
+              isLoading={list.isLoading}
+              onEdit={handleEdit}
+              onView={handleView}
+              onStatusChange={handleStatusChange}
+            />
+            <ListPagination page={list.page} limit={list.limit} total={list.total} onPageChange={list.setPage} isFetching={list.isFetching} />
+          </>
+        )}
       </div>
 
       <RequestFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         request={selectedRequest}
-        clients={clients}
         onSuccess={(savedRequest, wasCreated) => {
           queryClient.invalidateQueries({ queryKey: ["requests"] });
           if (wasCreated && savedRequest) {

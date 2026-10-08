@@ -6,8 +6,7 @@ import {
   DollarSign,
   Clock,
   CheckCircle,
-  XCircle,
-  Filter
+  XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +25,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { usePagedList } from "@/hooks/usePagedList";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { ListPagination } from "@/components/shared/ListPagination";
+import { ListError } from "@/components/shared/ListError";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentsTable } from "./PaymentsTable";
 import { PaymentFormDialog } from "./PaymentFormDialog";
@@ -44,60 +47,28 @@ export default function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: paymentsResponseData = [], isLoading: isPaymentsLoading } = useQuery({
-    queryKey: ["payments"],
-    queryFn: () => api.get('/payments?sortBy=-created_at'),
+  // Paginado, búsqueda (N°, referencia, cliente) y estado en el servidor. Cliente y solicitud
+  // vienen incrustados en cada pago.
+  const search = useDebouncedValue(searchTerm.trim());
+  const list = usePagedList("payments", "/payments", { status: statusTab, search });
+  const filteredPayments = list.rows;
+  const isLoading = list.isLoading;
+
+  // Totales de todos los pagos (GET /payments/stats), no solo de la página visible.
+  const { data: statsResponse } = useQuery({
+    queryKey: ["payments", "stats"],
+    queryFn: () => api.get("/payments/stats"),
   });
-
-  const { data: requestsResponseData = [], isLoading: isRequestsLoading } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'),
-  });
-
-  const { data: clientsResponseData = [], isLoading: isClientsLoading } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => api.get('/clients'),
-  });
-
-  const payments = Array.isArray(paymentsResponseData) ? paymentsResponseData : (paymentsResponseData as any)?.data || [];
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
-
-  const isLoading = isPaymentsLoading || isRequestsLoading || isClientsLoading;
-
-  const filteredPayments = useMemo(() => {
-    return payments.filter((payment: any) => {
-      const client = clients.find(c => c.id === payment.clientId);
-      const matchesSearch = 
-        (payment.paymentNumber?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (payment.reference?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (client?.firstName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (client?.lastName?.toLowerCase() || "").includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusTab === "all" || payment.status === statusTab;
-      
-      return matchesSearch && matchesStatus;
-    });
-  }, [payments, searchTerm, statusTab, clients]);
-
-  // Stats calculation
   const stats = useMemo(() => {
-    const completed = payments.filter((p: any) => p.status === "COMPLETADO");
-    const totalCLP = completed
-      .filter((p: any) => p.currency === "CLP")
-      .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
-    const totalUSD = completed
-      .filter((p: any) => p.currency === "USD")
-      .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
-    
+    const s = (statsResponse as any)?.data ?? {};
     return {
-      totalRecaudadoCLP: totalCLP,
-      totalRecaudadoUSD: totalUSD,
-      pendientes: payments.filter((p: any) => p.status === "PENDIENTE").length,
-      completados: completed.length,
-      cancelados: payments.filter((p: any) => p.status === "CANCELADO").length,
+      totalRecaudadoCLP: Number(s.totalCLP ?? 0),
+      totalRecaudadoUSD: Number(s.totalUSD ?? 0),
+      pendientes: s.pendientes ?? 0,
+      completados: s.completados ?? 0,
+      cancelados: s.cancelados ?? 0,
     };
-  }, [payments]);
+  }, [statsResponse]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -118,6 +89,9 @@ export default function PaymentsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast({ title: "Estado actualizado", description: "El estado del pago ha sido actualizado." });
+    },
+    onError: (error) => {
+      toast({ variant: "destructive", title: "No se pudo cambiar el estado", description: getErrorMessage(error, "Error al actualizar el pago.") });
     },
   });
 
@@ -168,7 +142,7 @@ export default function PaymentsPage() {
           <ExportMenu
             filename="pagos_adetravel"
             data={filteredPayments.map((p: any) => {
-              const client = clients.find((c: any) => c.id === p.clientId);
+              const client = p.client;
               return {
                 numero: p.paymentNumber,
                 cliente: client ? `${client.firstName} ${client.lastName}` : "",
@@ -253,27 +227,29 @@ export default function PaymentsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar N°, ref o cliente..." 
+                placeholder="Buscar N°, ref o cliente..." aria-label="Buscar N°, ref o cliente" 
                 className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm h-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
-              <Filter className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
-        <PaymentsTable 
-          payments={filteredPayments}
-          requests={requests}
-          clients={clients}
-          isLoading={isLoading}
-          onEdit={openEdit}
-          onDelete={setDeleteId}
-          onStatusChange={handleStatusChange}
-        />
+        {list.isError ? (
+          <ListError error={list.error} onRetry={() => list.refetch()} what="los pagos" />
+        ) : (
+          <>
+            <PaymentsTable
+              payments={filteredPayments}
+              isLoading={isLoading}
+              onEdit={openEdit}
+              onDelete={setDeleteId}
+              onStatusChange={handleStatusChange}
+            />
+            <ListPagination page={list.page} limit={list.limit} total={list.total} onPageChange={list.setPage} isFetching={list.isFetching} />
+          </>
+        )}
       </div>
 
       <PaymentFormDialog 

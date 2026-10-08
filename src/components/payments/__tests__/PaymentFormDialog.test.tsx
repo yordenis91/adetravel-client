@@ -103,4 +103,13 @@ describe("PaymentFormDialog", () => {
       expect(postSpy).not.toHaveBeenCalled();
     });
   });
+
+  it("al registrar un pago nuevo no deja elegir el estado y avisa de que queda pendiente", async () => {
+    mockListEndpoints();
+    renderDialog(undefined);
+
+    expect(await screen.findByDisplayValue("Se asigna al guardar")).toBeInTheDocument();
+    expect(screen.getByText(/Se registra como pendiente/)).toBeInTheDocument();
+    expect(screen.queryByText("Usa la tabla para cambiar el estado")).not.toBeInTheDocument();
+  });
 });

@@ -3,32 +3,12 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { useLocation, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-
-const pageTitles: Record<string, string> = {
-  "/": "Panel Principal",
-  "/dashboard": "Panel Principal",
-  "/clientes": "Gestión de Clientes",
-  "/proveedores": "Proveedores de Servicios",
-  "/solicitudes": "Solicitudes de Viaje",
-  "/cotizaciones": "Cotizaciones",
-  "/confirmaciones": "Confirmaciones de Reserva",
-  "/pagos": "Registro de Pagos",
-  "/vouchers": "Generación de Vouchers",
-  "/reportes": "Reportes y Estadísticas",
-  "/bitacora": "Bitácora de Operaciones",
-  "/tareas": "Gestión de Tareas",
-};
+import { getPageTitle } from "@/lib/page-titles";
 
 export default function AppLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   
-  const getPageTitle = (pathname: string) => {
-    if (pageTitles[pathname]) return pageTitles[pathname];
-    if (pathname.startsWith("/clientes/")) return "Historial del Cliente";
-    return "ADE Travel";
-  };
-
   const title = getPageTitle(location.pathname);
 
   return (

@@ -34,11 +34,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { VoucherStatusBadge } from "./VoucherStatusBadge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { serviceTypeLabel } from "@/lib/service-types";
 
 interface VouchersTableProps {
   vouchers: any[];
-  clients: any[];
-  requests: any[];
   isLoading: boolean;
   processingId?: string | null;
   onEdit: (voucher: any) => void;
@@ -48,10 +47,8 @@ interface VouchersTableProps {
 }
 
 export function VouchersTable({ 
-  vouchers, 
-  clients, 
-  requests, 
-  isLoading, 
+  vouchers,
+  isLoading,
   processingId,
   onEdit, 
   onDelete,
@@ -59,15 +56,13 @@ export function VouchersTable({
   onStatusChange
 }: VouchersTableProps) {
   
-  const getClientDetails = (clientId: string) => {
-    const client = clients.find((c) => c.id === clientId);
-    return client ? { name: `${client.firstName} ${client.lastName}`, id: client.id } : { name: "Cliente no encontrado", id: null };
+  // Cliente y solicitud vienen incrustados en cada voucher (GET /vouchers).
+  const getClientDetails = (voucher: any) => {
+    const client = voucher.client;
+    return client ? { name: `${client.firstName} ${client.lastName}`, id: voucher.clientId } : { name: "Cliente no encontrado", id: null };
   };
 
-  const getRequestNumber = (requestId: string) => {
-    const request = requests.find((r) => r.id === requestId);
-    return request ? request.requestNumber : "N/A";
-  };
+  const getRequestNumber = (voucher: any) => voucher.request?.requestNumber ?? "N/A";
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "-";
@@ -104,7 +99,7 @@ export function VouchersTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100 bg-white">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
             <TableHead className="text-xs font-bold uppercase tracking-wider">N° Voucher</TableHead>
@@ -118,7 +113,7 @@ export function VouchersTable({
         </TableHeader>
         <TableBody>
           {vouchers.map((voucher) => {
-            const clientDetails = getClientDetails(voucher.clientId);
+            const clientDetails = getClientDetails(voucher);
             
             return (
               <TableRow key={voucher.id} className="group hover:bg-slate-50/50 transition-colors">
@@ -132,13 +127,13 @@ export function VouchersTable({
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-tight">
                     <span>ID: {clientDetails.id?.substring(0, 8) ?? 'N/A'}</span>
                     <span>•</span>
-                    <span className="font-medium">REF: {getRequestNumber(voucher.requestId)}</span>
+                    <span className="font-medium">REF: {getRequestNumber(voucher)}</span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-bold text-[10px] text-blue-600 uppercase tracking-wider bg-blue-50 w-max px-1.5 py-0.5 rounded">
-                      {voucher.serviceType}
+                      {serviceTypeLabel(voucher.serviceType)}
                     </span>
                     <span className="text-xs font-medium text-navy mt-1">{voucher.serviceName}</span>
                   </div>
@@ -173,19 +168,19 @@ export function VouchersTable({
                     <div className="flex items-center justify-end gap-1">
                       <Button 
                         variant="ghost" 
-                        size="icon" 
+                        size="icon" aria-label="Ver PDF" 
                         className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                         onClick={() => onPreviewPDF(voucher)}
                         title="Ver PDF"
                       >
                         <Printer className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Vista Previa">
+                      <Button variant="ghost" size="icon" aria-label="Vista previa" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Vista Previa">
                         <Eye className="w-4 h-4" />
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8">
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
 } from "@/components/ui/sheet";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
+import { useProviderOptions } from "@/hooks/useProviderOptions";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateService, useUpdateService } from "@/hooks/useServices";
@@ -52,12 +53,7 @@ export function ServiceFormDialog({ open, onOpenChange, requestId, defaultClient
   const updateMutation = useUpdateService();
   const isEditing = !!service;
 
-  const { data: providersData } = useQuery({
-    queryKey: ["providers-all"],
-    queryFn: () => api.get("/providers"),
-    enabled: open,
-  });
-  const providers = Array.isArray(providersData) ? providersData : (providersData as any)?.data || [];
+  const providerOptions = useProviderOptions(open);
 
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceSchema),
@@ -120,7 +116,7 @@ export function ServiceFormDialog({ open, onOpenChange, requestId, defaultClient
       onOpenChange(false);
       onSuccess?.();
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Error al guardar", description: err?.message || "Intenta nuevamente." });
+      toast({ variant: "destructive", title: "Error al guardar", description: getErrorMessage(err, "Intenta nuevamente.") });
     }
   };
 
@@ -160,7 +156,7 @@ export function ServiceFormDialog({ open, onOpenChange, requestId, defaultClient
                       <FormItem>
                         <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Proveedor</FormLabel>
                         <Combobox
-                          options={providers.map((p: any) => ({ value: p.id, label: p.fantasyName || p.name }))}
+                          options={providerOptions.optionsFor(field.value)}
                           value={field.value}
                           onChange={field.onChange}
                           placeholder="Sin asignar"

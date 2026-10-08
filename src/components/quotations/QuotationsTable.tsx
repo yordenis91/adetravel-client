@@ -37,8 +37,6 @@ import { es } from "date-fns/locale";
 
 interface QuotationsTableProps {
   quotations: any[];
-  requests: any[];
-  clients: any[];
   isLoading: boolean;
   onEdit: (quotation: any) => void;
   onView: (quotation: any) => void;
@@ -49,8 +47,6 @@ interface QuotationsTableProps {
 
 export function QuotationsTable({
   quotations,
-  requests,
-  clients,
   isLoading,
   onEdit,
   onView,
@@ -67,15 +63,13 @@ export function QuotationsTable({
     }).format(amount || 0);
   };
 
-  const getClientDetails = (clientId: string) => {
-    const client = clients.find((c) => c.id === clientId);
-    return client ? { name: `${client.firstName} ${client.lastName}`, id: client.id } : { name: "Desconocido", id: null };
+  // Cliente y solicitud vienen incrustados en cada cotización (GET /quotations).
+  const getClientDetails = (quotation: any) => {
+    const client = quotation.client;
+    return client ? { name: `${client.firstName} ${client.lastName}`, id: quotation.clientId } : { name: "Desconocido", id: null };
   };
 
-  const getRequestNumber = (requestId: string) => {
-    const request = requests.find((r) => r.id === requestId);
-    return request ? request.requestNumber : "---";
-  };
+  const getRequestNumber = (quotation: any) => quotation.request?.requestNumber ?? "---";
 
   if (isLoading) {
     return (
@@ -103,7 +97,7 @@ export function QuotationsTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100 bg-white">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
             <TableHead className="text-xs font-bold uppercase tracking-wider">N° Cotización</TableHead>
@@ -117,7 +111,7 @@ export function QuotationsTable({
         </TableHeader>
         <TableBody>
           {quotations.map((quotation) => {
-            const clientDetails = getClientDetails(quotation.clientId);
+            const clientDetails = getClientDetails(quotation);
             return (
               <TableRow key={quotation.id} className="group hover:bg-slate-50/50 transition-colors">
                 <TableCell className="font-mono text-xs font-bold text-primary">
@@ -129,7 +123,7 @@ export function QuotationsTable({
                 </TableCell>
                 <TableCell>
                   <span className="font-mono text-xs text-muted-foreground font-medium">
-                    {getRequestNumber(quotation.requestId)}
+                    {getRequestNumber(quotation)}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -150,18 +144,18 @@ export function QuotationsTable({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => onPreviewPDF(quotation)} title="Ver/Descargar PDF">
+                    <Button variant="ghost" size="icon" aria-label="Descargar PDF" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => onPreviewPDF(quotation)} title="Ver/Descargar PDF">
                       <FileDown className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(quotation)} title="Vista Previa">
+                    <Button variant="ghost" size="icon" aria-label="Ver detalle" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => onView(quotation)} title="Vista Previa">
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(quotation)} title="Editar Cotización">
+                    <Button variant="ghost" size="icon" aria-label="Editar" className="h-8 w-8 text-primary hover:bg-primary/5" onClick={() => onEdit(quotation)} title="Editar Cotización">
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" aria-label="Más acciones" className="h-8 w-8">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>

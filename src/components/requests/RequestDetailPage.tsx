@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
+import { statusChangedToast } from "@/lib/request-status-feedback";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useRequest, useChangeRequestStatus } from "@/hooks/useRequests";
@@ -37,6 +38,9 @@ import { RequestStatusFlow } from "./RequestStatusFlow";
 import { RequestStatusActions } from "./RequestStatusActions";
 import { RequestFormDialog } from "./RequestFormDialog";
 import { ServicesSection } from "@/components/services/ServicesSection";
+import { useProviderOptions } from "@/hooks/useProviderOptions";
+import { serviceTypeLabel } from "@/lib/service-types";
+import { activityActionLabel } from "@/lib/activity-labels";
 
 type EventType = "cotizacion" | "pago" | "voucher" | "confirmacion" | "bitacora";
 
@@ -69,19 +73,8 @@ export default function RequestDetailPage() {
   // (la API respondería 403); sin ellos la pantalla sigue funcionando con menos detalle.
   const { hasPermission } = useAuth();
 
-  const { data: clientsResponse = [] } = useQuery({
-    queryKey: ["clients-all"],
-    queryFn: async () => await api.get("/clients"),
-    enabled: hasPermission("VIEW_CLIENTS"),
-  });
-  const clients = Array.isArray(clientsResponse) ? clientsResponse : (clientsResponse as any)?.data || [];
-
-  const { data: providersResponse = [] } = useQuery({
-    queryKey: ["providers-all"],
-    queryFn: async () => await api.get("/providers?limit=200"),
-    enabled: hasPermission("VIEW_PROVIDERS"),
-  });
-  const providers = Array.isArray(providersResponse) ? providersResponse : (providersResponse as any)?.data || [];
+  // Nombres de proveedores (lista mínima: también para quien no ve la ficha de proveedores).
+  const providerOptions = useProviderOptions();
 
   const { data: logsResponse = [], isLoading: isLogsLoading } = useQuery({
     queryKey: ["request-logs", requestId],
@@ -92,11 +85,7 @@ export default function RequestDetailPage() {
 
   const isLoading = isRequestLoading;
 
-  const getProviderName = (id?: string) => {
-    if (!id) return null;
-    const provider = providers.find((p: any) => p.id === id);
-    return provider ? provider.fantasyName || provider.name : null;
-  };
+  const getProviderName = (id?: string) => providerOptions.nameOf(id);
 
   const safeParseDate = (dateString: string | undefined) => {
     if (!dateString) return new Date();
@@ -141,7 +130,7 @@ export default function RequestDetailPage() {
       allEvents.push({
         id: v.id, type: "voucher", date: safeParseDate(v.createdAt),
         title: `Voucher ${v.voucherNumber || ""}`,
-        subtitle: `${v.serviceType || ""}${v.serviceName ? `: ${v.serviceName}` : ""}`,
+        subtitle: [serviceTypeLabel(v.serviceType), v.serviceName].filter(Boolean).join(": "),
         status: v.status, color: "gold", icon: <Ticket className="w-4 h-4" />, originalData: v,
       });
     });
@@ -158,13 +147,13 @@ export default function RequestDetailPage() {
     logs.forEach((l: any) => {
       allEvents.push({
         id: l.id, type: "bitacora", date: safeParseDate(l.createdAt),
-        title: l.action?.replace(/_/g, " ") || "Acción", subtitle: l.description,
+        title: activityActionLabel(l.action), subtitle: l.description,
         color: "slate", icon: <ClipboardList className="w-4 h-4" />, originalData: l,
       });
     });
 
     return allEvents.sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [request, logs, providers]);
+  }, [request, logs, providerOptions.providers]);
 
   const filteredEvents = useMemo(() => {
     if (filterType === "all") return events;
@@ -203,7 +192,8 @@ export default function RequestDetailPage() {
       ? { id: requestId, status: newStatus, cancellationReason: note }
       : { id: requestId, status: newStatus, notes: note };
     updateStatusMutation.mutate(payload, {
-      onSuccess: () => toast({ title: "Estado actualizado", description: "El estado de la solicitud ha sido cambiado." }),
+      onSuccess: (response: any) => toast(statusChangedToast(response)),
+      onError: (error) => toast({ variant: "destructive", title: "No se pudo cambiar el estado", description: getErrorMessage(error, "Error al actualizar la solicitud.") }),
     });
   };
 
@@ -254,14 +244,14 @@ export default function RequestDetailPage() {
       {kpis && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Servicios", value: kpis.servicesCount, icon: <Briefcase className="w-5 h-5" />, color: "blue" },
+            { label: "Servicios registrados", value: kpis.servicesCount, icon: <Briefcase className="w-5 h-5" />, color: "blue" },
             { label: "Cotizaciones", value: kpis.quotationsCount, icon: <FileText className="w-5 h-5" />, color: "sky" },
             { label: "Vouchers Emitidos", value: kpis.vouchersCount, icon: <Ticket className="w-5 h-5" />, color: "gold" },
             { label: "Total Pagado", value: kpis.totalPaidCLP, icon: <DollarSign className="w-5 h-5" />, color: "emerald" },
           ].map((kpi, i) => (
             <motion.div key={kpi.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
               <Card className="border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-all duration-300">
-                <CardContent className="p-5 flex items-center gap-4">
+                <CardContent className="p-4 sm:p-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
                   <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                     kpi.color === "blue" && "bg-blue-50 text-blue-600",
                     kpi.color === "sky" && "bg-sky-50 text-sky-600",
@@ -270,8 +260,8 @@ export default function RequestDetailPage() {
                   )}>
                     {kpi.icon}
                   </div>
-                  <div className="overflow-hidden">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate">{kpi.label}</p>
+                  <div className="min-w-0 w-full">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider sm:tracking-widest leading-snug">{kpi.label}</p>
                     <p className="text-xl font-playfair font-bold text-navy truncate">{kpi.value}</p>
                   </div>
                 </CardContent>
@@ -346,6 +336,13 @@ export default function RequestDetailPage() {
           <Briefcase className="w-4 h-4" />
           <span className="text-[10px] font-bold uppercase tracking-widest">Servicios</span>
         </div>
+        {request.services?.length > 0 && (
+          // Tipos que el cliente pidió al crear la solicitud; los servicios registrados van debajo.
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-navy">Tipos solicitados:</span>{" "}
+            {request.services.map((s: string) => serviceTypeLabel(s)).join(", ")}
+          </p>
+        )}
         <ServicesSection requestId={request.id} isPackage={!!request.isPackage} defaultClientId={request.clientId} />
       </div>
 
@@ -452,7 +449,6 @@ export default function RequestDetailPage() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         request={request}
-        clients={clients}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["requests"] });
           toast({ title: "Solicitud actualizada" });
@@ -470,7 +466,7 @@ export default function RequestDetailPage() {
                 selectedEvent.color === "violet" && "bg-violet-600",
                 selectedEvent.color === "slate" && "bg-slate-700",
               )}>
-                <Button variant="ghost" size="icon" className="absolute right-4 top-4 text-white hover:bg-white/20" onClick={() => setSelectedEvent(null)}>
+                <Button variant="ghost" size="icon" aria-label="Cerrar" className="absolute right-4 top-4 text-white hover:bg-white/20" onClick={() => setSelectedEvent(null)}>
                   <X className="w-5 h-5" />
                 </Button>
                 <div className="flex items-center gap-3">
@@ -576,7 +572,7 @@ function renderEventDetails(event: TimelineEvent, getProviderName: (id?: string)
     case "voucher":
       return (
         <>
-          <DetailRow label="Tipo de Servicio" value={data.serviceType} />
+          <DetailRow label="Tipo de Servicio" value={serviceTypeLabel(data.serviceType)} />
           <DetailRow label="Nombre del Servicio" value={data.serviceName} fullWidth />
           <DetailRow label="Check-In" value={data.checkIn} />
           <DetailRow label="Check-Out" value={data.checkOut} />

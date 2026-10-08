@@ -423,7 +423,7 @@ const handleSyncApi = async () => {
                         <div className="flex justify-end gap-2">
                           <Button 
                             variant="ghost" 
-                            size="icon" 
+                            size="icon" aria-label="Editar tipo de cambio" 
                             className="h-8 w-8 rounded-full hover:bg-blue-50 text-blue-600"
                             onClick={() => handleEditRate(rate)}
                           >
@@ -431,7 +431,7 @@ const handleSyncApi = async () => {
                           </Button>
                           <Button 
                             variant="ghost" 
-                            size="icon" 
+                            size="icon" aria-label="Eliminar tipo de cambio" 
                             className="h-8 w-8 rounded-full hover:bg-rose-50 text-rose-600"
                             onClick={() => setRateToDelete(rate.id)}
                           >

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useListTotal, usePagedList } from "@/hooks/usePagedList";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { ListPagination } from "@/components/shared/ListPagination";
+import { ListError } from "@/components/shared/ListError";
 import { ClientsTable } from "./ClientsTable";
 import { ClientFormDialog } from "./ClientFormDialog";
 import { ClientPreviewDialog } from "./ClientPreviewDialog";
@@ -13,7 +16,6 @@ import {
   Users, 
   UserCheck, 
   UserX, 
-  Filter,
   Download
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,26 +50,17 @@ export default function ClientsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: responseData = [], isLoading } = useQuery({
-    queryKey: ["clients", activeTab],
-    queryFn: async () => {
-      if (activeTab === "active") return await api.get('/clients?isActive=true&sortBy=-created_at');
-      if (activeTab === "inactive") return await api.get('/clients?isActive=false&sortBy=-created_at');
-      return await api.get('/clients?sortBy=-created_at');
-    }
-  });
+  // Paginado y búsqueda en el servidor (nombre, apellido, correo, teléfono, RUT...).
+  const search = useDebouncedValue(searchTerm.trim());
+  const isActiveParam = activeTab === "active" ? "true" : activeTab === "inactive" ? "false" : undefined;
+  const list = usePagedList("clients", "/clients", { isActive: isActiveParam, search });
+  const filteredClients = list.rows;
+  const isLoading = list.isLoading;
 
-  const clients = Array.isArray(responseData) ? responseData : (responseData as any)?.data || [];
-
-  const filteredClients = clients.filter((client: any) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      client.firstName?.toLowerCase().includes(searchLower) ||
-      client.lastName?.toLowerCase().includes(searchLower) ||
-      client.rut?.toLowerCase().includes(searchLower) ||
-      client.email?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Contadores sobre todos los clientes, no solo la página visible.
+  const totalClients = useListTotal("clients", "/clients");
+  const activeClients = useListTotal("clients", "/clients", { isActive: "true" });
+  const inactiveClients = useListTotal("clients", "/clients", { isActive: "false" });
 
   const toggleClientStatusMutation = useToggleClientStatus();
 
@@ -189,7 +182,7 @@ export default function ClientsPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Clientes</p>
-            <p className="text-2xl font-playfair font-bold text-navy">{clients.length}</p>
+            <p className="text-2xl font-playfair font-bold text-navy">{totalClients ?? "—"}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
@@ -198,7 +191,7 @@ export default function ClientsPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Activos</p>
-            <p className="text-2xl font-playfair font-bold text-navy">{clients.filter((c: any) => c.isActive).length}</p>
+            <p className="text-2xl font-playfair font-bold text-navy">{activeClients ?? "—"}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
@@ -207,7 +200,7 @@ export default function ClientsPage() {
           </div>
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Inactivos</p>
-            <p className="text-2xl font-playfair font-bold text-navy">{clients.filter((c: any) => !c.isActive).length}</p>
+            <p className="text-2xl font-playfair font-bold text-navy">{inactiveClients ?? "—"}</p>
           </div>
         </div>
       </div>
@@ -226,29 +219,32 @@ export default function ClientsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Buscar por nombre, RUT, email..." 
+                placeholder="Buscar por nombre, RUT, email..." aria-label="Buscar por nombre, RUT, email" 
                 className="pl-10 bg-slate-50 border-slate-100 focus:bg-white transition-all text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon" className="shrink-0">
-              <Filter className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
-        {/* 🔥 SE PASAN LOS PROPS FALTANTES A LA TABLA */}
-        <ClientsTable 
-          clients={filteredClients} 
-          isLoading={isLoading} 
-          onEdit={handleEdit}
-          onToggleActive={handleToggleActive}
-          onDelete={handleDelete}
-          selectedIds={selectedIds}
-          onSelectOne={handleSelectOne}
-          onSelectAll={handleSelectAll}
-        />
+        {list.isError ? (
+          <ListError error={list.error} onRetry={() => list.refetch()} what="los clientes" />
+        ) : (
+          <>
+            <ClientsTable
+              clients={filteredClients}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onToggleActive={handleToggleActive}
+              onDelete={handleDelete}
+              selectedIds={selectedIds}
+              onSelectOne={handleSelectOne}
+              onSelectAll={handleSelectAll}
+            />
+            <ListPagination page={list.page} limit={list.limit} total={list.total} onPageChange={list.setPage} isFetching={list.isFetching} />
+          </>
+        )}
       </div>
 
       <ClientFormDialog 

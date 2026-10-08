@@ -28,10 +28,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
+import { useRemoteOptions } from "@/hooks/useRemoteOptions";
+import { calculateQuotationTotals } from "@/lib/money";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, X, Calculator, ReceiptText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -72,20 +74,14 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
   const isEditing = !!quotation;
   const [items, setItems] = useState<LineItem[]>([]);
 
-  const { data: requestsResponseData = [] } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'),
-    enabled: open,
-  });
-
-  const { data: clientsResponseData = [] } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => api.get('/clients'),
-    enabled: open,
-  });
-
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+  // Solicitudes buscadas en el servidor (antes solo llegaban las 20 más recientes); la elegida se
+  // pide por id y de ella sale el cliente.
+  const requestOptions = useRemoteOptions(
+    "requests",
+    "/requests",
+    (r: any) => ({ value: r.id, label: `${r.requestNumber} - ${r.destinationCity || r.destinationCountry || ""}` }),
+    { enabled: open }
+  );
 
   const form = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationSchema),
@@ -108,14 +104,18 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
   const discount = form.watch("discount");
   const taxPercentage = form.watch("taxPercentage");
 
+  const { data: selectedRequestResponse } = useQuery({
+    queryKey: ["requests", selectedRequestId],
+    queryFn: () => api.get(`/requests/${selectedRequestId}`),
+    enabled: open && !!selectedRequestId,
+  });
+  const selectedRequest = (selectedRequestResponse as any)?.data;
+
   useEffect(() => {
-    if (selectedRequestId && !isEditing) {
-      const request = requests.find(r => r.id === selectedRequestId);
-      if (request) {
-        form.setValue("clientId", request.clientId);
-      }
+    if (selectedRequest && !isEditing) {
+      form.setValue("clientId", selectedRequest.clientId);
     }
-  }, [selectedRequestId, requests, form, isEditing]);
+  }, [selectedRequest, form, isEditing]);
 
   useEffect(() => {
     if (quotation) {
@@ -140,16 +140,10 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
         setItems([]);
       }
     } else {
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const random = Math.floor(1000 + Math.random() * 9000);
-      const qNum = `COTIZ-${year}-${month}-${random}`;
-      
       form.reset({
         requestId: "",
         clientId: "",
-        quotationNumber: qNum,
+        quotationNumber: "Se asigna al guardar", // lo genera la API (numeración correlativa)
         validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         status: "Borrador",
         currency: "CLP",
@@ -176,12 +170,12 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
     setItems(items.map(i => i.id === id ? { ...i, [field]: value } : i));
   };
 
-  const totals = useMemo(() => {
-    const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
-    const taxAmount = Math.round((subtotal - discount) * (taxPercentage / 100));
-    const total = subtotal - discount + taxAmount;
-    return { subtotal, taxAmount, total };
-  }, [items, discount, taxPercentage]);
+  // Mismo cálculo que la API: antes el IVA se redondeaba a enteros y el descuento podía dejar el
+  // subtotal en negativo, así que en USD el total mostrado no era el que se guardaba.
+  const totals = useMemo(
+    () => calculateQuotationTotals(items, taxPercentage, discount, currency),
+    [items, discount, taxPercentage, currency]
+  );
 
   const onSubmit = async (values: QuotationFormValues) => {
     try {
@@ -204,11 +198,11 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
       onOpenChange(false);
     } catch (error) {
       console.error(error);
-      toast({ title: "Error", description: "No se pudo guardar la cotización.", variant: "destructive" });
+      toast({ title: "Error", description: getErrorMessage(error, "No se pudo guardar la cotización."), variant: "destructive" });
     }
   };
 
-  const selectedClient = clients.find(c => c.id === form.watch("clientId"));
+  const selectedClient = selectedRequest?.client ?? quotation?.client;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -276,7 +270,10 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Vincular Solicitud *</FormLabel>
                           <Combobox
-                            options={requests.map((r: any) => ({ value: r.id, label: `${r.requestNumber} - ${r.destinationCity || r.destinationCountry || ""}` }))}
+                            options={requestOptions.options}
+                            onSearchChange={requestOptions.onSearchChange}
+                            loading={requestOptions.loading}
+                            selectedLabel={(selectedRequest ?? quotation?.request)?.requestNumber}
                             value={field.value}
                             onChange={field.onChange}
                             placeholder="Selecciona una solicitud"
@@ -370,7 +367,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                           <div className="col-span-5 space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Servicio / Producto</label>
                             <Input 
-                              placeholder="Ej: Pasaje Aéreo, Hotel, Tour" 
+                              placeholder="Ej: Pasaje Aéreo, Hotel, Tour" aria-label="Servicio o producto" 
                               value={item.service} 
                               onChange={(e) => updateItem(item.id, "service", e.target.value)}
                               className="bg-white"
@@ -380,7 +377,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cantidad</label>
                             <Input 
                               type="number" 
-                              value={item.quantity} 
+                              value={item.quantity} aria-label="Cantidad" 
                               onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
                               className="bg-white text-center"
                             />
@@ -389,7 +386,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Precio Unitario ({currency})</label>
                             <Input 
                               type="number" 
-                              value={item.unitPrice} 
+                              value={item.unitPrice} aria-label="Precio unitario" 
                               onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))}
                               className="bg-white text-right font-medium"
                             />
@@ -408,6 +405,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                               placeholder="Detalles adicionales, fechas, especificaciones..." 
                               value={item.description} 
                               onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                              aria-label="Descripción de la línea"
                               className="bg-white text-xs"
                             />
                           </div>
@@ -415,7 +413,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                             <Button 
                               type="button" 
                               variant="ghost" 
-                              size="icon" 
+                              size="icon" aria-label="Quitar línea" 
                               className="h-9 w-9 text-rose-400 hover:text-rose-600 hover:bg-rose-50"
                               onClick={() => removeItem(item.id)}
                             >
@@ -438,6 +436,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                         <label className="text-xs font-medium text-muted-foreground">Descuento ({currency})</label>
                         <Input 
                           type="number" 
+                          aria-label={`Descuento (${currency})`}
                           className="h-7 w-24 text-right bg-white border-navy/10" 
                           value={discount} 
                           onChange={(e) => form.setValue("discount", Number(e.target.value))}

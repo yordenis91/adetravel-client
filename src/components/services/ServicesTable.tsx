@@ -11,18 +11,17 @@ import { Eye, Package2 } from "lucide-react";
 
 interface ServicesTableProps {
   services: any[];
-  requests: any[];
-  providers: any[];
   isLoading: boolean;
 }
 
-export function ServicesTable({ services, requests, providers, isLoading }: ServicesTableProps) {
+// La solicitud y el proveedor vienen incrustados en cada servicio (GET /services): no hace falta
+// pedir las listas completas para mostrar sus nombres.
+export function ServicesTable({ services, isLoading }: ServicesTableProps) {
   const navigate = useNavigate();
 
-  const getRequestNumber = (requestId: string) => requests.find((r) => r.id === requestId)?.requestNumber || requestId?.substring(0, 8);
-  const getProviderName = (providerId?: string | null) => {
-    if (!providerId) return "—";
-    const p = providers.find((pv) => pv.id === providerId);
+  const getRequestNumber = (service: any) => service.request?.requestNumber || service.requestId?.substring(0, 8);
+  const getProviderName = (service: any) => {
+    const p = service.provider;
     return p ? (p.fantasyName || p.name) : "—";
   };
 
@@ -50,7 +49,7 @@ export function ServicesTable({ services, requests, providers, isLoading }: Serv
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
             <TableHead className="text-xs font-bold uppercase tracking-wider">N° Servicio</TableHead>
@@ -67,14 +66,14 @@ export function ServicesTable({ services, requests, providers, isLoading }: Serv
             <TableRow key={service.id} className="hover:bg-slate-50/50 transition-colors">
               <TableCell className="font-mono text-xs font-bold text-primary">{service.serviceNumber}</TableCell>
               <TableCell className="text-sm font-medium">{SERVICE_TYPE_LABELS[service.type as keyof typeof SERVICE_TYPE_LABELS] || service.type}</TableCell>
-              <TableCell className="font-mono text-xs">{getRequestNumber(service.requestId)}</TableCell>
-              <TableCell className="text-sm">{getProviderName(service.providerId)}</TableCell>
+              <TableCell className="font-mono text-xs">{getRequestNumber(service)}</TableCell>
+              <TableCell className="text-sm">{getProviderName(service)}</TableCell>
               <TableCell className="text-xs font-bold text-navy">
                 {service.price != null ? `${service.currency} ${Number(service.price).toLocaleString("es-CL")}` : "—"}
               </TableCell>
               <TableCell><RequestStatusBadge status={service.status} /></TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => navigate(`/solicitudes/${service.requestId}`)}>
+                <Button variant="ghost" size="icon" aria-label="Ver solicitud" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => navigate(`/solicitudes/${service.requestId}`)}>
                   <Eye className="w-4 h-4" />
                 </Button>
               </TableCell>

@@ -30,4 +30,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
+# Sin healthcheck, Easypanel/Swarm da por bueno un contenedor cuyo nginx no sirve la aplicación.
+# Pide index.html (no la ruta SPA, que siempre cae en index.html): si falta el build, da 404 y el
+# contenedor queda "unhealthy" y se reinicia. wget viene con la imagen alpine (busybox).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1/index.html || exit 1
+
 CMD ["nginx", "-g", "daemon off;"]
