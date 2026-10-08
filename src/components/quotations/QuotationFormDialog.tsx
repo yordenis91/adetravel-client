@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
+import { calculateQuotationTotals } from "@/lib/money";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -175,12 +176,12 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
     setItems(items.map(i => i.id === id ? { ...i, [field]: value } : i));
   };
 
-  const totals = useMemo(() => {
-    const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
-    const taxAmount = Math.round((subtotal - discount) * (taxPercentage / 100));
-    const total = subtotal - discount + taxAmount;
-    return { subtotal, taxAmount, total };
-  }, [items, discount, taxPercentage]);
+  // Mismo cálculo que la API: antes el IVA se redondeaba a enteros y el descuento podía dejar el
+  // subtotal en negativo, así que en USD el total mostrado no era el que se guardaba.
+  const totals = useMemo(
+    () => calculateQuotationTotals(items, taxPercentage, discount, currency),
+    [items, discount, taxPercentage, currency]
+  );
 
   const onSubmit = async (values: QuotationFormValues) => {
     try {
@@ -441,6 +442,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                         <label className="text-xs font-medium text-muted-foreground">Descuento ({currency})</label>
                         <Input 
                           type="number" 
+                          aria-label={`Descuento (${currency})`}
                           className="h-7 w-24 text-right bg-white border-navy/10" 
                           value={discount} 
                           onChange={(e) => form.setValue("discount", Number(e.target.value))}

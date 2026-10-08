@@ -216,15 +216,15 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                       render={({ field }) => (
                         <FormItem className="flex flex-col justify-center gap-2">
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">¿Es Paquete Completo?</FormLabel>
-                          <FormControl>
-                            <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <FormControl>
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
                               />
-                              <span className="text-xs font-medium text-navy">{field.value ? "Sí" : "No"}</span>
-                            </div>
-                          </FormControl>
+                            </FormControl>
+                            <span className="text-xs font-medium text-navy">{field.value ? "Sí" : "No"}</span>
+                          </div>
                         </FormItem>
                       )}
                     />
