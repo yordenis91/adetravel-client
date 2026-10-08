@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, BASE } from "@/lib/api";
 
 export function useQuotations(params?: {
   requestId?: string;
@@ -86,5 +86,5 @@ export function useDeleteQuotation() {
 
 // Abrir vista previa HTML en nueva pestaña para imprimir
 export function openQuotationPreview(id: string) {
-  window.open(`${import.meta.env.VITE_API_URL}/quotations/${id}/preview`, "_blank");
+  window.open(`${BASE}/quotations/${id}/preview`, "_blank");
 }
