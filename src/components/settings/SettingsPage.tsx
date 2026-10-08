@@ -1,7 +1,7 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Settings, Building2, Mail, FileText, Monitor, TrendingUp } from "lucide-react";
+import { Settings, Building2, Mail, FileText, Monitor, TrendingUp, Scale } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { SystemConfig } from "@/lib/api";
 import AgencyTab from "./AgencyTab";
@@ -9,8 +9,9 @@ import EmailTab from "./EmailTab";
 import DocumentsTab from "./DocumentsTab";
 import SystemTab from "./SystemTab";
 import ExchangeTab from "./ExchangeTab";
+import LegalTab from "./LegalTab";
 
-const TAB_VALUES = ["agencia", "email", "documentos", "divisas", "sistema"];
+const TAB_VALUES = ["agencia", "email", "documentos", "divisas", "legal", "sistema"];
 
 export default function SettingsPage() {
   // ?tab=divisas permite enlazar directo a una pestaña (p. ej. desde la ficha de tasas del Dashboard).
@@ -80,6 +81,13 @@ export default function SettingsPage() {
             Divisas
           </TabsTrigger>
           <TabsTrigger 
+            value="legal" 
+            className="data-[state=active]:bg-white data-[state=active]:text-navy data-[state=active]:shadow-sm transition-all flex items-center gap-2 px-6 py-2"
+          >
+            <Scale className="w-4 h-4" />
+            Legal
+          </TabsTrigger>
+          <TabsTrigger 
             value="sistema" 
             className="data-[state=active]:bg-white data-[state=active]:text-navy data-[state=active]:shadow-sm transition-all flex items-center gap-2 px-6 py-2"
           >
@@ -100,6 +108,9 @@ export default function SettingsPage() {
             </TabsContent>
           <TabsContent value="divisas" className="outline-none">
             <ExchangeTab config={config} configId={configId} />
+          </TabsContent>
+          <TabsContent value="legal" className="outline-none">
+            <LegalTab config={config} configId={configId} />
           </TabsContent>
           <TabsContent value="sistema" className="outline-none">
             <SystemTab config={config} configId={configId} />

@@ -170,3 +170,13 @@ export const SystemConfig = {
   create: (body: unknown) => api.put("/system-config", body),
   update: (_id: string, body: unknown) => api.put("/system-config", body),
 };
+
+export type LegalDocKind = "terms" | "privacy";
+
+/** Lectura pública (sin login) del texto legal que publicó la agencia; html null = usar el texto por defecto. */
+export const PublicLegal = {
+  get: async (doc: LegalDocKind): Promise<{ html: string | null; updatedAt: string | null }> => {
+    const response = await api.get(`/public/legal/${doc}`);
+    return (response as any)?.data ?? { html: null, updatedAt: null };
+  },
+};

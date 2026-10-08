@@ -5,6 +5,8 @@ import { ArrowLeft, AlertTriangle } from "lucide-react";
 interface LegalDocumentLayoutProps {
   title: string;
   lastUpdated: string;
+  /** Muestra el cartel de borrador. Solo aplica al texto por defecto, no al que publica la agencia. */
+  isDraft?: boolean;
   children: React.ReactNode;
 }
 
@@ -13,7 +15,7 @@ interface LegalDocumentLayoutProps {
  * Política de Privacidad). Es una ruta pública (fuera de ProtectedRoute):
  * cualquiera con el link puede leerlos, logueado o no.
  */
-export function LegalDocumentLayout({ title, lastUpdated, children }: LegalDocumentLayoutProps) {
+export function LegalDocumentLayout({ title, lastUpdated, isDraft = true, children }: LegalDocumentLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
@@ -27,6 +29,7 @@ export function LegalDocumentLayout({ title, lastUpdated, children }: LegalDocum
       </header>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+        {isDraft && (
         <div className="mb-8 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
           <div className="text-sm">
@@ -39,6 +42,7 @@ export function LegalDocumentLayout({ title, lastUpdated, children }: LegalDocum
             </p>
           </div>
         </div>
+        )}
 
         <h1 className="font-playfair text-3xl font-bold text-navy mb-2">{title}</h1>
         <p className="text-xs text-muted-foreground mb-8">Última actualización: {lastUpdated}</p>
