@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
+import { useProviderOptions } from "@/hooks/useProviderOptions";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -90,12 +91,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
     { enabled: open }
   );
 
-  const { data: providersResponseData = [] } = useQuery({
-    queryKey: ["providers"],
-    queryFn: () => api.get('/providers'),
-  });
-
-  const providers = Array.isArray(providersResponseData) ? providersResponseData : (providersResponseData as any)?.data || [];
+  const providerOptions = useProviderOptions(open);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -277,7 +273,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                   <FormItem>
                     <FormLabel>Proveedor del Servicio *</FormLabel>
                     <Combobox
-                      options={providers.map((provider: any) => ({ value: provider.id, label: provider.fantasyName || provider.name }))}
+                      options={providerOptions.optionsFor(field.value)}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Seleccione el proveedor / hotel / operador"

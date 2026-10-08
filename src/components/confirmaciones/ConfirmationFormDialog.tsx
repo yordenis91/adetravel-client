@@ -17,6 +17,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Combobox } from "@/components/ui/combobox";
+import { useProviderOptions } from "@/hooks/useProviderOptions";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateConfirmation, useUpdateConfirmation } from "@/hooks/useConfirmations";
@@ -54,8 +55,7 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
     enabled: open && !requestId,
   });
 
-  const { data: providersData } = useQuery({ queryKey: ["providers-all"], queryFn: () => api.get("/providers"), enabled: open });
-  const providers = Array.isArray(providersData) ? providersData : (providersData as any)?.data || [];
+  const providerOptions = useProviderOptions(open);
 
   const form = useForm<ConfirmationFormValues>({
     resolver: zodResolver(confirmationSchema),
@@ -193,7 +193,7 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
                   <FormItem>
                     <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Proveedor *</FormLabel>
                     <Combobox
-                      options={providers.map((p: any) => ({ value: p.id, label: p.fantasyName || p.name }))}
+                      options={providerOptions.optionsFor(field.value)}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Selecciona un proveedor"

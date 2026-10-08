@@ -37,6 +37,7 @@ import { RequestStatusFlow } from "./RequestStatusFlow";
 import { RequestStatusActions } from "./RequestStatusActions";
 import { RequestFormDialog } from "./RequestFormDialog";
 import { ServicesSection } from "@/components/services/ServicesSection";
+import { useProviderOptions } from "@/hooks/useProviderOptions";
 
 type EventType = "cotizacion" | "pago" | "voucher" | "confirmacion" | "bitacora";
 
@@ -69,13 +70,8 @@ export default function RequestDetailPage() {
   // (la API respondería 403); sin ellos la pantalla sigue funcionando con menos detalle.
   const { hasPermission } = useAuth();
 
-  const { data: providersResponse = [] } = useQuery({
-    queryKey: ["providers-all"],
-    // La API acepta como mucho 100 por página (con 200 respondía 400).
-    queryFn: async () => await api.get("/providers?limit=100"),
-    enabled: hasPermission("VIEW_PROVIDERS"),
-  });
-  const providers = Array.isArray(providersResponse) ? providersResponse : (providersResponse as any)?.data || [];
+  // Nombres de proveedores (lista mínima: también para quien no ve la ficha de proveedores).
+  const providerOptions = useProviderOptions();
 
   const { data: logsResponse = [], isLoading: isLogsLoading } = useQuery({
     queryKey: ["request-logs", requestId],
@@ -86,11 +82,7 @@ export default function RequestDetailPage() {
 
   const isLoading = isRequestLoading;
 
-  const getProviderName = (id?: string) => {
-    if (!id) return null;
-    const provider = providers.find((p: any) => p.id === id);
-    return provider ? provider.fantasyName || provider.name : null;
-  };
+  const getProviderName = (id?: string) => providerOptions.nameOf(id);
 
   const safeParseDate = (dateString: string | undefined) => {
     if (!dateString) return new Date();
@@ -158,7 +150,7 @@ export default function RequestDetailPage() {
     });
 
     return allEvents.sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [request, logs, providers]);
+  }, [request, logs, providerOptions.providers]);
 
   const filteredEvents = useMemo(() => {
     if (filterType === "all") return events;
