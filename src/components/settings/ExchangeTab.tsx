@@ -69,6 +69,19 @@ interface ExchangeTabProps {
   configId: string | undefined;
 }
 
+const DEFAULT_INTERVAL = 480;
+const MIN_INTERVAL = 15;
+const MAX_INTERVAL = 7 * 24 * 60;
+const CUSTOM = "custom";
+const INTERVAL_PRESETS = [
+  { minutes: 480, label: "3 veces al día (cada 8 h)" },
+  { minutes: 720, label: "2 veces al día (cada 12 h)" },
+  { minutes: 1440, label: "1 vez al día" },
+  { minutes: 240, label: "Cada 4 horas" },
+  { minutes: 60, label: "Cada hora" },
+  { minutes: 30, label: "Cada 30 minutos" },
+];
+
 const CURRENCIES = [
   { value: "CLP", label: "Peso Chileno (CLP)" },
   { value: "USD", label: "Dólar Estadounidense (USD)" },
@@ -111,6 +124,24 @@ export default function ExchangeTab({ config, configId }: ExchangeTabProps) {
     }
   }, [config]);
 
+  // SettingsPage y el Dashboard cachean la config bajo claves distintas; hay que refrescar ambas.
+  const refreshConfig = () => {
+    queryClient.invalidateQueries({ queryKey: ["system-config"] });
+    queryClient.invalidateQueries({ queryKey: ["systemConfig"] });
+  };
+
+  const [autoSync, setAutoSync] = useState(true);
+  const [intervalMinutes, setIntervalMinutes] = useState(DEFAULT_INTERVAL);
+  const [customMinutes, setCustomMinutes] = useState("");
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+  useEffect(() => {
+    if (!config) return;
+    setAutoSync(config.exchangeAutoSync ?? true);
+    const minutes = config.exchangeSyncIntervalMinutes ?? DEFAULT_INTERVAL;
+    setIntervalMinutes(minutes);
+    setCustomMinutes(INTERVAL_PRESETS.some((p) => p.minutes === minutes) ? "" : String(minutes));
+  }, [config?.exchangeAutoSync, config?.exchangeSyncIntervalMinutes]);
+
   const form = useForm<RateFormValues>({
     resolver: zodResolver(rateSchema),
     defaultValues: {
@@ -125,16 +156,9 @@ export default function ExchangeTab({ config, configId }: ExchangeTabProps) {
   // 2. 🧹 Guardado Seguro: Limpiando la basura antes de enviar a Prisma
   const saveRates = async (newRates: any[], showToast = true) => {
     try {
-      // Creamos una copia de la configuración
-      const payload = { ...config, exchangeRates: JSON.stringify(newRates) };
-      
-      // 🔥 ELIMINAMOS los campos protegidos de Prisma para evitar el Error 500
-      delete payload.id;
-      delete payload.createdAt;
-      delete payload.updatedAt;
-
-      // Enviamos el paquete limpio
-      await api.put('/system-config', payload);
+      // Solo se envía lo que esta pestaña edita: reenviar la config completa pisaría con datos viejos
+      // lo que el servidor haya cambiado mientras tanto (p. ej. una sincronización automática).
+      await api.put('/system-config', { exchangeRates: JSON.stringify(newRates) });
       
       if (showToast) {
         toast({
@@ -142,7 +166,7 @@ export default function ExchangeTab({ config, configId }: ExchangeTabProps) {
           description: "Las tasas de cambio se han guardado correctamente.",
         });
       }
-      queryClient.invalidateQueries({ queryKey: ["system-config"] });
+      refreshConfig();
     } catch (error) {
       console.error("Error saving rates", error);
       toast({
@@ -150,6 +174,27 @@ export default function ExchangeTab({ config, configId }: ExchangeTabProps) {
         title: "Error",
         description: "No se pudieron guardar los cambios.",
       });
+    }
+  };
+
+  const isCustom = !INTERVAL_PRESETS.some((p) => p.minutes === intervalMinutes);
+  const effectiveMinutes = isCustom ? Number(customMinutes) : intervalMinutes;
+  const customInvalid = isCustom && (!Number.isInteger(effectiveMinutes) || effectiveMinutes < MIN_INTERVAL || effectiveMinutes > MAX_INTERVAL);
+  const requestsPerMonth = effectiveMinutes > 0 ? Math.ceil((30 * 24 * 60) / effectiveMinutes) : 0;
+  const scheduleDirty =
+    autoSync !== (config?.exchangeAutoSync ?? true) ||
+    effectiveMinutes !== (config?.exchangeSyncIntervalMinutes ?? DEFAULT_INTERVAL);
+
+  const handleSaveSchedule = async () => {
+    try {
+      setIsSavingSchedule(true);
+      await api.put('/system-config', { exchangeAutoSync: autoSync, exchangeSyncIntervalMinutes: effectiveMinutes });
+      toast({ title: "Frecuencia guardada", description: autoSync ? "Las tasas se actualizarán automáticamente con la nueva frecuencia." : "La actualización automática quedó desactivada." });
+      refreshConfig();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: getErrorMessage(error, "No se pudo guardar la frecuencia.") });
+    } finally {
+      setIsSavingSchedule(false);
     }
   };
 
@@ -165,7 +210,7 @@ const handleSyncApi = async () => {
         className: "bg-emerald-50 border-emerald-200 text-emerald-800",
       });
       // Refrescamos los datos en pantalla
-      queryClient.invalidateQueries({ queryKey: ["system-config"] });
+      refreshConfig();
    } catch (error) {
       // Leemos el mensaje específico que enviamos desde el backend
       const errorMessage = getErrorMessage(error, "No se pudo conectar con el proveedor de divisas.");
@@ -234,6 +279,73 @@ const handleSyncApi = async () => {
 
   return (
     <div className="space-y-6">
+      <Card className="border-navy/10 shadow-lg">
+        <CardHeader className="bg-navy/[0.02] border-b border-navy/5">
+          <CardTitle className="text-base font-playfair font-bold text-navy">Actualización automática</CardTitle>
+          <CardDescription>
+            El sistema consulta la API de divisas por su cuenta. Si contratas un plan con más consultas, acorta el intervalo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-4 bg-slate-50/50">
+            <div className="space-y-0.5">
+              <p className="text-sm font-bold text-navy">Actualizar tasas automáticamente</p>
+              <p className="text-xs text-muted-foreground">Si se apaga, solo cambian al pulsar «Sincronizar API» o al editarlas a mano.</p>
+            </div>
+            <Switch checked={autoSync} onCheckedChange={setAutoSync} aria-label="Actualizar tasas automáticamente" />
+          </div>
+          <div className={cn("grid gap-4 md:grid-cols-2", !autoSync && "opacity-50 pointer-events-none")}>
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Frecuencia</p>
+              <Select
+                value={isCustom ? CUSTOM : String(intervalMinutes)}
+                onValueChange={(v) => {
+                  if (v === CUSTOM) { setIntervalMinutes(0); setCustomMinutes(customMinutes || "15"); }
+                  else { setIntervalMinutes(Number(v)); setCustomMinutes(""); }
+                }}
+              >
+                <SelectTrigger className="bg-slate-50 border-slate-100"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {INTERVAL_PRESETS.map((p) => <SelectItem key={p.minutes} value={String(p.minutes)}>{p.label}</SelectItem>)}
+                  <SelectItem value={CUSTOM}>Personalizada (minutos)…</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {isCustom && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cada cuántos minutos</p>
+                <Input
+                  type="number"
+                  min={MIN_INTERVAL}
+                  max={MAX_INTERVAL}
+                  value={customMinutes}
+                  onChange={(e) => setCustomMinutes(e.target.value)}
+                  className="bg-slate-50 border-slate-100"
+                />
+                {customInvalid && <p className="text-[10px] text-rose-600">Ingresa un entero entre {MIN_INTERVAL} y {MAX_INTERVAL} minutos.</p>}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="text-xs text-muted-foreground space-y-1">
+              {autoSync && !customInvalid && <p>≈ {requestsPerMonth.toLocaleString("es-CL")} consultas al mes a la API (verifica que tu plan las cubra).</p>}
+              <p>
+                {config?.exchangeLastSyncAt
+                  ? `Última sincronización exitosa: ${new Date(config.exchangeLastSyncAt).toLocaleString("es-CL")}`
+                  : "Aún no hay sincronizaciones desde la API."}
+              </p>
+              {config?.exchangeLastSyncError && (
+                <p className="text-rose-600 font-medium">Último intento fallido: {config.exchangeLastSyncError}</p>
+              )}
+            </div>
+            <Button onClick={handleSaveSchedule} disabled={!scheduleDirty || customInvalid || isSavingSchedule} className="bg-navy hover:bg-navy-dark text-white gap-2">
+              {isSavingSchedule ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Guardar frecuencia
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="border-navy/10 shadow-lg">
         <CardHeader className="bg-navy/[0.02] border-b border-navy/5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

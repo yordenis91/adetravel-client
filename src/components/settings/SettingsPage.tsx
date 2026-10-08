@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings, Building2, Mail, FileText, Monitor, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,13 @@ import DocumentsTab from "./DocumentsTab";
 import SystemTab from "./SystemTab";
 import ExchangeTab from "./ExchangeTab";
 
+const TAB_VALUES = ["agencia", "email", "documentos", "divisas", "sistema"];
+
 export default function SettingsPage() {
+  // ?tab=divisas permite enlazar directo a una pestaña (p. ej. desde la ficha de tasas del Dashboard).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab") ?? "";
+  const activeTab = TAB_VALUES.includes(requestedTab) ? requestedTab : "agencia";
   const { data: configs, isLoading } = useQuery({
     queryKey: ["systemConfig"],
     queryFn: () => SystemConfig.list(),
@@ -38,7 +45,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="agencia" className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(tab) => setSearchParams({ tab }, { replace: true })}
+        className="w-full"
+      >
         <TabsList className="bg-navy/5 p-1 mb-8">
           <TabsTrigger 
             value="agencia" 

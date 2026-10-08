@@ -45,7 +45,11 @@ export default function DashboardPage() {
     queryKey: ["system-config"],
     queryFn: () => api.get('/system-config'),
     enabled: canConfig,
+    // La sincronización automática corre en el servidor: se refresca para mostrar tasas nuevas sin recargar.
+    refetchInterval: 5 * 60 * 1000,
   });
+
+  const systemConfig: any = (configData as any)?.data || configData || {};
 
   // Extraer y parsear las tasas de forma segura
   // 2. Parseamos la información de forma segura
@@ -225,7 +229,13 @@ export default function DashboardPage() {
 
           <PendingAlerts />
           <TasksWidget />
-          {canConfig && <ExchangeRatesWidget exchangeRates={exchangeRates} />}
+          {canConfig && <ExchangeRatesWidget
+            exchangeRates={exchangeRates}
+            autoSync={systemConfig.exchangeAutoSync}
+            intervalMinutes={systemConfig.exchangeSyncIntervalMinutes}
+            lastSyncAt={systemConfig.exchangeLastSyncAt}
+            lastSyncError={systemConfig.exchangeLastSyncError}
+          />}
           {hasPermission("VIEW_CLIENTS") && <BirthdayReminder />}
 
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -235,4 +245,4 @@ export default function DashboardPage() {
       </div>
     </div>
   );
-}
+}
