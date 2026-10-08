@@ -17,9 +17,19 @@ interface ExchangeRate {
 
 interface ExchangeRatesWidgetProps {
   exchangeRates: ExchangeRate[];
+  autoSync?: boolean;
+  intervalMinutes?: number;
+  lastSyncAt?: string | null;
+  lastSyncError?: string | null;
 }
 
-export function ExchangeRatesWidget({ exchangeRates = [] }: ExchangeRatesWidgetProps) {
+export function formatInterval(minutes: number): string {
+  if (minutes % 1440 === 0) return minutes === 1440 ? "cada día" : `cada ${minutes / 1440} días`;
+  if (minutes % 60 === 0) return minutes === 60 ? "cada hora" : `cada ${minutes / 60} h`;
+  return `cada ${minutes} min`;
+}
+
+export function ExchangeRatesWidget({ exchangeRates = [], autoSync = false, intervalMinutes = 480, lastSyncAt, lastSyncError }: ExchangeRatesWidgetProps) {
   const activeRates = exchangeRates.filter((rate) => rate.isActive);
   return (
     <motion.div
@@ -36,7 +46,7 @@ export function ExchangeRatesWidget({ exchangeRates = [] }: ExchangeRatesWidgetP
               </div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tasas de Cambio</h3>
             </div>
-            <Link to="/configuracion">
+            <Link to="/configuracion?tab=divisas">
               <Button variant="ghost" size="icon" aria-label="Configurar tipos de cambio" className="h-8 w-8 rounded-full hover:bg-slate-100">
                 <Settings className="w-4 h-4 text-slate-400" />
               </Button>
@@ -94,7 +104,7 @@ export function ExchangeRatesWidget({ exchangeRates = [] }: ExchangeRatesWidgetP
             ) : (
               <div className="py-8 text-center">
                 <p className="text-xs text-muted-foreground italic">No hay tasas configuradas</p>
-                <Link to="/configuracion">
+                <Link to="/configuracion?tab=divisas">
                   <Button variant="link" className="text-xs text-amber-600 font-bold p-0 h-auto mt-1">Configurar ahora</Button>
                 </Link>
               </div>
@@ -103,9 +113,12 @@ export function ExchangeRatesWidget({ exchangeRates = [] }: ExchangeRatesWidgetP
           
           <div className="mt-4 pt-4 border-t border-slate-50">
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-              <span>Fuentes oficiales</span>
-              <span className="flex items-center gap-1">
-                Tasa manual <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span>
+                {autoSync ? `Actualización automática ${formatInterval(intervalMinutes)}` : "Actualización automática desactivada"}
+              </span>
+              <span className="flex items-center gap-1" title={lastSyncError ?? undefined}>
+                {lastSyncError ? "Última sync fallida" : lastSyncAt ? "Tasa de mercado" : "Tasa manual"}
+                <div className={`w-1.5 h-1.5 rounded-full ${lastSyncError ? "bg-rose-400" : lastSyncAt ? "bg-emerald-400" : "bg-amber-400"}`} />
               </span>
             </div>
           </div>

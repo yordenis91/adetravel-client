@@ -1,9 +1,10 @@
 import React from "react";
-import { LegalDocumentLayout } from "@/components/legal/LegalDocumentLayout";
+import { LegalDocumentView } from "@/components/legal/LegalDocumentView";
 
-export default function TermsOfService() {
+/** Texto por defecto: se muestra mientras la agencia no publique el suyo (Configuración → Legal). */
+export function TermsOfServiceBody() {
   return (
-    <LegalDocumentLayout title="Términos de Servicio" lastUpdated="[COMPLETAR AL PUBLICAR]">
+    <>
       <p>
         Estos Términos de Servicio ("Términos") rigen el acceso y uso de la plataforma AdeTravel
         ("el Servicio", "la Plataforma") por parte de la agencia de viajes que contrata una
@@ -142,6 +143,14 @@ export default function TermsOfService() {
       <p>
         Consultas sobre estos Términos: <strong>[EMAIL DE CONTACTO LEGAL/COMERCIAL]</strong>.
       </p>
-    </LegalDocumentLayout>
+    </>
+  );
+}
+
+export default function TermsOfService() {
+  return (
+    <LegalDocumentView doc="terms" title="Términos de Servicio" defaultLastUpdated="[COMPLETAR AL PUBLICAR]">
+      <TermsOfServiceBody />
+    </LegalDocumentView>
   );
 }

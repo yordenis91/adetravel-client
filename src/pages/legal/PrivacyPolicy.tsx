@@ -1,9 +1,10 @@
 import React from "react";
-import { LegalDocumentLayout } from "@/components/legal/LegalDocumentLayout";
+import { LegalDocumentView } from "@/components/legal/LegalDocumentView";
 
-export default function PrivacyPolicy() {
+/** Texto por defecto: se muestra mientras la agencia no publique el suyo (Configuración → Legal). */
+export function PrivacyPolicyBody() {
   return (
-    <LegalDocumentLayout title="Política de Privacidad" lastUpdated="[COMPLETAR AL PUBLICAR]">
+    <>
       <p>
         Esta Política de Privacidad describe cómo <strong>[RAZÓN SOCIAL DEL PROVEEDOR]</strong>
         ("AdeTravel", "el Proveedor", "nosotros") trata los datos personales en el marco de la
@@ -160,6 +161,14 @@ export default function PrivacyPolicy() {
         Consultas sobre esta política o solicitudes relacionadas con datos personales:{" "}
         <strong>[EMAIL DE CONTACTO DE PRIVACIDAD]</strong>.
       </p>
-    </LegalDocumentLayout>
+    </>
+  );
+}
+
+export default function PrivacyPolicy() {
+  return (
+    <LegalDocumentView doc="privacy" title="Política de Privacidad" defaultLastUpdated="[COMPLETAR AL PUBLICAR]">
+      <PrivacyPolicyBody />
+    </LegalDocumentView>
   );
 }
