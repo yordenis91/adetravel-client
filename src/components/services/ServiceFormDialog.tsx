@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
 } from "@/components/ui/sheet";
@@ -116,7 +116,7 @@ export function ServiceFormDialog({ open, onOpenChange, requestId, defaultClient
       onOpenChange(false);
       onSuccess?.();
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Error al guardar", description: err?.message || "Intenta nuevamente." });
+      toast({ variant: "destructive", title: "Error al guardar", description: getErrorMessage(err, "Intenta nuevamente.") });
     }
   };
 

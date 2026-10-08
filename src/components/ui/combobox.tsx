@@ -6,6 +6,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FormItemContext } from "@/components/ui/form";
 
 export interface ComboboxOption {
   value: string;
@@ -49,6 +50,10 @@ export function Combobox({
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const remote = !!onSearchChange;
+  // Dentro de un FormItem, el botón toma el id al que apunta su FormLabel (htmlFor): así el lector
+  // de pantalla anuncia "Cliente, Selecciona un cliente" y no un botón sin nombre.
+  const formItem = React.useContext(FormItemContext);
+  const triggerId = formItem?.id ? `${formItem.id}-form-item` : undefined;
   // Con búsqueda remota, la opción elegida puede no estar en la página de resultados actual.
   const [picked, setPicked] = React.useState<ComboboxOption | null>(null);
 
@@ -67,6 +72,7 @@ export function Combobox({
           type="button"
           variant="outline"
           role="combobox"
+          id={triggerId}
           aria-expanded={open}
           disabled={disabled}
           className={cn(

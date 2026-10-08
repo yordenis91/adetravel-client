@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface VoucherPDFPreviewProps {
@@ -84,7 +84,7 @@ export function VoucherPDFPreview({
       toast({
         variant: "destructive",
         title: "Error al generar el PDF",
-        description: error instanceof Error ? error.message : "Intenta nuevamente.",
+        description: getErrorMessage(error, "Intenta nuevamente."),
       });
     } finally {
       setIsDownloading(false);

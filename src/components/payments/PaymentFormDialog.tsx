@@ -345,14 +345,14 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs font-bold text-navy">Monto *</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">
-                            {form.watch("currency") === "CLP" ? "$" : "US$"}
-                          </span>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold" aria-hidden="true">
+                          {form.watch("currency") === "CLP" ? "$" : "US$"}
+                        </span>
+                        <FormControl>
                           <Input type="number" className="pl-10 text-lg font-bold bg-white" {...field} />
-                        </div>
-                      </FormControl>
+                        </FormControl>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
