@@ -31,6 +31,8 @@ export default function DocumentsTab({ config, configId }: DocumentsTabProps) {
       quotationNumberPrefix: "COTIZ",
       paymentNumberPrefix: "PAG",
       voucherNumberPrefix: "VCH",
+      serviceNumberPrefix: "SRV",
+      confirmationNumberPrefix: "CONF",
     },
   });
 
@@ -43,6 +45,13 @@ export default function DocumentsTab({ config, configId }: DocumentsTabProps) {
   }, [config, reset]);
 
   const onSubmit = async (data: any) => {
+    const keys = ["request", "quotation", "payment", "voucher", "service", "confirmation"].map((k) => `${k}NumberPrefix`);
+    for (const key of keys) {
+      if (!/^[A-Za-z0-9]{1,10}$/.test((data[key] ?? "").trim())) {
+        toast({ variant: "destructive", title: "Prefijo inválido", description: "Cada prefijo debe tener entre 1 y 10 letras o números." });
+        return;
+      }
+    }
     try {
       if (configId) {
         await SystemConfig.update(configId, data);
@@ -64,7 +73,10 @@ export default function DocumentsTab({ config, configId }: DocumentsTabProps) {
     }
   };
 
-  const getPreview = (prefix: string) => `${prefix || '---'}-2024-05-0001`;
+  const getPreview = (prefix: string) => {
+    const now = new Date();
+    return `${prefix || '---'}-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-0001`;
+  };
 
   return (
     <div className="space-y-8">
@@ -158,6 +170,15 @@ export default function DocumentsTab({ config, configId }: DocumentsTabProps) {
                       </Badge>
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="serviceNumberPrefix">Servicios</Label>
+                    <div className="flex items-center gap-3">
+                      <Input id="serviceNumberPrefix" {...register("serviceNumberPrefix")} placeholder="SRV" />
+                      <Badge variant="secondary" className="whitespace-nowrap font-mono text-[10px]">
+                        {getPreview(prefixes.serviceNumberPrefix)}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -175,6 +196,15 @@ export default function DocumentsTab({ config, configId }: DocumentsTabProps) {
                       <Input id="voucherNumberPrefix" {...register("voucherNumberPrefix")} placeholder="VCH" />
                       <Badge variant="secondary" className="whitespace-nowrap font-mono text-[10px]">
                         {getPreview(prefixes.voucherNumberPrefix)}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmationNumberPrefix">Confirmaciones</Label>
+                    <div className="flex items-center gap-3">
+                      <Input id="confirmationNumberPrefix" {...register("confirmationNumberPrefix")} placeholder="CONF" />
+                      <Badge variant="secondary" className="whitespace-nowrap font-mono text-[10px]">
+                        {getPreview(prefixes.confirmationNumberPrefix)}
                       </Badge>
                     </div>
                   </div>
