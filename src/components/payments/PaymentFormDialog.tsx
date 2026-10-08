@@ -436,33 +436,40 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold text-navy">Estado *</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value}
-                        disabled={isEditing} // 🛡️ Bloqueamos el cambio de estado en edición directa
-                      >
-                        <FormControl>
-                          <SelectTrigger className={isEditing ? "bg-slate-100" : "bg-white"}>
-                            <SelectValue placeholder="Seleccione estado" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="PENDIENTE">PENDIENTE</SelectItem>
-                          <SelectItem value="COMPLETADO">COMPLETADO</SelectItem>
-                          <SelectItem value="CANCELADO">CANCELADO</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {isEditing && <p className="text-[10px] text-muted-foreground">Usa la tabla para cambiar el estado</p>}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {isEditing ? (
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold text-navy">Estado</FormLabel>
+                        {/* El estado se cambia desde la tabla, que aplica las reglas del flujo */}
+                        <Select onValueChange={field.onChange} value={field.value} disabled>
+                          <FormControl>
+                            <SelectTrigger className="bg-slate-100">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="PENDIENTE">Pendiente</SelectItem>
+                            <SelectItem value="COMPLETADO">Completado</SelectItem>
+                            <SelectItem value="CANCELADO">Cancelado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground">Usa la tabla para cambiar el estado</p>
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  // La API registra todo pago nuevo como pendiente; se confirma después desde la tabla.
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-navy">Estado</p>
+                    <p className="text-sm">Pendiente</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Se registra como pendiente; márcalo como completado desde la tabla al confirmar el cobro.
+                    </p>
+                  </div>
+                )}
 
                 <FormField
                   control={form.control}
