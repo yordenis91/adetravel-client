@@ -110,7 +110,7 @@ export function PaymentsTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100 bg-white">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
             <TableHead className="text-xs font-bold uppercase tracking-wider">N° Pago</TableHead>

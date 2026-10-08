@@ -63,7 +63,7 @@ export function RecentRequests() {
           </Button>
         </div>
       ) : (
-        <Table>
+        <Table stackOnMobile>
           <TableHeader className="bg-slate-50/50 border-b border-gray-100">
             <TableRow className="hover:bg-transparent border-none">
               <TableHead className="text-[10px] uppercase font-extrabold tracking-widest text-slate-600">ID</TableHead>

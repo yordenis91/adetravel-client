@@ -49,7 +49,7 @@ export function ServicesTable({ services, isLoading }: ServicesTableProps) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
             <TableHead className="text-xs font-bold uppercase tracking-wider">N° Servicio</TableHead>

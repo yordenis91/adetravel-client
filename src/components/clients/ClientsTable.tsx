@@ -68,7 +68,7 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-      <Table>
+      <Table stackOnMobile>
         <TableHeader className="bg-muted/50">
           <TableRow className="hover:bg-transparent border-gray-100">
             <TableHead className="w-10 px-4 py-4">
