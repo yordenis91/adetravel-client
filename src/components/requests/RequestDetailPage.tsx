@@ -39,6 +39,7 @@ import { RequestStatusActions } from "./RequestStatusActions";
 import { RequestFormDialog } from "./RequestFormDialog";
 import { ServicesSection } from "@/components/services/ServicesSection";
 import { useProviderOptions } from "@/hooks/useProviderOptions";
+import { activityActionLabel } from "@/lib/activity-labels";
 
 type EventType = "cotizacion" | "pago" | "voucher" | "confirmacion" | "bitacora";
 
@@ -145,7 +146,7 @@ export default function RequestDetailPage() {
     logs.forEach((l: any) => {
       allEvents.push({
         id: l.id, type: "bitacora", date: safeParseDate(l.createdAt),
-        title: l.action?.replace(/_/g, " ") || "Acción", subtitle: l.description,
+        title: activityActionLabel(l.action), subtitle: l.description,
         color: "slate", icon: <ClipboardList className="w-4 h-4" />, originalData: l,
       });
     });
@@ -242,14 +243,14 @@ export default function RequestDetailPage() {
       {kpis && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Servicios", value: kpis.servicesCount, icon: <Briefcase className="w-5 h-5" />, color: "blue" },
+            { label: "Servicios registrados", value: kpis.servicesCount, icon: <Briefcase className="w-5 h-5" />, color: "blue" },
             { label: "Cotizaciones", value: kpis.quotationsCount, icon: <FileText className="w-5 h-5" />, color: "sky" },
             { label: "Vouchers Emitidos", value: kpis.vouchersCount, icon: <Ticket className="w-5 h-5" />, color: "gold" },
             { label: "Total Pagado", value: kpis.totalPaidCLP, icon: <DollarSign className="w-5 h-5" />, color: "emerald" },
           ].map((kpi, i) => (
             <motion.div key={kpi.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
               <Card className="border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-all duration-300">
-                <CardContent className="p-5 flex items-center gap-4">
+                <CardContent className="p-4 sm:p-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
                   <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                     kpi.color === "blue" && "bg-blue-50 text-blue-600",
                     kpi.color === "sky" && "bg-sky-50 text-sky-600",
@@ -258,8 +259,8 @@ export default function RequestDetailPage() {
                   )}>
                     {kpi.icon}
                   </div>
-                  <div className="overflow-hidden">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate">{kpi.label}</p>
+                  <div className="min-w-0 w-full">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider sm:tracking-widest leading-snug">{kpi.label}</p>
                     <p className="text-xl font-playfair font-bold text-navy truncate">{kpi.value}</p>
                   </div>
                 </CardContent>

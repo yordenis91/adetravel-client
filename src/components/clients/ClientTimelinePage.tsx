@@ -17,6 +17,7 @@ import { format, isAfter, subDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { isWorkflowStatus, getStatusColor as getWorkflowStatusColor } from "@/lib/workflow-status";
+import { activityActionLabel } from "@/lib/activity-labels";
 
 type EventType = "solicitud" | "cotizacion" | "pago" | "voucher" | "bitacora" | "tarea";
 
@@ -159,7 +160,7 @@ export default function ClientTimelinePage() {
     logs.forEach((l: any) => {
       allEvents.push({
         id: l.id, type: "bitacora", date: safeParseDate(l.createdAt),
-        title: l.action?.replace(/_/g, " ") || 'Acción', description: l.description, 
+        title: activityActionLabel(l.action), description: l.description, 
         color: "slate", icon: <ClipboardList className="w-4 h-4" />, originalData: l
       });
     });

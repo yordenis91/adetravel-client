@@ -14,9 +14,26 @@ const steps: { id: WorkflowStatus; label: string }[] = WORKFLOW_STATUSES
   .filter((s) => s !== "CANCELADA")
   .map((id) => ({ id, label: STATUS_LABELS[id] }));
 
+// Ancho mínimo de cada paso: en escritorio las 16 etapas reparten el ancho disponible y caben sin
+// desplazamiento; en pantallas estrechas se desplaza en horizontal y se centra la etapa actual.
+const MIN_STEP_PX = 56;
+const gridColumns = `repeat(${steps.length}, minmax(${MIN_STEP_PX}px, 1fr))`;
+
 export function RequestStatusFlow({ currentStatus }: RequestStatusFlowProps) {
   const isCancelled = currentStatus === "CANCELADA";
   const currentIndex = steps.findIndex((s) => s.id === currentStatus);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || currentIndex < 0 || container.scrollWidth <= container.clientWidth) return;
+    const stepWidth = container.scrollWidth / steps.length;
+    container.scrollLeft = Math.max(0, stepWidth * (currentIndex + 0.5) - container.clientWidth / 2);
+  }, [currentIndex]);
+
+  // La línea va del centro del primer paso al centro del último.
+  const half = `(100% / ${steps.length * 2})`;
+  const progress = currentIndex > 0 ? currentIndex / (steps.length - 1) : 0;
 
   return (
     <div className="relative w-full py-6">
@@ -28,63 +45,76 @@ export function RequestStatusFlow({ currentStatus }: RequestStatusFlowProps) {
         </div>
       )}
 
-      <div className={cn("overflow-x-auto pb-1", isCancelled && "opacity-40 grayscale")}>
-        {/* Cabecera de fases, alineada por cantidad de pasos de cada grupo */}
-        <div className="flex min-w-max mb-2">
-          {STATUS_PHASES.map((phase) => (
-            <div
-              key={phase.label}
-              className="flex-shrink-0 text-center text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70 border-b-2 border-slate-100 pb-1"
-              style={{ width: `${phase.statuses.length * 88}px` }}
-            >
-              {phase.label}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center relative min-w-max px-1">
-          {/* Connector Line */}
-          <div className="absolute top-5 left-0 h-0.5 bg-slate-100 z-0" style={{ width: `${steps.length * 88}px` }} />
-          <div
-            className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-500 z-0"
-            style={{ width: currentIndex >= 0 ? `${(currentIndex / (steps.length - 1)) * (steps.length * 88)}px` : "0px" }}
-          />
-
-          {steps.map((step, index) => {
-            const isPast = currentIndex >= 0 && index < currentIndex;
-            const isCurrent = index === currentIndex;
-
-            return (
-              <div key={step.id} className="relative z-10 flex flex-col items-center gap-2 flex-shrink-0" style={{ width: "88px" }}>
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 bg-white",
-                  isPast ? "bg-primary border-primary text-white" :
-                  isCurrent ? "border-primary text-primary shadow-lg shadow-primary/20" :
-                  "border-slate-200 text-slate-300"
-                )}>
-                  {isPast ? (
-                    <Check className="w-4 h-4 stroke-[3px]" />
-                  ) : isCurrent ? (
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className="flex items-center justify-center"
-                    >
-                      <span className="text-[10px] font-bold">{index + 1}</span>
-                    </motion.div>
-                  ) : (
-                    <span className="text-[10px] font-bold">{index + 1}</span>
-                  )}
-                </div>
-                <span className={cn(
-                  "text-[9px] font-bold uppercase tracking-wide text-center leading-tight px-1 transition-colors duration-300",
-                  isCurrent ? "text-navy" : "text-muted-foreground"
-                )}>
-                  {step.label}
-                </span>
+      <div
+        ref={scrollRef}
+        data-testid="status-flow-scroll"
+        className={cn("overflow-x-auto pb-1", isCancelled && "opacity-40 grayscale")}
+      >
+        <div style={{ minWidth: steps.length * MIN_STEP_PX }}>
+          {/* Cabecera de fases, alineada con las columnas de sus pasos */}
+          <div className="grid mb-2" style={{ gridTemplateColumns: gridColumns }}>
+            {STATUS_PHASES.map((phase) => (
+              <div
+                key={phase.label}
+                className="text-center text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70 border-b-2 border-slate-100 pb-1 mx-0.5"
+                style={{ gridColumn: `span ${phase.statuses.length}` }}
+              >
+                {phase.label}
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          <div className="relative">
+            {/* Línea de conexión y avance */}
+            <div aria-hidden className="absolute top-4 h-0.5 bg-slate-100 z-0" style={{ left: `calc${half}`, right: `calc${half}` }} />
+            <div
+              aria-hidden
+              className="absolute top-4 h-0.5 bg-primary transition-all duration-500 z-0"
+              style={{ left: `calc${half}`, width: `calc((100% - 2 * ${half}) * ${progress})` }}
+            />
+
+            <ol className="grid relative" style={{ gridTemplateColumns: gridColumns }} aria-label="Etapas de la solicitud">
+              {steps.map((step, index) => {
+                const isPast = currentIndex >= 0 && index < currentIndex;
+                const isCurrent = index === currentIndex;
+
+                return (
+                  <li
+                    key={step.id}
+                    className="relative z-10 flex min-w-0 flex-col items-center gap-2"
+                    aria-current={isCurrent ? "step" : undefined}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 bg-white",
+                      isPast ? "bg-primary border-primary text-white" :
+                      isCurrent ? "border-primary text-primary shadow-lg shadow-primary/20" :
+                      "border-slate-200 text-slate-300"
+                    )}>
+                      {isPast ? (
+                        <Check className="w-4 h-4 stroke-[3px]" />
+                      ) : isCurrent ? (
+                        <motion.div
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ repeat: Infinity, duration: 2 }}
+                          className="flex items-center justify-center"
+                        >
+                          <span className="text-[10px] font-bold">{index + 1}</span>
+                        </motion.div>
+                      ) : (
+                        <span className="text-[10px] font-bold">{index + 1}</span>
+                      )}
+                    </div>
+                    <span className={cn(
+                      "w-full text-[10px] font-semibold text-center leading-tight px-0.5 transition-colors duration-300 hyphens-auto [overflow-wrap:anywhere]",
+                      isCurrent ? "text-navy" : "text-muted-foreground"
+                    )}>
+                      {step.label}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         </div>
       </div>
     </div>
