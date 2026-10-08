@@ -371,12 +371,12 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Destino *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                      <FormControl>
                         <Input className="pl-10" placeholder="Ciudad, País" {...field} />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -427,7 +427,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                       render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormControl>
-                            <Input placeholder="Nombre Completo del Pasajero" {...field} />
+                            <Input placeholder="Nombre Completo del Pasajero" aria-label={`Pasajero ${index + 1}`} {...field} />
                           </FormControl>
                         </FormItem>
                       )}

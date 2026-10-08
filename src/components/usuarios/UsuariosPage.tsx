@@ -168,21 +168,21 @@ export default function UsuariosPage() {
             </DialogHeader>
             <form onSubmit={handleCreateUser} className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Nombre Completo</label>
-                <Input required placeholder="Ej: Ana López" value={newUser.fullName} onChange={e => setNewUser({...newUser, fullName: e.target.value})} />
+                <label htmlFor="new-user-name" className="text-sm font-bold text-navy">Nombre Completo</label>
+                <Input id="new-user-name" required placeholder="Ej: Ana López" value={newUser.fullName} onChange={e => setNewUser({...newUser, fullName: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Correo Electrónico</label>
-                <Input required type="email" placeholder="ana@adetravel.com" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
+                <label htmlFor="new-user-email" className="text-sm font-bold text-navy">Correo Electrónico</label>
+                <Input id="new-user-email" required type="email" placeholder="ana@adetravel.com" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Contraseña Temporal</label>
-                <Input required type="password" placeholder="8+ caracteres, mayúscula, número y símbolo (!@#$%^&*)" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} />
+                <label htmlFor="new-user-password" className="text-sm font-bold text-navy">Contraseña Temporal</label>
+                <Input id="new-user-password" required type="password" placeholder="8+ caracteres, mayúscula, número y símbolo (!@#$%^&*)" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Rol en la Agencia</label>
+                <label htmlFor="new-user-role" className="text-sm font-bold text-navy">Rol en la Agencia</label>
                 <Select value={newUser.agencyRole} onValueChange={val => setNewUser({...newUser, agencyRole: val})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="new-user-role"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {AGENCY_ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
                   </SelectContent>
@@ -209,16 +209,16 @@ export default function UsuariosPage() {
             </DialogHeader>
             <form onSubmit={handleEditUser} className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Nombre Completo</label>
-                <Input required value={editingUser.fullName} onChange={e => setEditingUser({...editingUser, fullName: e.target.value})} />
+                <label htmlFor="edit-user-name" className="text-sm font-bold text-navy">Nombre Completo</label>
+                <Input id="edit-user-name" required value={editingUser.fullName} onChange={e => setEditingUser({...editingUser, fullName: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-navy">Correo Electrónico</label>
-                <Input required type="email" value={editingUser.email} onChange={e => setEditingUser({...editingUser, email: e.target.value})} />
+                <label htmlFor="edit-user-email" className="text-sm font-bold text-navy">Correo Electrónico</label>
+                <Input id="edit-user-email" required type="email" value={editingUser.email} onChange={e => setEditingUser({...editingUser, email: e.target.value})} />
               </div>
               <div className="space-y-2 relative">
-                <label className="text-sm font-bold text-navy">Nueva Contraseña (Opcional)</label>
-                <Input 
+                <label htmlFor="edit-user-password" className="text-sm font-bold text-navy">Nueva Contraseña (Opcional)</label>
+                <Input id="edit-user-password" 
                   type="password" 
                   placeholder="Dejar en blanco para no cambiar" 
                   value={editingUser.newPassword} 

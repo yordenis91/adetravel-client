@@ -25,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog } from "@/hooks/useCatalogs";
 import { useRemoteOptions } from "@/hooks/useRemoteOptions";
@@ -145,7 +145,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
       console.error(error);
       toast({
         title: "Error",
-        description: error.message || "Hubo un problema al procesar la solicitud.",
+        description: getErrorMessage(error, "Hubo un problema al procesar la solicitud."),
         variant: "destructive"
       });
     }
@@ -387,6 +387,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
                         <FormControl>
                           <Textarea
                             placeholder="Detalles adicionales, requerimientos especiales, etc."
+                            aria-label="Descripción de la solicitud"
                             className="bg-slate-50 border-slate-100 min-h-[120px]"
                             {...field}
                           />

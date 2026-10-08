@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getErrorMessage } from "@/lib/api";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -77,7 +78,7 @@ export function CatalogTab({ resource, label, parent }: CatalogTabProps) {
       }
       setDialogOpen(false);
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Error al guardar", description: err?.message });
+      toast({ variant: "destructive", title: "Error al guardar", description: getErrorMessage(err, "Intenta nuevamente.") });
     }
   };
 

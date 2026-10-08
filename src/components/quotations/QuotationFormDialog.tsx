@@ -372,7 +372,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                           <div className="col-span-5 space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Servicio / Producto</label>
                             <Input 
-                              placeholder="Ej: Pasaje Aéreo, Hotel, Tour" 
+                              placeholder="Ej: Pasaje Aéreo, Hotel, Tour" aria-label="Servicio o producto" 
                               value={item.service} 
                               onChange={(e) => updateItem(item.id, "service", e.target.value)}
                               className="bg-white"
@@ -382,7 +382,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cantidad</label>
                             <Input 
                               type="number" 
-                              value={item.quantity} 
+                              value={item.quantity} aria-label="Cantidad" 
                               onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
                               className="bg-white text-center"
                             />
@@ -391,7 +391,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Precio Unitario ({currency})</label>
                             <Input 
                               type="number" 
-                              value={item.unitPrice} 
+                              value={item.unitPrice} aria-label="Precio unitario" 
                               onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))}
                               className="bg-white text-right font-medium"
                             />
@@ -410,6 +410,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                               placeholder="Detalles adicionales, fechas, especificaciones..." 
                               value={item.description} 
                               onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                              aria-label="Descripción de la línea"
                               className="bg-white text-xs"
                             />
                           </div>
