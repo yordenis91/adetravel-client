@@ -254,7 +254,7 @@ export default function UsuariosPage() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table stackOnMobile>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-b border-slate-100">
                   <TableHead className="font-bold text-navy px-6 py-4">Usuario</TableHead>
