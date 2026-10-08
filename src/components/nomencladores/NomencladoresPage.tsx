@@ -28,12 +28,12 @@ export default function NomencladoresPage() {
             <TabsTrigger value="car-models" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Modelo de Auto</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="countries"><CatalogTab resource="countries" label="País" /></TabsContent>
+          <TabsContent value="countries"><CatalogTab resource="countries" label="País" childrenLabel="ciudades y regiones" /></TabsContent>
           <TabsContent value="cities"><CatalogTab resource="cities" label="Ciudad" parent={{ resource: "countries", field: "countryId", label: "País" }} /></TabsContent>
           <TabsContent value="regions"><CatalogTab resource="regions" label="Región" parent={{ resource: "countries", field: "countryId", label: "País" }} /></TabsContent>
           <TabsContent value="nationalities"><CatalogTab resource="nationalities" label="Nacionalidad" /></TabsContent>
           <TabsContent value="car-types"><CatalogTab resource="car-types" label="Tipo de Auto" /></TabsContent>
-          <TabsContent value="car-brands"><CatalogTab resource="car-brands" label="Marca de Auto" /></TabsContent>
+          <TabsContent value="car-brands"><CatalogTab resource="car-brands" label="Marca de Auto" childrenLabel="modelos" /></TabsContent>
           <TabsContent value="car-models"><CatalogTab resource="car-models" label="Modelo de Auto" parent={{ resource: "car-brands", field: "carBrandId", label: "Marca" }} /></TabsContent>
         </Tabs>
       </div>

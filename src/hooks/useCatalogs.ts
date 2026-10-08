@@ -16,12 +16,18 @@ interface CatalogItem {
 
 /** Lista un nomenclador (activos por defecto). `parentId` filtra por catálogo padre cuando aplica
  * (p.ej. countryId para "cities"/"regions", carBrandId para "car-models"). */
-export function useCatalog(resource: CatalogResource, parentId?: string, parentField?: "countryId" | "carBrandId") {
+export function useCatalog(
+  resource: CatalogResource,
+  parentId?: string,
+  parentField?: "countryId" | "carBrandId",
+  includeInactive = false,
+) {
   const query = new URLSearchParams();
   if (parentField && parentId) query.set(parentField, parentId);
+  if (includeInactive) query.set("includeInactive", "true");
 
   const { data: responseData, ...rest } = useQuery({
-    queryKey: ["catalog", resource, parentId],
+    queryKey: ["catalog", resource, parentId, includeInactive],
     queryFn: async () => api.get(`/${resource}?${query.toString()}`),
   });
 
@@ -37,20 +43,44 @@ export function useCreateCatalogItem(resource: CatalogResource) {
   });
 }
 
+// Desactivar/reactivar un padre (país, marca) arrastra a sus hijos, así que se invalida todo el
+// árbol de catálogos y no solo el recurso editado.
+const invalidateAllCatalogs = (qc: ReturnType<typeof useQueryClient>) => qc.invalidateQueries({ queryKey: ["catalog"] });
+
+/** `cascade` aplica el cambio de estado también a los hijos (ciudades/regiones de un país, modelos de una marca). */
 export function useUpdateCatalogItem(resource: CatalogResource) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Record<string, unknown>) => api.patch(`/${resource}/${id}`, data),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["catalog", resource] }),
+    mutationFn: ({ id, cascade, ...data }: { id: string; cascade?: boolean } & Record<string, unknown>) =>
+      api.patch(`/${resource}/${id}${cascade ? "?cascade=true" : ""}`, data),
+    onSuccess: () => void invalidateAllCatalogs(qc),
   });
 }
 
+/** Baja lógica. Si hay hijos activos, la API responde 409 (`CATALOG_HAS_DEPENDENTS`) salvo con `cascade`. */
 export function useDeleteCatalogItem(resource: CatalogResource) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/${resource}/${id}`),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["catalog", resource] }),
+    mutationFn: ({ id, cascade }: { id: string; cascade?: boolean }) =>
+      api.delete(`/${resource}/${id}${cascade ? "?cascade=true" : ""}`),
+    onSuccess: () => void invalidateAllCatalogs(qc),
   });
+}
+
+export interface CatalogDependents {
+  total: number;
+  items: { label: string; singular: string; count: number }[];
+}
+
+/** Hijos activos de un registro (para avisar antes de desactivarlo). */
+export function useCatalogDependents(resource: CatalogResource, id: string | null) {
+  const { data } = useQuery({
+    queryKey: ["catalog-dependents", resource, id],
+    enabled: !!id,
+    staleTime: 0,
+    queryFn: async () => api.get(`/${resource}/${id}/dependents`),
+  });
+  return ((data as any)?.data ?? data ?? null) as CatalogDependents | null;
 }
 
 const uniqueByName = (items: CatalogItem[]) => {
