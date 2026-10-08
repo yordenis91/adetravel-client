@@ -81,6 +81,8 @@ export const isForbiddenError = (error: unknown): boolean =>
 type ApiEventHandlers = {
   onUnauthorized?: () => void;
   onForbidden?: (error: ApiError) => void;
+  /** 429: límite de peticiones. No cierra la sesión: solo se avisa (el cupo se recupera solo). */
+  onRateLimited?: (error: ApiError) => void;
 };
 let handlers: ApiEventHandlers = {};
 
@@ -94,6 +96,7 @@ async function failFrom(res: Response, path: string): Promise<never> {
   // El 401 de /auth/login es "credenciales incorrectas", no una sesión vencida.
   if (res.status === 401 && !path.startsWith("/auth/login")) handlers.onUnauthorized?.();
   if (res.status === 403) handlers.onForbidden?.(error);
+  if (res.status === 429) handlers.onRateLimited?.(error);
   throw error;
 }
 
