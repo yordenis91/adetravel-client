@@ -6,8 +6,7 @@ import {
   Ticket,
   Clock,
   CheckCircle,
-  XCircle,
-  Filter
+  XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +25,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
+import { usePagedList } from "@/hooks/usePagedList";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { ListPagination } from "@/components/shared/ListPagination";
+import { ListError } from "@/components/shared/ListError";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { VouchersTable } from "./VouchersTable";
@@ -49,57 +52,23 @@ export default function VouchersPage() {
   const [pdfVoucher, setPdfVoucher] = useState<any>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
 
-  const { data: vouchersResponseData = [], isLoading: isLoadingVouchers } = useQuery({
-    queryKey: ["vouchers"],
-    queryFn: () => api.get('/vouchers?sortBy=-created_at'),
+  // Paginado, búsqueda (N°, servicio, destino, código, cliente) y estado en el servidor. Cliente,
+  // solicitud y proveedor vienen incrustados en cada voucher.
+  const search = useDebouncedValue(searchTerm.trim());
+  const list = usePagedList("vouchers", "/vouchers", { status: statusTab, search });
+  const vouchers = list.rows;
+  const filteredVouchers = vouchers;
+  const isLoading = list.isLoading;
+
+  // Contadores de todos los vouchers (GET /vouchers/stats), no solo de la página visible.
+  const { data: statsResponse } = useQuery({
+    queryKey: ["vouchers", "stats"],
+    queryFn: () => api.get("/vouchers/stats"),
   });
-
-  const { data: requestsResponseData = [], isLoading: isLoadingRequests } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'),
-  });
-
-  const { data: clientsResponseData = [], isLoading: isLoadingClients } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => api.get('/clients'),
-  });
-
-  const { data: providersResponseData = [], isLoading: isLoadingProviders } = useQuery({
-    queryKey: ["providers"],
-    queryFn: () => api.get('/providers'),
-  });
-
-  const vouchers = Array.isArray(vouchersResponseData) ? vouchersResponseData : (vouchersResponseData as any)?.data || [];
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
-  const providers = Array.isArray(providersResponseData) ? providersResponseData : (providersResponseData as any)?.data || [];
-
-  const isLoading = isLoadingVouchers || isLoadingRequests || isLoadingClients || isLoadingProviders;
-
-  const filteredVouchers = useMemo(() => {
-    return vouchers.filter((voucher: any) => {
-      const client = clients.find(c => c.id === voucher.clientId);
-      const matchesSearch = 
-        (voucher.voucherNumber?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (voucher.serviceName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (voucher.destination?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (client?.firstName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (client?.lastName?.toLowerCase() || "").includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusTab === "all" || voucher.status === statusTab;
-      
-      return matchesSearch && matchesStatus;
-    });
-  }, [vouchers, searchTerm, statusTab, clients]);
-
   const stats = useMemo(() => {
-    return {
-      total: vouchers.length,
-      borradores: vouchers.filter((v: any) => v.status === "BORRADOR").length,
-      emitidos: vouchers.filter((v: any) => v.status === "EMITIDO").length,
-      cancelados: vouchers.filter((v: any) => v.status === "CANCELADO").length,
-    };
-  }, [vouchers]);
+    const s = (statsResponse as any)?.data ?? {};
+    return { total: s.total ?? 0, borradores: s.borradores ?? 0, emitidos: s.emitidos ?? 0, cancelados: s.cancelados ?? 0 };
+  }, [statsResponse]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -124,8 +93,9 @@ export default function VouchersPage() {
       queryClient.invalidateQueries({ queryKey: ["vouchers"] });
       toast({ title: "Estado actualizado", description: `El voucher ha cambiado a ${variables.status}.` });
     },
-    onError: () => {
-      toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el estado." });
+    onError: (error) => {
+      // El motivo concreto (p. ej. "la solicitud aún no está pagada al proveedor") viene de la API.
+      toast({ variant: "destructive", title: "No se pudo cambiar el estado", description: getErrorMessage(error, "No se pudo actualizar el estado.") });
     },
     onSettled: () => {
       setProcessingId(null);
@@ -146,39 +116,35 @@ export default function VouchersPage() {
     setIsFormOpen(true);
   };
 
-  // Deep-link desde el buscador global: /vouchers?view=<voucherId>.
+  // Deep-link desde el buscador global: /vouchers?view=<voucherId>. Se pide por id: el voucher
+  // puede no estar en la página visible.
   useEffect(() => {
     const viewId = searchParams.get("view");
-    if (viewId && vouchers.length > 0) {
-      const found = vouchers.find((v: any) => v.id === viewId);
-      if (found) {
-        openEdit(found);
-      }
-      searchParams.delete("view");
-      setSearchParams(searchParams, { replace: true });
-    }
+    if (!viewId) return;
+    searchParams.delete("view");
+    setSearchParams(searchParams, { replace: true });
+    api.get(`/vouchers/${viewId}`)
+      .then((res: any) => res?.data && openEdit(res.data))
+      .catch(() => toast({ variant: "destructive", title: "Voucher no encontrado" }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, setSearchParams, vouchers]);
+  }, [searchParams, setSearchParams]);
 
-  const handlePreviewPDF = (voucher: any) => {
+  // La vista previa necesita los datos completos de cliente y proveedor (RUT, correo, teléfono),
+  // que el listado no trae: se pide el voucher por id (GET /vouchers/:id los incluye).
+  const handlePreviewPDF = async (voucher: any) => {
     setPdfVoucher(voucher);
     setPdfOpen(true);
+    try {
+      const res: any = await api.get(`/vouchers/${voucher.id}`);
+      if (res?.data) setPdfVoucher(res.data);
+    } catch (error) {
+      toast({ variant: "destructive", title: "No se pudo cargar el voucher", description: getErrorMessage(error, "Error de conexión.") });
+    }
   };
 
-  const matchedClient = useMemo(() => {
-    if (!pdfVoucher) return null;
-    return clients.find(c => c.id === pdfVoucher.clientId);
-  }, [pdfVoucher, clients]);
-
-  const matchedProvider = useMemo(() => {
-    if (!pdfVoucher) return null;
-    return providers.find(p => p.id === pdfVoucher.providerId);
-  }, [pdfVoucher, providers]);
-
-  const matchedRequest = useMemo(() => {
-    if (!pdfVoucher) return null;
-    return requests.find(r => r.id === pdfVoucher.requestId);
-  }, [pdfVoucher, requests]);
+  const matchedClient = pdfVoucher?.client ?? null;
+  const matchedProvider = pdfVoucher?.provider ?? null;
+  const matchedRequest = pdfVoucher?.request ?? null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -193,7 +159,7 @@ export default function VouchersPage() {
           <ExportMenu
             filename="vouchers_adetravel"
             data={filteredVouchers.map((v: any) => {
-              const client = clients.find((c: any) => c.id === v.clientId);
+              const client = v.client;
               return {
                 numero: v.voucherNumber,
                 cliente: client ? `${client.firstName} ${client.lastName}` : "",
@@ -281,23 +247,25 @@ export default function VouchersPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
-              <Filter className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
-        <VouchersTable 
-          vouchers={filteredVouchers}
-          requests={requests}
-          clients={clients}
-          isLoading={isLoading}
-          processingId={processingId}
-          onEdit={openEdit}
-          onDelete={setDeleteId}
-          onPreviewPDF={handlePreviewPDF}
-          onStatusChange={handleStatusChange}
-        />
+        {list.isError ? (
+          <ListError error={list.error} onRetry={() => list.refetch()} what="los vouchers" />
+        ) : (
+          <>
+            <VouchersTable
+              vouchers={filteredVouchers}
+              isLoading={isLoading}
+              processingId={processingId}
+              onEdit={openEdit}
+              onDelete={setDeleteId}
+              onPreviewPDF={handlePreviewPDF}
+              onStatusChange={handleStatusChange}
+            />
+            <ListPagination page={list.page} limit={list.limit} total={list.total} onPageChange={list.setPage} isFetching={list.isFetching} />
+          </>
+        )}
       </div>
 
       <VoucherFormDialog 

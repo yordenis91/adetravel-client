@@ -11,6 +11,10 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useNavigate: () => navigateMock };
 });
 
+const CLIENT = { id: "client-1", firstName: "Ana", lastName: "Pérez" };
+const REQUEST = { id: "req-1", requestNumber: "REQ-0001" };
+
+// GET /payments incrusta cliente y solicitud en cada pago.
 const PAYMENT = {
   id: "pay-1",
   paymentNumber: "PAG-0001",
@@ -21,18 +25,15 @@ const PAYMENT = {
   method: "TRANSFERENCIA",
   status: "PENDIENTE",
   paymentDate: "2026-01-15",
+  client: CLIENT,
+  request: REQUEST,
 };
-
-const CLIENT = { id: "client-1", firstName: "Ana", lastName: "Pérez" };
-const REQUEST = { id: "req-1", requestNumber: "REQ-0001" };
 
 function renderTable() {
   return render(
     <MemoryRouter>
       <PaymentsTable
         payments={[PAYMENT]}
-        requests={[REQUEST]}
-        clients={[CLIENT]}
         isLoading={false}
         onEdit={vi.fn()}
         onDelete={vi.fn()}

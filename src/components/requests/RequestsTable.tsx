@@ -40,7 +40,8 @@ import { PermissionGuard } from "@/components/PermissionGuard";
 interface RequestsTableProps {
   requests: any[];
   isLoading: boolean;
-  clients: any[];
+  /** Opcional: si no se pasa, se usa el cliente incrustado en cada solicitud. */
+  clients?: any[];
   onEdit: (request: any) => void;
   onView: (request: any) => void;
   onStatusChange: (id: string, newStatus: string, note?: string) => void;
@@ -49,7 +50,7 @@ interface RequestsTableProps {
 export function RequestsTable({
   requests,
   isLoading,
-  clients,
+  clients = [],
   onEdit,
   onView,
   onStatusChange

@@ -28,7 +28,7 @@ export default function ProviderDetailsPage() {
 
   const { data: vouchersData, isLoading: isVouchersLoading } = useQuery({
     queryKey: ["vouchers", { providerId }],
-    queryFn: () => api.get(`/vouchers?providerId=${providerId}`),
+    queryFn: () => api.get(`/vouchers?providerId=${providerId}&limit=100`),
     enabled: !!providerId,
   });
 

@@ -15,6 +15,7 @@ import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Combobox } from "@/components/ui/combobox";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -48,8 +49,10 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
   const updateMutation = useUpdateConfirmation();
   const isEditing = !!confirmation;
 
-  const { data: requestsData } = useQuery({ queryKey: ["requests-all"], queryFn: () => api.get("/requests?limit=1000"), enabled: open && !requestId });
-  const requests = Array.isArray(requestsData) ? requestsData : (requestsData as any)?.data || [];
+  // Búsqueda de solicitudes en el servidor (antes limit=1000, que la API rechaza con 400).
+  const requestOptions = useRemoteOptions("requests", "/requests", (r: any) => ({ value: r.id, label: r.requestNumber }), {
+    enabled: open && !requestId,
+  });
 
   const { data: providersData } = useQuery({ queryKey: ["providers-all"], queryFn: () => api.get("/providers"), enabled: open });
   const providers = Array.isArray(providersData) ? providersData : (providersData as any)?.data || [];
@@ -76,7 +79,14 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
   });
   const services = Array.isArray(servicesData) ? servicesData : (servicesData as any)?.data || [];
 
-  const selectedRequest = requests.find((r: any) => r.id === selectedRequestId);
+  // La solicitud elegida se pide por id: así se sabe si es paquete también cuando el formulario
+  // se abre desde el detalle de la solicitud (antes, sin la lista cargada, nunca lo era).
+  const { data: selectedRequestData } = useQuery({
+    queryKey: ["requests", selectedRequestId],
+    queryFn: () => api.get(`/requests/${selectedRequestId}`),
+    enabled: open && !!selectedRequestId,
+  });
+  const selectedRequest = (selectedRequestData as any)?.data;
   const isPackage = selectedRequest?.isPackage;
 
   useEffect(() => {
@@ -142,7 +152,10 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
                     <FormItem>
                       <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Solicitud *</FormLabel>
                       <Combobox
-                        options={requests.map((r: any) => ({ value: r.id, label: r.requestNumber }))}
+                        options={requestOptions.options}
+                        onSearchChange={requestOptions.onSearchChange}
+                        loading={requestOptions.loading}
+                        selectedLabel={selectedRequest?.requestNumber ?? confirmation?.request?.requestNumber}
                         value={field.value}
                         onChange={field.onChange}
                         disabled={isEditing}

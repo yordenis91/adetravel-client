@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog } from "@/hooks/useCatalogs";
+import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Loader2 } from "lucide-react";
 
 const requestSchema = z.object({
@@ -60,13 +61,17 @@ interface RequestFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   request?: any;
-  clients: any[];
   onSuccess: (savedRequest: any, wasCreated: boolean) => void;
 }
 
-export function RequestFormDialog({ open, onOpenChange, request, clients, onSuccess }: RequestFormDialogProps) {
+export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: RequestFormDialogProps) {
   const { toast } = useToast();
   const isEditing = !!request;
+  const clientName = (c: any) => `${c.firstName} ${c.lastName ?? ""}`.trim();
+  const clientOptions = useRemoteOptions("clients", "/clients", (c: any) => ({ value: c.id, label: clientName(c) }), {
+    enabled: open,
+    params: { isActive: "true" },
+  });
   const { data: countries } = useCatalog("countries");
   const { data: cities } = useCatalog("cities");
 
@@ -176,7 +181,10 @@ export function RequestFormDialog({ open, onOpenChange, request, clients, onSucc
                       <FormItem>
                         <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cliente Titular *</FormLabel>
                         <Combobox
-                          options={clients.map((client: any) => ({ value: client.id, label: `${client.firstName} ${client.lastName}` }))}
+                          options={clientOptions.options}
+                          onSearchChange={clientOptions.onSearchChange}
+                          loading={clientOptions.loading}
+                          selectedLabel={request?.client ? clientName(request.client) : undefined}
                           value={field.value}
                           onChange={field.onChange}
                           placeholder="Selecciona un cliente"

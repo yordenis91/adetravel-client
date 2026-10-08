@@ -39,8 +39,6 @@ import { es } from "date-fns/locale";
 
 interface PaymentsTableProps {
   payments: any[];
-  requests: any[];
-  clients: any[];
   isLoading: boolean;
   onEdit: (payment: any) => void;
   onDelete: (paymentId: string) => void;
@@ -64,10 +62,8 @@ const methodLabels: Record<string, string> = {
 };
 
 export function PaymentsTable({ 
-  payments, 
-  requests, 
-  clients, 
-  isLoading, 
+  payments,
+  isLoading,
   onEdit, 
   onDelete,
   onStatusChange
@@ -129,8 +125,9 @@ export function PaymentsTable({
         </TableHeader>
         <TableBody>
           {payments.map((payment) => {
-            const client = clients.find((c) => c.id === payment.clientId);
-            const request = requests.find((r) => r.id === payment.requestId);
+            // Cliente y solicitud vienen incrustados en cada pago (GET /payments).
+            const client = payment.client;
+            const request = payment.request;
             const MethodIcon = methodIcons[payment.method] || Banknote;
 
             return (
