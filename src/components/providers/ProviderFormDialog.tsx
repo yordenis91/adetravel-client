@@ -33,7 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { useCatalog } from "@/hooks/useCatalogs";
+import { useCatalog, useCitiesForCountry } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X, Building2, MapPin, Phone, User, Settings, CreditCard } from "lucide-react";
 
 const providerSchema = z.object({
@@ -72,7 +72,6 @@ interface ProviderFormDialogProps {
 export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: ProviderFormDialogProps) {
   const { toast } = useToast();
   const { data: countries } = useCatalog("countries");
-  const { data: cities } = useCatalog("cities");
   const isEditing = !!provider;
 
   const form = useForm<ProviderFormValues>({
@@ -101,6 +100,7 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
       isActive: true,
     },
   });
+  const { cities } = useCitiesForCountry(form.watch("country"));
 
   useEffect(() => {
     if (provider) {
@@ -287,7 +287,10 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                           <Combobox
                             options={countries.map((c: any) => ({ value: c.name, label: c.name }))}
                             value={field.value}
-                            onChange={field.onChange}
+                            onChange={(v) => {
+                              if (v !== field.value) form.setValue("city", "");
+                              field.onChange(v);
+                            }}
                             allowCustomValue
                             placeholder="Ej: Chile"
                             searchPlaceholder="Buscar o escribir país..."
