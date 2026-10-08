@@ -8,7 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom
 import * as Sentry from "@sentry/react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { isChunkLoadError } from "@/lib/chunk-reload";
+import { isChunkLoadError, reloadOnChunkError } from "@/lib/chunk-reload";
 import { Loader2 } from "lucide-react";
 
 // 1. PRIMERO: Todas las importaciones estáticas (Rutas públicas)
@@ -103,7 +103,7 @@ const PageLoader = () => (
   </div>
 );
 const App = () => (
-  <Sentry.ErrorBoundary fallback={FallbackError} showDialog={false}>
+  <Sentry.ErrorBoundary fallback={FallbackError} showDialog={false} onError={reloadOnChunkError}>
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
