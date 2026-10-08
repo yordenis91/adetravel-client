@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
+import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Banknote, 
@@ -79,39 +80,15 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
   const queryClient = useQueryClient();
   const isEditing = !!payment;
 
-  const { data: paymentsResponse } = useQuery({
-    queryKey: ["payments"],
-    queryFn: () => api.get('/payments'),
-    enabled: open,
-  });
-
-  const { data: requestsResponse } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'),
-    enabled: open,
-  });
-
-  const { data: quotationsResponse } = useQuery({
-    queryKey: ["quotations"],
-    queryFn: () => api.get('/quotations'),
-    enabled: open,
-  });
-
-  const { data: clientsResponse } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => api.get('/clients'),
-    enabled: open,
-  });
-
-  // IMPORTANTE: usar EMPTY_ARRAY (constante estable a nivel de módulo) en vez de
-  // un `[]` inline como fallback. Un `[]` literal aquí crea una referencia nueva
-  // en cada render mientras la query está pendiente, y como `allPayments` es
-  // dependencia del useEffect de abajo, eso lo dispara en cada render → loop de
-  // re-renders (efecto → form.reset → re-render → nueva referencia → efecto...).
-  const allPayments = Array.isArray(paymentsResponse) ? paymentsResponse : (paymentsResponse as any)?.data || EMPTY_ARRAY;
-  const requests = Array.isArray(requestsResponse) ? requestsResponse : (requestsResponse as any)?.data || EMPTY_ARRAY;
-  const quotations = Array.isArray(quotationsResponse) ? quotationsResponse : (quotationsResponse as any)?.data || EMPTY_ARRAY;
-  const clients = Array.isArray(clientsResponse) ? clientsResponse : (clientsResponse as any)?.data || EMPTY_ARRAY;
+  // Solicitudes buscadas en el servidor; la elegida y sus cotizaciones se piden por id. Antes se
+  // pedían las listas completas de pagos, solicitudes, cotizaciones y clientes, y solo llegaban
+  // las 20 más recientes de cada una.
+  const requestOptions = useRemoteOptions(
+    "requests",
+    "/requests",
+    (req: any) => ({ value: req.id, label: `${req.requestNumber} | ${req.destinationCity || ""}` }),
+    { enabled: open && !isEditing }
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -145,16 +122,12 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
         reference: payment.reference || "",
         notes: payment.notes || "",
       });
-    } else if (open && allPayments) {
-      const year = new Date().getFullYear();
-      const month = String(new Date().getMonth() + 1).padStart(2, '0');
-      const nextNumber = (allPayments.length + 1).toString().padStart(4, '0');
-      
+    } else if (open) {
       form.reset({
         requestId: "",
         quotationId: "",
         clientId: "",
-        paymentNumber: `PAG-${year}-${month}-${nextNumber}`, // El backend igual lo recalcula seguro
+        paymentNumber: "Se asigna al guardar", // lo genera la API (numeración correlativa)
         amount: 0,
         currency: "CLP",
         paymentDate: format(new Date(), "yyyy-MM-dd"),
@@ -164,7 +137,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
         notes: "",
       });
     }
-  }, [payment, open, allPayments, form]);
+  }, [payment, open, form]);
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -194,10 +167,31 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
   };
 
   const selectedRequestId = form.watch("requestId");
-  
+
+  const { data: selectedRequestResponse } = useQuery({
+    queryKey: ["requests", selectedRequestId],
+    queryFn: () => api.get(`/requests/${selectedRequestId}`),
+    enabled: open && !!selectedRequestId,
+  });
+  const selectedRequest = (selectedRequestResponse as any)?.data;
+
+  const { data: quotationsResponse } = useQuery({
+    queryKey: ["requests", selectedRequestId, "quotations"],
+    queryFn: () => api.get(`/requests/${selectedRequestId}/quotations`),
+    enabled: open && !!selectedRequestId,
+  });
+  // EMPTY_ARRAY (constante de módulo) y no `[]`: `quotations` es dependencia del efecto de abajo y
+  // un literal nuevo en cada render lo dispararía en bucle.
+  const quotations = Array.isArray(quotationsResponse) ? quotationsResponse : (quotationsResponse as any)?.data || EMPTY_ARRAY;
+
+  const clientLabel = (() => {
+    const c = selectedRequest?.client ?? payment?.client;
+    return c ? `${c.firstName} ${c.lastName ?? ""}`.trim() : "";
+  })();
+
   useEffect(() => {
     if (selectedRequestId && !isEditing) {
-      const request = requests.find((r: any) => r.id === selectedRequestId);
+      const request = selectedRequest;
       if (request) {
         form.setValue("clientId", request.clientId);
         
@@ -220,7 +214,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
         }
       }
     }
-  }, [selectedRequestId, requests, quotations, form, isEditing, toast]);
+  }, [selectedRequestId, selectedRequest, quotations, form, isEditing, toast]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -250,7 +244,10 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                     <FormItem>
                       <FormLabel className="text-xs font-bold text-navy">Solicitud *</FormLabel>
                       <Combobox
-                        options={requests.map((req: any) => ({ value: req.id, label: `${req.requestNumber} | ${req.destinationCity || ""}` }))}
+                        options={requestOptions.options}
+                        onSearchChange={requestOptions.onSearchChange}
+                        loading={requestOptions.loading}
+                        selectedLabel={(selectedRequest ?? payment?.request)?.requestNumber}
                         value={field.value}
                         onChange={field.onChange}
                         disabled={isEditing}
@@ -281,7 +278,6 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                           <SelectContent>
                             <SelectItem value="none">Ninguna</SelectItem>
                             {quotations
-                              .filter((q: any) => q.requestId === selectedRequestId)
                               .map((q: any) => (
                                 <SelectItem key={q.id} value={q.id}>
                                   {q.quotationNumber} {["Aceptada", "ACEPTADA"].includes(q.status) ? "✓" : ""}
@@ -311,20 +307,10 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs font-bold text-navy">Cliente</FormLabel>
-                      <Select disabled value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-slate-100">
-                            <SelectValue placeholder="Automático" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clients.map((client: any) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.firstName} {client.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {/* El cliente sale de la solicitud (la API lo deriva igual al guardar). */}
+                      <FormControl>
+                        <Input disabled value={clientLabel} placeholder="Automático" className="bg-slate-100" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

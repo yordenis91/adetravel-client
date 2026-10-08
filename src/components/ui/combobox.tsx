@@ -24,6 +24,12 @@ interface ComboboxProps {
   /** Si es true, permite escribir un valor libre que no está en `options` (usado por los combobox
    * de nomencladores: el catálogo sugiere, pero el campo sigue guardando texto libre). */
   allowCustomValue?: boolean;
+  /** Búsqueda en el servidor: si se indica, el texto escrito se entrega aquí y `options` ya
+   * llegan filtradas (no se filtra en el navegador). Para listas que no caben en una página. */
+  onSearchChange?: (search: string) => void;
+  /** Etiqueta del valor seleccionado cuando no está entre las `options` cargadas (búsqueda remota). */
+  selectedLabel?: string;
+  loading?: boolean;
 }
 
 export function Combobox({
@@ -36,12 +42,23 @@ export function Combobox({
   disabled,
   className,
   allowCustomValue = false,
+  onSearchChange,
+  selectedLabel,
+  loading = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
+  const remote = !!onSearchChange;
+  // Con búsqueda remota, la opción elegida puede no estar en la página de resultados actual.
+  const [picked, setPicked] = React.useState<ComboboxOption | null>(null);
 
-  const selectedOption = options.find((o) => o.value === value);
-  const displayLabel = selectedOption?.label ?? (allowCustomValue && value ? value : undefined);
+  const selectedOption = options.find((o) => o.value === value) ?? (picked?.value === value ? picked : undefined);
+  const displayLabel = selectedOption?.label ?? (value ? selectedLabel : undefined) ?? (allowCustomValue && value ? value : undefined);
+
+  const updateSearch = (next: string) => {
+    setSearch(next);
+    onSearchChange?.(next);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -63,19 +80,20 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command shouldFilter={!allowCustomValue}>
+        <Command shouldFilter={!allowCustomValue && !remote}>
           <CommandInput
             placeholder={searchPlaceholder}
-            value={allowCustomValue ? search : undefined}
-            onValueChange={allowCustomValue ? setSearch : undefined}
+            value={allowCustomValue || remote ? search : undefined}
+            onValueChange={allowCustomValue || remote ? updateSearch : undefined}
           />
           <CommandList>
+            {loading && <div className="px-2 py-1.5 text-xs text-muted-foreground" aria-live="polite">Buscando…</div>}
             <CommandEmpty>
               {allowCustomValue && search.trim() ? (
                 <button
                   type="button"
                   className="w-full px-2 py-1.5 text-left text-sm hover:bg-accent rounded-sm"
-                  onClick={() => { onChange(search.trim()); setSearch(""); setOpen(false); }}
+                  onClick={() => { onChange(search.trim()); updateSearch(""); setOpen(false); }}
                 >
                   Usar "{search.trim()}"
                 </button>
@@ -88,10 +106,11 @@ export function Combobox({
               ).map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.label}
+                  value={remote ? option.value : option.label}
                   onSelect={() => {
+                    setPicked(option);
                     onChange(option.value);
-                    setSearch("");
+                    updateSearch("");
                     setOpen(false);
                   }}
                 >

@@ -69,16 +69,10 @@ export default function RequestDetailPage() {
   // (la API respondería 403); sin ellos la pantalla sigue funcionando con menos detalle.
   const { hasPermission } = useAuth();
 
-  const { data: clientsResponse = [] } = useQuery({
-    queryKey: ["clients-all"],
-    queryFn: async () => await api.get("/clients"),
-    enabled: hasPermission("VIEW_CLIENTS"),
-  });
-  const clients = Array.isArray(clientsResponse) ? clientsResponse : (clientsResponse as any)?.data || [];
-
   const { data: providersResponse = [] } = useQuery({
     queryKey: ["providers-all"],
-    queryFn: async () => await api.get("/providers?limit=200"),
+    // La API acepta como mucho 100 por página (con 200 respondía 400).
+    queryFn: async () => await api.get("/providers?limit=100"),
     enabled: hasPermission("VIEW_PROVIDERS"),
   });
   const providers = Array.isArray(providersResponse) ? providersResponse : (providersResponse as any)?.data || [];
@@ -452,7 +446,6 @@ export default function RequestDetailPage() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         request={request}
-        clients={clients}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["requests"] });
           toast({ title: "Solicitud actualizada" });

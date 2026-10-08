@@ -29,6 +29,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api, extractArrayFromResponse } from "@/lib/api";
 import { toast } from "sonner";
+import { Combobox } from "@/components/ui/combobox";
+import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Loader2, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -55,6 +57,14 @@ interface TaskFormDialogProps {
   onSuccess?: () => void;
 }
 
+const RELATED_ENTITY_SOURCES: Record<string, { key: string; path: string; label: (row: any) => string }> = {
+  CLIENTE: { key: "clients", path: "/clients", label: (i) => `${i.firstName} ${i.lastName}` },
+  COTIZACION: { key: "quotations", path: "/quotations", label: (i) => i.quotationNumber },
+  PAGO: { key: "payments", path: "/payments", label: (i) => i.paymentNumber },
+  SOLICITUD: { key: "requests", path: "/requests", label: (i) => `${i.requestNumber} — ${i.destinationCity ?? ""}` },
+  VOUCHER: { key: "vouchers", path: "/vouchers", label: (i) => `${i.voucherNumber} — ${i.destination ?? ""}` },
+};
+
 export function TaskFormDialog({
   open,
   onOpenChange,
@@ -62,8 +72,6 @@ export function TaskFormDialog({
   onSuccess,
 }: TaskFormDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [relatedEntities, setRelatedEntities] = useState<any[]>([]);
-  const [isLoadingEntities, setIsLoadingEntities] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -119,69 +127,15 @@ export function TaskFormDialog({
     }
   }, [task, open, form, currentUser?.id]);
 
-  useEffect(() => {
-    async function loadRelatedEntities() {
-      if (!relatedEntityType || relatedEntityType === "NONE") {
-        setRelatedEntities([]);
-        return;
-      }
-
-      setIsLoadingEntities(true);
-      try {
-        let items: any[] = [];
-        switch (relatedEntityType) {
-          case "CLIENTE":
-            items = extractArrayFromResponse(await api.get("/clients"));
-            setRelatedEntities(
-              items.map((i) => ({
-                id: i.id,
-                label: `${i.firstName} ${i.lastName}`,
-              }))
-            );
-            break;
-          case "COTIZACION":
-            items = extractArrayFromResponse(await api.get("/quotations"));
-            setRelatedEntities(
-              items.map((i) => ({ id: i.id, label: i.quotationNumber }))
-            );
-            break;
-          case "PAGO":
-            items = extractArrayFromResponse(await api.get("/payments"));
-            setRelatedEntities(
-              items.map((i) => ({ id: i.id, label: i.paymentNumber }))
-            );
-            break;
-          case "SOLICITUD":
-            items = extractArrayFromResponse(await api.get("/requests"));
-            setRelatedEntities(
-              items.map((i) => ({
-                id: i.id,
-                label: `${i.requestNumber} — ${i.destinationCity}`,
-              }))
-            );
-            break;
-          case "VOUCHER":
-            items = extractArrayFromResponse(await api.get("/vouchers"));
-            setRelatedEntities(
-              items.map((i) => ({
-                id: i.id,
-                label: `${i.voucherNumber} — ${i.destination}`,
-              }))
-            );
-            break;
-          default:
-            setRelatedEntities([]);
-        }
-      } catch (error) {
-        console.error("Error loading related entities:", error);
-        toast.error("Error al cargar entidades relacionadas");
-      } finally {
-        setIsLoadingEntities(false);
-      }
-    }
-
-    loadRelatedEntities();
-  }, [relatedEntityType]);
+  // Registros enlazables buscados en el servidor según el tipo (antes se pedía cada lista sin
+  // paginar y solo aparecían los 20 más recientes).
+  const entitySource = RELATED_ENTITY_SOURCES[relatedEntityType ?? ""];
+  const entityOptions = useRemoteOptions(
+    entitySource?.key ?? "none",
+    entitySource?.path ?? "/requests",
+    (row: any) => ({ value: row.id, label: entitySource ? entitySource.label(row) : row.id }),
+    { enabled: open && !!entitySource }
+  );
 
   async function onSubmit(values: TaskFormValues) {
     setIsLoading(true);
@@ -406,32 +360,22 @@ export function TaskFormDialog({
                       <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         Registro
                       </FormLabel>
-                      <Select
-                        disabled={!relatedEntityType || relatedEntityType === "NONE" || isLoadingEntities}
-                        onValueChange={(val) => {
+                      <Combobox
+                        options={entityOptions.options}
+                        onSearchChange={entityOptions.onSearchChange}
+                        loading={entityOptions.loading}
+                        disabled={!entitySource}
+                        selectedLabel={form.watch("relatedEntityLabel") ?? undefined}
+                        value={field.value}
+                        onChange={(val) => {
                           field.onChange(val);
-                          const selected = relatedEntities.find(e => e.id === val);
+                          const selected = entityOptions.options.find((o) => o.value === val);
                           form.setValue("relatedEntityLabel", selected?.label || null);
                         }}
-                        value={field.value || "NONE"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            {isLoadingEntities ? (
-                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                            ) : null}
-                            <SelectValue placeholder="Seleccionar registro" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="NONE" disabled>Seleccionar...</SelectItem>
-                          {relatedEntities.map((entity) => (
-                            <SelectItem key={entity.id} value={entity.id}>
-                              {entity.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Seleccionar registro"
+                        searchPlaceholder="Buscar..."
+                        emptyText="Sin resultados."
+                      />
                       <FormMessage />
                     </FormItem>
                   )}

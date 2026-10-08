@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { useConfirmations } from "@/hooks/useConfirmations";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePagedList } from "@/hooks/usePagedList";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { ListPagination } from "@/components/shared/ListPagination";
+import { ListError } from "@/components/shared/ListError";
 import { ConfirmationsTable } from "./ConfirmationsTable";
 import { ConfirmationFormDialog } from "./ConfirmationFormDialog";
 import { ConfirmationDetailSheet } from "./ConfirmationDetailSheet";
@@ -17,20 +19,11 @@ export default function ConfirmacionesPage() {
   const [selectedConfirmation, setSelectedConfirmation] = useState<any>(null);
   const queryClient = useQueryClient();
 
-  const { data: confirmations, isLoading } = useConfirmations({});
-
-  const { data: requestsData } = useQuery({ queryKey: ["requests-all"], queryFn: () => api.get("/requests?limit=1000") });
-  const requests = Array.isArray(requestsData) ? requestsData : (requestsData as any)?.data || [];
-
-  const { data: providersData } = useQuery({ queryKey: ["providers-all"], queryFn: () => api.get("/providers") });
-  const providers = Array.isArray(providersData) ? providersData : (providersData as any)?.data || [];
-
-  const filteredConfirmations = confirmations.filter((c: any) => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    const requestNumber = requests.find((r: any) => r.id === c.requestId)?.requestNumber || "";
-    return c.confirmationNumber?.toLowerCase().includes(search) || requestNumber.toLowerCase().includes(search);
-  });
+  // Paginado y búsqueda en el servidor. La solicitud y el proveedor vienen en cada fila; antes se
+  // pedían todas las solicitudes con limit=1000, que la API rechaza (máximo 100).
+  const search = useDebouncedValue(searchTerm.trim());
+  const list = usePagedList("confirmations", "/confirmations", { search });
+  const filteredConfirmations = list.rows;
 
   const handleAdd = () => {
     setSelectedConfirmation(null);
@@ -64,10 +57,10 @@ export default function ConfirmacionesPage() {
           <ExportMenu
             filename="confirmaciones_adetravel"
             data={filteredConfirmations.map((c: any) => {
-              const provider = providers.find((p: any) => p.id === c.providerId);
+              const provider = c.provider;
               return {
                 numero: c.confirmationNumber,
-                solicitud: requests.find((r: any) => r.id === c.requestId)?.requestNumber || "",
+                solicitud: c.request?.requestNumber || "",
                 proveedor: provider ? (provider.fantasyName || provider.name) : "",
                 precio: c.price,
                 vigencia: c.validUntil,
@@ -92,21 +85,26 @@ export default function ConfirmacionesPage() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por N° confirmación o solicitud..."
+            placeholder="Buscar por N° de confirmación..."
             className="pl-10 bg-slate-50 border-slate-100 h-10 text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <ConfirmationsTable
-          confirmations={filteredConfirmations}
-          requests={requests}
-          providers={providers}
-          isLoading={isLoading}
-          onView={handleView}
-          onEdit={handleEdit}
-        />
+        {list.isError ? (
+          <ListError error={list.error} onRetry={() => list.refetch()} what="las confirmaciones" />
+        ) : (
+          <>
+            <ConfirmationsTable
+              confirmations={filteredConfirmations}
+              isLoading={list.isLoading}
+              onView={handleView}
+              onEdit={handleEdit}
+            />
+            <ListPagination page={list.page} limit={list.limit} total={list.total} onPageChange={list.setPage} isFetching={list.isFetching} />
+          </>
+        )}
       </div>
 
       <ConfirmationFormDialog
@@ -120,8 +118,6 @@ export default function ConfirmacionesPage() {
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
         confirmation={selectedConfirmation}
-        requests={requests}
-        providers={providers}
         onEdit={handleEdit}
       />
     </div>

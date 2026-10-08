@@ -50,25 +50,25 @@ export default function ClientTimelinePage() {
 
   const { data: requestsData = [], isLoading: isRequestsLoading } = useQuery({
     queryKey: ["client-requests", clientId],
-    queryFn: () => api.get(`/requests?clientId=${clientId}`),
+    queryFn: () => api.get(`/requests?clientId=${clientId}&limit=100`),
     enabled: !!clientId
   });
 
   const { data: quotationsData = [], isLoading: isQuotationsLoading } = useQuery({
     queryKey: ["client-quotations", clientId],
-    queryFn: () => api.get(`/quotations?clientId=${clientId}`),
+    queryFn: () => api.get(`/quotations?clientId=${clientId}&limit=100`),
     enabled: !!clientId
   });
 
   const { data: paymentsData = [], isLoading: isPaymentsLoading } = useQuery({
     queryKey: ["client-payments", clientId],
-    queryFn: () => api.get(`/payments?clientId=${clientId}`),
+    queryFn: () => api.get(`/payments?clientId=${clientId}&limit=100`),
     enabled: !!clientId
   });
 
   const { data: vouchersData = [], isLoading: isVouchersLoading } = useQuery({
     queryKey: ["client-vouchers", clientId],
-    queryFn: () => api.get(`/vouchers?clientId=${clientId}`),
+    queryFn: () => api.get(`/vouchers?clientId=${clientId}&limit=100`),
     enabled: !!clientId
   });
 

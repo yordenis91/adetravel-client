@@ -37,8 +37,6 @@ import { es } from "date-fns/locale";
 
 interface QuotationsTableProps {
   quotations: any[];
-  requests: any[];
-  clients: any[];
   isLoading: boolean;
   onEdit: (quotation: any) => void;
   onView: (quotation: any) => void;
@@ -49,8 +47,6 @@ interface QuotationsTableProps {
 
 export function QuotationsTable({
   quotations,
-  requests,
-  clients,
   isLoading,
   onEdit,
   onView,
@@ -67,15 +63,13 @@ export function QuotationsTable({
     }).format(amount || 0);
   };
 
-  const getClientDetails = (clientId: string) => {
-    const client = clients.find((c) => c.id === clientId);
-    return client ? { name: `${client.firstName} ${client.lastName}`, id: client.id } : { name: "Desconocido", id: null };
+  // Cliente y solicitud vienen incrustados en cada cotización (GET /quotations).
+  const getClientDetails = (quotation: any) => {
+    const client = quotation.client;
+    return client ? { name: `${client.firstName} ${client.lastName}`, id: quotation.clientId } : { name: "Desconocido", id: null };
   };
 
-  const getRequestNumber = (requestId: string) => {
-    const request = requests.find((r) => r.id === requestId);
-    return request ? request.requestNumber : "---";
-  };
+  const getRequestNumber = (quotation: any) => quotation.request?.requestNumber ?? "---";
 
   if (isLoading) {
     return (
@@ -117,7 +111,7 @@ export function QuotationsTable({
         </TableHeader>
         <TableBody>
           {quotations.map((quotation) => {
-            const clientDetails = getClientDetails(quotation.clientId);
+            const clientDetails = getClientDetails(quotation);
             return (
               <TableRow key={quotation.id} className="group hover:bg-slate-50/50 transition-colors">
                 <TableCell className="font-mono text-xs font-bold text-primary">
@@ -129,7 +123,7 @@ export function QuotationsTable({
                 </TableCell>
                 <TableCell>
                   <span className="font-mono text-xs text-muted-foreground font-medium">
-                    {getRequestNumber(quotation.requestId)}
+                    {getRequestNumber(quotation)}
                   </span>
                 </TableCell>
                 <TableCell>

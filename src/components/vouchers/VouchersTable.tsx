@@ -37,8 +37,6 @@ import { es } from "date-fns/locale";
 
 interface VouchersTableProps {
   vouchers: any[];
-  clients: any[];
-  requests: any[];
   isLoading: boolean;
   processingId?: string | null;
   onEdit: (voucher: any) => void;
@@ -48,10 +46,8 @@ interface VouchersTableProps {
 }
 
 export function VouchersTable({ 
-  vouchers, 
-  clients, 
-  requests, 
-  isLoading, 
+  vouchers,
+  isLoading,
   processingId,
   onEdit, 
   onDelete,
@@ -59,15 +55,13 @@ export function VouchersTable({
   onStatusChange
 }: VouchersTableProps) {
   
-  const getClientDetails = (clientId: string) => {
-    const client = clients.find((c) => c.id === clientId);
-    return client ? { name: `${client.firstName} ${client.lastName}`, id: client.id } : { name: "Cliente no encontrado", id: null };
+  // Cliente y solicitud vienen incrustados en cada voucher (GET /vouchers).
+  const getClientDetails = (voucher: any) => {
+    const client = voucher.client;
+    return client ? { name: `${client.firstName} ${client.lastName}`, id: voucher.clientId } : { name: "Cliente no encontrado", id: null };
   };
 
-  const getRequestNumber = (requestId: string) => {
-    const request = requests.find((r) => r.id === requestId);
-    return request ? request.requestNumber : "N/A";
-  };
+  const getRequestNumber = (voucher: any) => voucher.request?.requestNumber ?? "N/A";
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "-";
@@ -118,7 +112,7 @@ export function VouchersTable({
         </TableHeader>
         <TableBody>
           {vouchers.map((voucher) => {
-            const clientDetails = getClientDetails(voucher.clientId);
+            const clientDetails = getClientDetails(voucher);
             
             return (
               <TableRow key={voucher.id} className="group hover:bg-slate-50/50 transition-colors">
@@ -132,7 +126,7 @@ export function VouchersTable({
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-tight">
                     <span>ID: {clientDetails.id?.substring(0, 8) ?? 'N/A'}</span>
                     <span>•</span>
-                    <span className="font-medium">REF: {getRequestNumber(voucher.requestId)}</span>
+                    <span className="font-medium">REF: {getRequestNumber(voucher)}</span>
                   </div>
                 </TableCell>
                 <TableCell>

@@ -28,10 +28,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
+import { useRemoteOptions } from "@/hooks/useRemoteOptions";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, X, Calculator, ReceiptText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -72,20 +73,14 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
   const isEditing = !!quotation;
   const [items, setItems] = useState<LineItem[]>([]);
 
-  const { data: requestsResponseData = [] } = useQuery({
-    queryKey: ["requests"],
-    queryFn: () => api.get('/requests'),
-    enabled: open,
-  });
-
-  const { data: clientsResponseData = [] } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => api.get('/clients'),
-    enabled: open,
-  });
-
-  const requests = Array.isArray(requestsResponseData) ? requestsResponseData : (requestsResponseData as any)?.data || [];
-  const clients = Array.isArray(clientsResponseData) ? clientsResponseData : (clientsResponseData as any)?.data || [];
+  // Solicitudes buscadas en el servidor (antes solo llegaban las 20 más recientes); la elegida se
+  // pide por id y de ella sale el cliente.
+  const requestOptions = useRemoteOptions(
+    "requests",
+    "/requests",
+    (r: any) => ({ value: r.id, label: `${r.requestNumber} - ${r.destinationCity || r.destinationCountry || ""}` }),
+    { enabled: open }
+  );
 
   const form = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationSchema),
@@ -108,14 +103,18 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
   const discount = form.watch("discount");
   const taxPercentage = form.watch("taxPercentage");
 
+  const { data: selectedRequestResponse } = useQuery({
+    queryKey: ["requests", selectedRequestId],
+    queryFn: () => api.get(`/requests/${selectedRequestId}`),
+    enabled: open && !!selectedRequestId,
+  });
+  const selectedRequest = (selectedRequestResponse as any)?.data;
+
   useEffect(() => {
-    if (selectedRequestId && !isEditing) {
-      const request = requests.find(r => r.id === selectedRequestId);
-      if (request) {
-        form.setValue("clientId", request.clientId);
-      }
+    if (selectedRequest && !isEditing) {
+      form.setValue("clientId", selectedRequest.clientId);
     }
-  }, [selectedRequestId, requests, form, isEditing]);
+  }, [selectedRequest, form, isEditing]);
 
   useEffect(() => {
     if (quotation) {
@@ -204,11 +203,11 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
       onOpenChange(false);
     } catch (error) {
       console.error(error);
-      toast({ title: "Error", description: "No se pudo guardar la cotización.", variant: "destructive" });
+      toast({ title: "Error", description: getErrorMessage(error, "No se pudo guardar la cotización."), variant: "destructive" });
     }
   };
 
-  const selectedClient = clients.find(c => c.id === form.watch("clientId"));
+  const selectedClient = selectedRequest?.client ?? quotation?.client;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -276,7 +275,10 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
                         <FormItem>
                           <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Vincular Solicitud *</FormLabel>
                           <Combobox
-                            options={requests.map((r: any) => ({ value: r.id, label: `${r.requestNumber} - ${r.destinationCity || r.destinationCountry || ""}` }))}
+                            options={requestOptions.options}
+                            onSearchChange={requestOptions.onSearchChange}
+                            loading={requestOptions.loading}
+                            selectedLabel={(selectedRequest ?? quotation?.request)?.requestNumber}
                             value={field.value}
                             onChange={field.onChange}
                             placeholder="Selecciona una solicitud"

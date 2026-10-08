@@ -10,17 +10,16 @@ import { es } from "date-fns/locale";
 
 interface ConfirmationsTableProps {
   confirmations: any[];
-  requests: any[];
-  providers: any[];
   isLoading: boolean;
   onView: (c: any) => void;
   onEdit: (c: any) => void;
 }
 
-export function ConfirmationsTable({ confirmations, requests, providers, isLoading, onView, onEdit }: ConfirmationsTableProps) {
-  const getRequestNumber = (id: string) => requests.find((r) => r.id === id)?.requestNumber || id?.substring(0, 8);
-  const getProviderName = (id: string) => {
-    const p = providers.find((pv) => pv.id === id);
+// Solicitud y proveedor vienen incrustados en cada confirmación (GET /confirmations).
+export function ConfirmationsTable({ confirmations, isLoading, onView, onEdit }: ConfirmationsTableProps) {
+  const getRequestNumber = (c: any) => c.request?.requestNumber || c.requestId?.substring(0, 8);
+  const getProviderName = (c: any) => {
+    const p = c.provider;
     return p ? (p.fantasyName || p.name) : "—";
   };
 
@@ -64,8 +63,8 @@ export function ConfirmationsTable({ confirmations, requests, providers, isLoadi
           {confirmations.map((c) => (
             <TableRow key={c.id} className="hover:bg-slate-50/50 transition-colors">
               <TableCell className="font-mono text-xs font-bold text-primary">{c.confirmationNumber}</TableCell>
-              <TableCell className="font-mono text-xs">{getRequestNumber(c.requestId)}</TableCell>
-              <TableCell className="text-sm">{getProviderName(c.providerId)}</TableCell>
+              <TableCell className="font-mono text-xs">{getRequestNumber(c)}</TableCell>
+              <TableCell className="text-sm">{getProviderName(c)}</TableCell>
               <TableCell className="text-xs text-muted-foreground">{c.providerConfirmationNumber || "—"}</TableCell>
               <TableCell className="text-xs font-bold text-navy">{Number(c.price).toLocaleString("es-CL")}</TableCell>
               <TableCell className="text-xs text-muted-foreground">
