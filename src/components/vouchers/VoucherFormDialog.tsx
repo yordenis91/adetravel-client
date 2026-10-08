@@ -46,6 +46,7 @@ import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { normalizeServiceType, SERVICE_TYPE_SHORT_LABELS, UNIFIED_SERVICE_TYPES } from "@/lib/service-types";
 
 const formSchema = z.object({
   requestId: z.string().min(1, "La solicitud es requerida"),
@@ -74,9 +75,6 @@ interface VoucherFormDialogProps {
   voucher?: any;
 }
 
-const SERVICE_TYPES = [
-  "HOTEL", "AÉREO", "TOUR", "TRANSFER", "SEGURO", "RESTAURANT", "OTRO"
-];
 
 export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDialogProps) {
   const { toast } = useToast();
@@ -100,7 +98,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
       clientId: "",
       providerId: "",
       voucherNumber: "",
-      serviceType: "HOTEL",
+      serviceType: "ALOJAMIENTO",
       serviceName: "",
       serviceDetails: "",
       checkIn: format(new Date(), "yyyy-MM-dd"),
@@ -127,7 +125,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
         clientId: voucher.clientId || "",
         providerId: voucher.providerId || "",
         voucherNumber: voucher.voucherNumber || "",
-        serviceType: voucher.serviceType || "HOTEL",
+        serviceType: voucher.serviceType ? normalizeServiceType(voucher.serviceType) : "ALOJAMIENTO",
         serviceName: voucher.serviceName || "",
         serviceDetails: voucher.serviceDetails || "",
         checkIn: voucher.checkIn || format(new Date(), "yyyy-MM-dd"),
@@ -141,15 +139,12 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
         notes: voucher.notes || "",
       });
     } else {
-      const year = new Date().getFullYear();
-      const month = String(new Date().getMonth() + 1).padStart(2, '0');
-      const random = Math.floor(1000 + Math.random() * 9000);
       form.reset({
         requestId: "",
         clientId: "",
         providerId: "",
-        voucherNumber: `VCH-${year}-${month}-${random}`,
-        serviceType: "HOTEL",
+        voucherNumber: "Se asigna al guardar", // lo genera la API (numeración correlativa)
+        serviceType: "ALOJAMIENTO",
         serviceName: "",
         serviceDetails: "",
         checkIn: format(new Date(), "yyyy-MM-dd"),
@@ -306,8 +301,8 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {SERVICE_TYPES.map((type) => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          {UNIFIED_SERVICE_TYPES.map((type) => (
+                            <SelectItem key={type} value={type}>{SERVICE_TYPE_SHORT_LABELS[type]}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

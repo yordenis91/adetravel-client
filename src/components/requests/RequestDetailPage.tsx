@@ -39,6 +39,7 @@ import { RequestStatusActions } from "./RequestStatusActions";
 import { RequestFormDialog } from "./RequestFormDialog";
 import { ServicesSection } from "@/components/services/ServicesSection";
 import { useProviderOptions } from "@/hooks/useProviderOptions";
+import { serviceTypeLabel } from "@/lib/service-types";
 import { activityActionLabel } from "@/lib/activity-labels";
 
 type EventType = "cotizacion" | "pago" | "voucher" | "confirmacion" | "bitacora";
@@ -129,7 +130,7 @@ export default function RequestDetailPage() {
       allEvents.push({
         id: v.id, type: "voucher", date: safeParseDate(v.createdAt),
         title: `Voucher ${v.voucherNumber || ""}`,
-        subtitle: `${v.serviceType || ""}${v.serviceName ? `: ${v.serviceName}` : ""}`,
+        subtitle: [serviceTypeLabel(v.serviceType), v.serviceName].filter(Boolean).join(": "),
         status: v.status, color: "gold", icon: <Ticket className="w-4 h-4" />, originalData: v,
       });
     });
@@ -335,6 +336,13 @@ export default function RequestDetailPage() {
           <Briefcase className="w-4 h-4" />
           <span className="text-[10px] font-bold uppercase tracking-widest">Servicios</span>
         </div>
+        {request.services?.length > 0 && (
+          // Tipos que el cliente pidió al crear la solicitud; los servicios registrados van debajo.
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-navy">Tipos solicitados:</span>{" "}
+            {request.services.map((s: string) => serviceTypeLabel(s)).join(", ")}
+          </p>
+        )}
         <ServicesSection requestId={request.id} isPackage={!!request.isPackage} defaultClientId={request.clientId} />
       </div>
 
@@ -564,7 +572,7 @@ function renderEventDetails(event: TimelineEvent, getProviderName: (id?: string)
     case "voucher":
       return (
         <>
-          <DetailRow label="Tipo de Servicio" value={data.serviceType} />
+          <DetailRow label="Tipo de Servicio" value={serviceTypeLabel(data.serviceType)} />
           <DetailRow label="Nombre del Servicio" value={data.serviceName} fullWidth />
           <DetailRow label="Check-In" value={data.checkIn} />
           <DetailRow label="Check-Out" value={data.checkOut} />

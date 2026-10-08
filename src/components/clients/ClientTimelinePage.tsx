@@ -17,6 +17,7 @@ import { format, isAfter, subDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { isWorkflowStatus, getStatusColor as getWorkflowStatusColor } from "@/lib/workflow-status";
+import { serviceTypeLabel } from "@/lib/service-types";
 import { activityActionLabel } from "@/lib/activity-labels";
 
 type EventType = "solicitud" | "cotizacion" | "pago" | "voucher" | "bitacora" | "tarea";
@@ -134,7 +135,7 @@ export default function ClientTimelinePage() {
     vouchers.forEach((v: any) => {
       allEvents.push({
         id: v.id, type: "voucher", date: safeParseDate(v.createdAt),
-        title: `Voucher ${v.voucherNumber || ''}`, subtitle: `${v.serviceType}: ${v.serviceName}`,
+        title: `Voucher ${v.voucherNumber || ''}`, subtitle: [serviceTypeLabel(v.serviceType), v.serviceName].filter(Boolean).join(": "),
         status: v.status, color: "gold", icon: <Ticket className="w-4 h-4" />, originalData: v
       });
     });
@@ -504,7 +505,7 @@ function renderEventDetails(event: TimelineEvent) {
     case "voucher":
       return (
         <>
-          <DetailRow label="Tipo de Servicio" value={data.serviceType} />
+          <DetailRow label="Tipo de Servicio" value={serviceTypeLabel(data.serviceType)} />
           <DetailRow label="Nombre del Servicio" value={data.serviceName} fullWidth />
           <DetailRow label="Check-In" value={data.checkIn} />
           <DetailRow label="Check-Out" value={data.checkOut} />
