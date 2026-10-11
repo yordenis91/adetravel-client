@@ -64,15 +64,6 @@ export default function ClientsPage() {
 
   const toggleClientStatusMutation = useToggleClientStatus();
 
-  // Observer para mensaje de toast después de toggle
-  useEffect(() => {
-    if (toggleClientStatusMutation.isSuccess) {
-      const client = filteredClients.find(c => c.id === itemToConfirm);
-      const statusText = client?.isActive ? "activado" : "desactivado";
-      toast({ title: `Cliente ${statusText}`, description: "El estado del cliente ha sido actualizado." });
-    }
-  }, [toggleClientStatusMutation.isSuccess]);
-
   const handleEdit = (client: any) => {
     setSelectedClient(client);
     setIsFormOpen(true);
@@ -279,7 +270,17 @@ export default function ClientsPage() {
                 if (actionType === 'toggle') {
                   const client = filteredClients.find(c => c.id === itemToConfirm);
                   if (client) {
-                    toggleClientStatusMutation.mutate({ id: itemToConfirm, isActive: client.isActive });
+                    // El aviso depende del estado previo; al terminar la mutación el diálogo ya se cerró.
+                    const wasActive = client.isActive;
+                    toggleClientStatusMutation.mutate(
+                      { id: itemToConfirm, isActive: wasActive },
+                      {
+                        onSuccess: () => toast({
+                          title: `Cliente ${wasActive ? "desactivado" : "activado"}`,
+                          description: "El estado del cliente ha sido actualizado.",
+                        }),
+                      },
+                    );
                   }
                 } else if (actionType === 'delete') {
                   // TODO: Implementar soft delete cuando se defina el endpoint
