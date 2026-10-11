@@ -11,12 +11,15 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
 import { useProviderOptions } from "@/hooks/useProviderOptions";
+import { useClient } from "@/hooks/useClients";
+import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateService, useUpdateService } from "@/hooks/useServices";
 import { SERVICE_TYPES, SERVICE_TYPE_LABELS, ServiceType } from "@/types/service";
 import { serviceDetailsSchema } from "@/lib/serviceDetailsSchema";
 import { SERVICE_DETAIL_FIELDS, getDefaultDetails } from "./details";
+import { applyClientPrefill, getClientPrefill } from "./details/clientPrefill";
 
 import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
 import { ClipboardList, Layers } from "lucide-react";
@@ -87,6 +90,23 @@ export function ServiceFormDialog({ open, onOpenChange, requestId, defaultClient
   }, [service, open, defaultClientId, form]);
 
   const selectedType = form.watch("type") as ServiceType;
+
+  // Al crear un servicio se copian al formulario los datos que el cliente ya tiene en su ficha
+  // (nombre, pasaporte, etc.). Se aplica al abrir, al cargar el cliente y al cambiar de tipo, y
+  // nunca pisa lo que ya tenga valor. Sin VIEW_CLIENTS no se consulta la ficha (daría 403).
+  const { hasPermission } = useAuth();
+  const prefillClientId = form.watch("clientId") ?? defaultClientId;
+  const { data: prefillClient } = useClient(open && !isEditing && hasPermission("VIEW_CLIENTS") ? prefillClientId ?? undefined : undefined);
+  useEffect(() => {
+    if (!open || isEditing || !prefillClient) return;
+    // El tipo se lee del formulario: al abrir, form.reset corre antes y selectedType del render puede estar viejo.
+    const prefill = getClientPrefill(form.getValues("type") as ServiceType, prefillClient);
+    if (!Object.keys(prefill).length) return;
+    const current = form.getValues("details") as Record<string, unknown>;
+    form.setValue("details", applyClientPrefill(current, prefill) as ServiceFormValues["details"]);
+    // form es estable; solo debe volver a correr al cambiar cliente, tipo o apertura.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEditing, prefillClient, selectedType]);
   const DetailFields = SERVICE_DETAIL_FIELDS[selectedType];
 
   const handleTypeChange = (newType: ServiceType) => {
