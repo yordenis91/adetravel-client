@@ -1,12 +1,18 @@
 import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { defaultFilter } from "cmdk";
 import { cn } from "@/lib/utils";
+import { normalizeSearch } from "@/lib/normalize-search";
 import { Button } from "@/components/ui/button";
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FormItemContext } from "@/components/ui/form";
+
+// Misma búsqueda aproximada de cmdk, pero ignorando tildes y mayúsculas en ambos lados.
+const accentInsensitiveFilter = (value: string, search: string, keywords?: string[]) =>
+  defaultFilter(normalizeSearch(value), normalizeSearch(search), keywords?.map(normalizeSearch));
 
 export interface ComboboxOption {
   value: string;
@@ -86,7 +92,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command shouldFilter={!allowCustomValue && !remote}>
+        <Command shouldFilter={!allowCustomValue && !remote} filter={accentInsensitiveFilter}>
           <CommandInput
             placeholder={searchPlaceholder}
             value={allowCustomValue || remote ? search : undefined}
@@ -107,7 +113,7 @@ export function Combobox({
             </CommandEmpty>
             <CommandGroup>
               {(allowCustomValue
-                ? options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()))
+                ? options.filter((o) => normalizeSearch(o.label).includes(normalizeSearch(search)))
                 : options
               ).map((option) => (
                 <CommandItem
