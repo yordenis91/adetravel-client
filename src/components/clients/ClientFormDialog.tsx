@@ -61,6 +61,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
   const { toast } = useToast();
   const isEditing = !!client;
   const { data: nationalities } = useCatalog("nationalities");
+  const { data: countries } = useCatalog("countries");
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -305,9 +306,15 @@ const onSubmit = async (values: ClientFormValues) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-bold text-navy">País Pasaporte</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Chile" {...field} className="bg-white" />
-                          </FormControl>
+                          <Combobox
+                            options={countries.map((c) => ({ value: c.name, label: c.name }))}
+                            value={field.value}
+                            onChange={field.onChange}
+                            allowCustomValue
+                            placeholder="Ej: Chile"
+                            searchPlaceholder="Buscar o escribir país..."
+                            className="bg-white"
+                          />
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}

@@ -1,16 +1,22 @@
 import React from "react";
-import { Control, useFieldArray, useFormContext } from "react-hook-form";
+import { Control, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import { Combobox } from "@/components/ui/combobox";
+import { useCatalog, useCitiesForCountry } from "@/hooks/useCatalogs";
 
 const ROOM_TYPES = ["SINGLE", "DOBLE", "TRIPLE", "CUADRUPLE", "FAMILIAR"];
 
 export function AlojamientoFields({ control }: { control: Control<any> }) {
   const { formState } = useFormContext();
   const { fields, append, remove } = useFieldArray({ control, name: "details.rooms" as any });
+  const { setValue } = useFormContext();
+  const { data: countries } = useCatalog("countries");
+  const hotelCountry = useWatch({ control, name: "details.hotelCountry" });
+  const { cities } = useCitiesForCountry(hotelCountry);
 
   return (
     <div className="space-y-4">
@@ -46,14 +52,33 @@ export function AlojamientoFields({ control }: { control: Control<any> }) {
         <FormField control={control} name="details.hotelCity" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-xs font-bold text-navy">Ciudad</FormLabel>
-            <FormControl><Input {...field} className="bg-white" /></FormControl>
+            <Combobox
+              options={cities.map((c) => ({ value: c.name, label: c.name }))}
+              value={field.value}
+              onChange={field.onChange}
+              allowCustomValue
+              placeholder="Ej: Madrid"
+              searchPlaceholder="Buscar o escribir ciudad..."
+              className="bg-white"
+            />
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
         <FormField control={control} name="details.hotelCountry" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-xs font-bold text-navy">País</FormLabel>
-            <FormControl><Input {...field} className="bg-white" /></FormControl>
+            <Combobox
+              options={countries.map((c) => ({ value: c.name, label: c.name }))}
+              value={field.value}
+              onChange={(v) => {
+                if (v !== field.value) setValue("details.hotelCity", "");
+                field.onChange(v);
+              }}
+              allowCustomValue
+              placeholder="Ej: España"
+              searchPlaceholder="Buscar o escribir país..."
+              className="bg-white"
+            />
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />

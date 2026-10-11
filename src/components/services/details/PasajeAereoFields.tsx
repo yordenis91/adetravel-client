@@ -2,8 +2,13 @@ import React from "react";
 import { Control } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Combobox } from "@/components/ui/combobox";
+import { useCitiesForCountry } from "@/hooks/useCatalogs";
 
 export function PasajeAereoFields({ control }: { control: Control<any> }) {
+  // Sin país elegido se ofrecen todas las ciudades del nomenclador (sin repetir nombres).
+  const { cities } = useCitiesForCountry(null);
+  const cityOptions = cities.map((c) => ({ value: c.name, label: c.name }));
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <FormField control={control} name="details.fullName" render={({ field }) => (
@@ -16,14 +21,30 @@ export function PasajeAereoFields({ control }: { control: Control<any> }) {
       <FormField control={control} name="details.origin" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Origen *</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <Combobox
+            options={cityOptions}
+            value={field.value}
+            onChange={field.onChange}
+            allowCustomValue
+            placeholder="Ej: Santiago"
+            searchPlaceholder="Buscar ciudad o escribir código..."
+            className="bg-white"
+          />
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.destination" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Destino *</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <Combobox
+            options={cityOptions}
+            value={field.value}
+            onChange={field.onChange}
+            allowCustomValue
+            placeholder="Ej: Madrid"
+            searchPlaceholder="Buscar ciudad o escribir código..."
+            className="bg-white"
+          />
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
