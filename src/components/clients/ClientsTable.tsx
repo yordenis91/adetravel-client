@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
+import { whatsAppMessages } from "@/lib/whatsapp";
 
 interface ClientsTableProps {
   clients: any[];
@@ -130,6 +132,9 @@ export function ClientsTable({ clients, isLoading, onEdit, onToggleActive, onDel
                   <div className="flex items-center gap-2 text-[10px] text-slate-600">
                     <Phone className="w-3 h-3 text-primary/60" />
                     <span>{client.phone || "-"}</span>
+                    {client.phone && (
+                      <WhatsAppButton variant="icon-sm" phone={client.phone} message={whatsAppMessages.client(client.firstName)} />
+                    )}
                   </div>
                 </div>
               </TableCell>

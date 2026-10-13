@@ -25,6 +25,8 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
+import { whatsAppMessages } from "@/lib/whatsapp";
 
 interface QuotationDetailSheetProps {
   open: boolean;
@@ -124,6 +126,9 @@ export function QuotationDetailSheet({
                     <div className="text-sm font-bold text-navy">{client?.firstName} {client?.lastName}</div>
                     <div className="text-xs text-muted-foreground">{client?.email || "Sin email registrado"}</div>
                     <div className="text-xs text-muted-foreground mt-1">{client?.phone || "Sin teléfono"}</div>
+                    {client && (
+                      <WhatsAppButton className="mt-3" phone={client.phone} message={whatsAppMessages.quotation(client.firstName, quotation.quotationNumber)} />
+                    )}
                   </div>
                 </div>
               </div>

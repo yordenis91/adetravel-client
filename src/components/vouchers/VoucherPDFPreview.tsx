@@ -24,6 +24,8 @@ import { es } from "date-fns/locale";
 import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { serviceTypeLabel } from "@/lib/service-types";
+import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
+import { whatsAppMessages } from "@/lib/whatsapp";
 
 interface VoucherPDFPreviewProps {
   open: boolean;
@@ -101,6 +103,9 @@ export function VoucherPDFPreview({
             <p className="text-sm text-muted-foreground mt-1">Comprobante oficial para {voucher.voucherNumber}</p>
           </div>
           <div className="flex gap-2">
+            {client && (
+              <WhatsAppButton phone={client.phone} message={whatsAppMessages.voucher(client.firstName, voucher.voucherNumber)} className="h-10 px-4" />
+            )}
             <Button onClick={handleDownloadPdf} disabled={isDownloading} className="bg-navy hover:bg-navy-light text-white gap-2">
               {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
               Imprimir / Descargar PDF

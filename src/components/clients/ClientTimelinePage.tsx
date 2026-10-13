@@ -19,6 +19,8 @@ import { motion } from "framer-motion";
 import { isWorkflowStatus, getStatusColor as getWorkflowStatusColor } from "@/lib/workflow-status";
 import { serviceTypeLabel } from "@/lib/service-types";
 import { activityActionLabel } from "@/lib/activity-labels";
+import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
+import { whatsAppMessages } from "@/lib/whatsapp";
 
 type EventType = "solicitud" | "cotizacion" | "pago" | "voucher" | "bitacora" | "tarea";
 
@@ -235,7 +237,8 @@ export default function ClientTimelinePage() {
           </div>
         </div>
 
-        <div className="flex gap-2 shrink-0 self-end md:self-center">
+        <div className="flex flex-wrap gap-2 shrink-0 self-end md:self-center">
+          <WhatsAppButton className="text-xs font-bold uppercase tracking-wider" phone={client.phone} message={whatsAppMessages.client(client.firstName)} />
           <Button variant="outline" size="sm" className="gap-2 text-xs font-bold uppercase tracking-wider" onClick={() => navigate("/solicitudes?action=new")}>
             <Plus className="w-3 h-3" /> Nueva Solicitud
           </Button>
