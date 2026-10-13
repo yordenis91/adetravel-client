@@ -10,16 +10,15 @@ import {
   FileDown,
   Printer,
   X,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
   Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { api, getErrorMessage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { AgencyDocumentHeader } from "@/components/shared/AgencyDocumentHeader";
+import { agencyDisplayName } from "@/lib/agency-name";
+import { useAgencyInfo } from "@/hooks/useAgencyInfo";
 
 interface QuotationPDFPreviewProps {
   open: boolean;
@@ -37,6 +36,7 @@ export function QuotationPDFPreview({
   request,
 }: QuotationPDFPreviewProps) {
   const { toast } = useToast();
+  const { agency } = useAgencyInfo(open);
   const [isDownloading, setIsDownloading] = useState(false);
 
   if (!quotation) return null;
@@ -114,24 +114,7 @@ export function QuotationPDFPreview({
           >
             {/* Header */}
             <div className="ade-header flex justify-between items-start mb-10">
-              <div className="agency-info">
-                <h1 className="text-3xl font-extrabold text-[#0F1E3C] tracking-tighter">ADE TRAVEL</h1>
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Agencia de Viajes & Turismo</p>
-                <div className="mt-4 space-y-1">
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <MapPin className="w-3 h-3 text-[#C9A84C]" /> Av. Providencia 1234, Oficina 502, Santiago
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <Phone className="w-3 h-3 text-[#C9A84C]" /> +56 2 2345 6789
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <Mail className="w-3 h-3 text-[#C9A84C]" /> contacto@adetravel.cl
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <Globe className="w-3 h-3 text-[#C9A84C]" /> www.adetravel.cl
-                  </div>
-                </div>
-              </div>
+              <AgencyDocumentHeader agency={agency} />
               
               <div className="quotation-label-box text-right">
                 <div className="text-[#C9A84C] text-4xl font-black mb-1">COTIZACIÓN</div>
@@ -230,7 +213,7 @@ export function QuotationPDFPreview({
 
             {/* Footer */}
             <div className="mt-auto pt-10 border-t border-slate-100 text-center text-[9px] text-slate-400">
-              <p className="mb-1 font-bold uppercase tracking-widest text-slate-500">ADE TRAVEL - AGENCIA DE VIAJES</p>
+              <p className="mb-1 font-bold uppercase tracking-widest text-slate-500">{agencyDisplayName(agency)} - AGENCIA DE VIAJES</p>
               <p>Este documento es una propuesta comercial. La validez de la misma se especifica en la parte superior.</p>
               <p className="mt-2">Gracias por preferirnos para sus sueños de viaje.</p>
             </div>
