@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
+import { whatsAppMessages } from "@/lib/whatsapp";
 import { 
   User, 
   Fingerprint, 
@@ -167,6 +169,7 @@ export function ClientPreviewDialog({ open, onOpenChange, client }: ClientPrevie
                     <p className="text-[9px] font-bold uppercase text-muted-foreground">Teléfono de Contacto</p>
                     <p className="text-sm font-medium text-navy">{client.phone || "Sin teléfono"}</p>
                   </div>
+                  <WhatsAppButton className="ml-auto" label="WhatsApp" phone={client.phone} message={whatsAppMessages.client(client.firstName)} />
                 </div>
               </div>
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
