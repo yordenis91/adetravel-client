@@ -23,10 +23,14 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 
 export default function BitacoraPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  // Los eventos que genera el propio sistema (sincronización programada de divisas) se repiten varias
+  // veces al día y tapan la actividad real: se ocultan salvo que el usuario los pida.
+  const [showAutomatic, setShowAutomatic] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // 🔥 Efecto Debounce: Espera 500ms después de que el usuario deja de escribir para buscar
@@ -37,19 +41,20 @@ export default function BitacoraPage() {
 
   // 1. Obtener estadísticas globales REALES desde el backend
   const { data: statsResponse } = useQuery({
-    queryKey: ["activity-logs-stats"],
-    queryFn: () => api.get("/activity-logs/stats?days=7")
+    queryKey: ["activity-logs-stats", showAutomatic],
+    queryFn: () => api.get(`/activity-logs/stats?days=7${showAutomatic ? "&includeAutomatic=true" : ""}`)
   });
   
   const stats = (statsResponse as any)?.data || statsResponse || { total: 0, today: 0, recent: 0 };
 
   // 2. Obtener logs delegando el filtro y la búsqueda a la Base de Datos
   const { data: logsResponse, isLoading } = useQuery({
-    queryKey: ["activity-logs", filterType, debouncedSearch],
+    queryKey: ["activity-logs", filterType, debouncedSearch, showAutomatic],
     queryFn: () => {
       const params = new URLSearchParams({ limit: "100" });
       if (filterType !== "all") params.append("entityType", filterType);
       if (debouncedSearch) params.append("search", debouncedSearch);
+      if (showAutomatic) params.append("includeAutomatic", "true");
       return api.get(`/activity-logs?${params.toString()}`);
     }
   });
@@ -121,7 +126,11 @@ export default function BitacoraPage() {
             />
           </div>
           
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer select-none" title="Sincronización programada de divisas y otros eventos que el sistema registra solo">
+              <Switch checked={showAutomatic} onCheckedChange={setShowAutomatic} aria-label="Ver eventos automáticos" />
+              Ver eventos automáticos
+            </label>
             <div className="flex items-center gap-2 text-sm font-bold text-navy dark:text-white uppercase tracking-wider">
               <Filter className="w-4 h-4" /> Filtrar:
             </div>
