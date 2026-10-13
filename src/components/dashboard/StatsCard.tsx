@@ -11,6 +11,8 @@ interface StatsCardProps {
   icon: React.ReactNode;
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
+  /** Aviso al pasar el ratón sobre la etiqueta de tendencia. */
+  trendHint?: string;
   color?: string;
   delay?: number;
 }
@@ -29,6 +31,7 @@ export function StatsCard({
   icon, 
   trend, 
   trendValue, 
+  trendHint,
   color = "blue",
   delay = 0 
 }: StatsCardProps) {
@@ -60,7 +63,7 @@ export function StatsCard({
             
             {/* Badge de tendencia alineado a la derecha */}
             {trend && (
-              <div className={cn(
+              <div title={trendHint} className={cn(
                 "flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full tracking-wider",
                 trend === "up" ? "text-emerald-700 bg-emerald-100" : 
                 trend === "down" ? "text-rose-700 bg-rose-100" : 

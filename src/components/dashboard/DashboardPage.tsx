@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { describeTrend } from "@/lib/trend";
 import { StatsCard } from "./StatsCard";
 import { RecentRequests } from "./RecentRequests";
 import { ExchangeRatesWidget } from "./ExchangeRatesWidget";
@@ -99,6 +100,16 @@ export default function DashboardPage() {
 
 
 
+  // Tendencias reales: últimos 30 días frente a los 30 anteriores (las calcula el API en GET /reports).
+  // Si el API aún no las envía, la tarjeta se muestra sin etiqueta en lugar de inventar una.
+  const trends = reportData.trends;
+  const trendDays = trends?.windowDays ?? 30;
+  const clientsTrend = describeTrend(trends?.clients, "count", trendDays);
+  const requestsTrend = describeTrend(trends?.requests, "count", trendDays);
+  const tripsTrend = describeTrend(trends?.confirmedTrips, "count", trendDays);
+  const revenueTrend = describeTrend(trends?.revenue, "amount", trendDays, (n) =>
+    new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(n));
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
@@ -141,8 +152,9 @@ export default function DashboardPage() {
           value={reportData.summary.totalClients}
           subtitle="Titulares registrados"
           icon={<Users className="w-6 h-6" />}
-          trend="up"
-          trendValue="+12%"
+          trend={clientsTrend?.trend}
+          trendValue={clientsTrend?.label}
+          trendHint={clientsTrend?.hint}
           color="blue"
           delay={0.1}
         />
@@ -151,8 +163,9 @@ export default function DashboardPage() {
           value={activeRequests}
           subtitle="En proceso de cotización"
           icon={<ClipboardCheck className="w-6 h-6" />}
-          trend="neutral"
-          trendValue="estable"
+          trend={requestsTrend?.trend}
+          trendValue={requestsTrend?.label}
+          trendHint={requestsTrend?.hint}
           color="gold"
           delay={0.2}
         />
@@ -161,8 +174,9 @@ export default function DashboardPage() {
           value={confirmedRequests}
           subtitle="Listos para operar"
           icon={<PlaneTakeoff className="w-6 h-6" />}
-          trend="up"
-          trendValue="+5"
+          trend={tripsTrend?.trend}
+          trendValue={tripsTrend?.label}
+          trendHint={tripsTrend?.hint}
           color="green"
           delay={0.3}
         />
@@ -171,8 +185,9 @@ export default function DashboardPage() {
           value={reportData.summary.formattedRevenue}
           subtitle="Pagos completados en CLP"
           icon={<DollarSign className="w-6 h-6" />}
-          trend="up"
-          trendValue="estable"
+          trend={revenueTrend?.trend}
+          trendValue={revenueTrend?.label}
+          trendHint={revenueTrend?.hint}
           color="red"
           delay={0.4}
         />
