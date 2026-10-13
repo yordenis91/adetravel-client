@@ -50,6 +50,7 @@ export default function AgencyTab({ config, configId }: AgencyTabProps) {
         description: "Los datos de la agencia han sido actualizados correctamente.",
       });
       queryClient.invalidateQueries({ queryKey: ["systemConfig"] });
+      queryClient.invalidateQueries({ queryKey: ["agency-info"] });
     } catch (error) {
       console.error("Error saving agency config", error);
       toast({

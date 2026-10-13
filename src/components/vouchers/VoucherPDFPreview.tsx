@@ -10,9 +10,6 @@ import {
   Printer,
   X,
   MapPin,
-  Phone,
-  Mail,
-  Globe,
   Calendar,
   Ticket,
   User,
@@ -26,6 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 import { serviceTypeLabel } from "@/lib/service-types";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
 import { whatsAppMessages } from "@/lib/whatsapp";
+import { AgencyDocumentHeader } from "@/components/shared/AgencyDocumentHeader";
+import { agencyDisplayName } from "@/lib/agency-name";
+import { useAgencyInfo } from "@/hooks/useAgencyInfo";
 
 interface VoucherPDFPreviewProps {
   open: boolean;
@@ -45,6 +45,7 @@ export function VoucherPDFPreview({
   request,
 }: VoucherPDFPreviewProps) {
   const { toast } = useToast();
+  const { agency } = useAgencyInfo(open);
   const [isDownloading, setIsDownloading] = useState(false);
 
   if (!voucher) return null;
@@ -124,24 +125,7 @@ export function VoucherPDFPreview({
           >
             {/* Header */}
             <div className="voucher-header flex justify-between items-start mb-10">
-              <div className="agency-info">
-                <h1 className="text-3xl font-extrabold text-[#0F1E3C] tracking-tighter">ADE TRAVEL</h1>
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Agencia de Viajes & Turismo</p>
-                <div className="mt-4 space-y-1">
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <MapPin className="w-3 h-3 text-[#C9A84C]" /> Av. Providencia 1234, Oficina 502, Santiago
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <Phone className="w-3 h-3 text-[#C9A84C]" /> +56 2 2345 6789
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <Mail className="w-3 h-3 text-[#C9A84C]" /> contacto@adetravel.cl
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <Globe className="w-3 h-3 text-[#C9A84C]" /> www.adetravel.cl
-                  </div>
-                </div>
-              </div>
+              <AgencyDocumentHeader agency={agency} />
               
               <div className="voucher-label-box text-right">
                 <div className="text-[#0F1E3C] text-4xl font-black mb-1">VOUCHER</div>
@@ -250,8 +234,8 @@ export function VoucherPDFPreview({
             <div className="mt-auto pt-10 border-t border-slate-100 text-center text-[9px] text-slate-400">
               <p className="mb-2 text-[#0F1E3C] font-bold">ESTE VOUCHER ES EL COMPROBANTE OFICIAL DEL SERVICIO CONTRATADO</p>
               <p>Por favor presente este documento al momento de realizar su check-in o abordar el servicio.</p>
-              <p>Ante cualquier inconveniente o duda, contacte inmediatamente a su agente de viajes ADE TRAVEL.</p>
-              <p className="mt-4 font-bold uppercase tracking-widest text-slate-500">ADE TRAVEL - AGENCIA DE VIAJES</p>
+              <p>Ante cualquier inconveniente o duda, contacte inmediatamente a su agente de viajes {agencyDisplayName(agency)}.</p>
+              <p className="mt-4 font-bold uppercase tracking-widest text-slate-500">{agencyDisplayName(agency)} - AGENCIA DE VIAJES</p>
             </div>
           </div>
         </div>
