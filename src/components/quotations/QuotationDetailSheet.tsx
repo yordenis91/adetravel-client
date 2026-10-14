@@ -77,7 +77,8 @@ export function QuotationDetailSheet({
                 </SheetTitle>
               </div>
             </div>
-            <div className="text-right">
+            {/* mr-8: deja libre la esquina donde el panel dibuja su botón de cerrar (X) */}
+            <div className="text-right mr-8">
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1">Válida Hasta</span>
               <div className="flex items-center gap-2 text-navy font-bold">
                 <Calendar className="w-4 h-4 text-gold" />
