@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { serviceTypeLabel } from "@/lib/service-types";
+import { formatMoney } from "@/lib/money";
 
 export function GlobalSearch() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export function GlobalSearch() {
 
   const { data: response, isLoading } = useQuery({
     queryKey: ["global-search", debouncedTerm],
-    queryFn: () => api.get(`/search?q=${debouncedTerm}`),
+    queryFn: () => api.get(`/search?q=${encodeURIComponent(debouncedTerm)}`),
     enabled: debouncedTerm.length >= 2,
   });
 
@@ -114,7 +115,7 @@ export function GlobalSearch() {
                       <button key={p.id} onClick={() => handleSelect(`/pagos?search=${p.paymentNumber}`)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-emerald-50/50 transition-colors group flex justify-between items-center">
                         <div>
                           <p className="text-sm font-bold text-navy group-hover:text-emerald-700">{p.paymentNumber}</p>
-                          <p className="text-[10px] text-muted-foreground">${p.amount} {p.currency}</p>
+                          <p className="text-[10px] text-muted-foreground">{formatMoney(p.amount, p.currency)} {p.currency}</p>
                         </div>
                         <Badge variant="outline" className="text-[9px] uppercase">{p.status}</Badge>
                       </button>
@@ -155,7 +156,7 @@ export function GlobalSearch() {
                       >
                         <div>
                           <p className="text-sm font-bold text-navy group-hover:text-amber-700">{q.quotationNumber}</p>
-                          <p className="text-[10px] text-muted-foreground">{q.requestId ? `Solicitud: ${q.requestId}` : ''} {q.currency ? `${q.total ? `· ${q.total} ${q.currency}` : ''}` : ''}</p>
+                          <p className="text-[10px] text-muted-foreground">{q.requestId ? `Solicitud: ${q.requestId}` : ''} {q.currency ? `${q.total ? `· ${formatMoney(q.total, q.currency)} ${q.currency}` : ''}` : ''}</p>
                         </div>
                         <Badge variant="outline" className="text-[9px] uppercase">{q.status}</Badge>
                       </button>

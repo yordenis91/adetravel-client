@@ -28,3 +28,19 @@ export function calculateQuotationTotals(
   const total = roundMoney(discounted + taxAmount, currency);
   return { subtotal, taxAmount, total };
 }
+
+/**
+ * Importe legible con separador de miles: "$1.166.200" en pesos (es-CL) y "$1,543.19" en dólares u otras
+ * monedas (en-US), con los decimales de cada moneda. Sin el código de moneda: quien lo muestra lo añade.
+ */
+export function formatMoney(amount: number | string | null | undefined, currency: string | null | undefined): string {
+  const value = Number(amount);
+  if (amount === null || amount === undefined || amount === "" || !Number.isFinite(value)) return "—";
+  const decimals = currencyDecimals(currency);
+  return new Intl.NumberFormat(currency === "USD" ? "en-US" : "es-CL", {
+    style: "currency",
+    currency: currency === "USD" ? "USD" : "CLP",
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
