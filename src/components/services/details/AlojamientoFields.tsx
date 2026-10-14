@@ -24,28 +24,28 @@ export function AlojamientoFields({ control }: { control: Control<any> }) {
         <FormField control={control} name="details.hotelName" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-xs font-bold text-navy">Nombre de Hotel/Casa *</FormLabel>
-            <FormControl><Input {...field} className="bg-white" /></FormControl>
+            <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
         <FormField control={control} name="details.hotelChain" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-xs font-bold text-navy">Cadena hotelera *</FormLabel>
-            <FormControl><Input {...field} placeholder="Ej: Independiente" className="bg-white" /></FormControl>
+            <FormControl><Input {...field} value={field.value ?? ""} placeholder="Ej: Independiente" className="bg-white" /></FormControl>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
         <FormField control={control} name="details.checkIn" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-xs font-bold text-navy">Fecha In *</FormLabel>
-            <FormControl><Input type="date" {...field} className="bg-white" /></FormControl>
+            <FormControl><Input type="date" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
         <FormField control={control} name="details.checkOut" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-xs font-bold text-navy">Fecha Out *</FormLabel>
-            <FormControl><Input type="date" {...field} className="bg-white" /></FormControl>
+            <FormControl><Input type="date" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
@@ -95,7 +95,7 @@ export function AlojamientoFields({ control }: { control: Control<any> }) {
           <div key={field.id} className="flex items-center gap-2">
             <FormField control={control} name={`details.rooms.${index}.responsibleName` as any} render={({ field }) => (
               <FormItem className="flex-1">
-                <FormControl><Input placeholder="Responsable de la habitación" {...field} className="bg-white" /></FormControl>
+                <FormControl><Input placeholder="Responsable de la habitación" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
               </FormItem>
             )} />
             <FormField control={control} name={`details.rooms.${index}.roomType` as any} render={({ field }) => (

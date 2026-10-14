@@ -18,49 +18,49 @@ export function ArriendoAutoFields({ control }: { control: Control<any> }) {
       <FormField control={control} name="details.clientName" render={({ field }) => (
         <FormItem className="sm:col-span-2">
           <FormLabel className="text-xs font-bold text-navy">Cliente principal *</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.pickupDate" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Fecha de recogida *</FormLabel>
-          <FormControl><Input type="date" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="date" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.pickupTime" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Hora de recogida *</FormLabel>
-          <FormControl><Input type="time" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="time" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.dropoffDate" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Fecha de entrega *</FormLabel>
-          <FormControl><Input type="date" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="date" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.dropoffTime" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Hora de entrega *</FormLabel>
-          <FormControl><Input type="time" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="time" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.pickupAddress" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Dirección de retiro *</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.dropoffAddress" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Dirección de entrega *</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
@@ -115,7 +115,7 @@ export function ArriendoAutoFields({ control }: { control: Control<any> }) {
       <FormField control={control} name="details.mileageLimitPerDay" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Límite km/día (si aplica)</FormLabel>
-          <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-white" /></FormControl>
+          <FormControl><Input type="number" {...field} value={Number.isFinite(field.value) ? field.value : ""} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
@@ -128,14 +128,14 @@ export function ArriendoAutoFields({ control }: { control: Control<any> }) {
       <FormField control={control} name="details.arrivalFlightDateTime" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Vuelo de llegada (opcional)</FormLabel>
-          <FormControl><Input type="datetime-local" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="datetime-local" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.departureFlightDateTime" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Vuelo de partida (opcional)</FormLabel>
-          <FormControl><Input type="datetime-local" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="datetime-local" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />

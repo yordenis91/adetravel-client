@@ -14,7 +14,7 @@ export function PasajeAereoFields({ control }: { control: Control<any> }) {
       <FormField control={control} name="details.fullName" render={({ field }) => (
         <FormItem className="sm:col-span-2">
           <FormLabel className="text-xs font-bold text-navy">Nombre y apellidos *</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
@@ -51,35 +51,35 @@ export function PasajeAereoFields({ control }: { control: Control<any> }) {
       <FormField control={control} name="details.departureDate" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Fecha de ida *</FormLabel>
-          <FormControl><Input type="date" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="date" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.returnDate" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Fecha de regreso *</FormLabel>
-          <FormControl><Input type="date" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="date" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.passportNumber" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">N° de pasaporte</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.rut" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">RUT (si no hay pasaporte)</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.frequentFlyerNumber" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">N° pasajero frecuente</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />

@@ -132,9 +132,12 @@ export function VouchersTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-bold text-[10px] text-blue-600 uppercase tracking-wider bg-blue-50 w-max px-1.5 py-0.5 rounded">
-                      {serviceTypeLabel(voucher.serviceType)}
-                    </span>
+                    {/* Sin tipo guardado (vouchers antiguos) no se dibuja una pastilla vacía. */}
+                    {serviceTypeLabel(voucher.serviceType) && (
+                      <span className="font-bold text-[10px] text-blue-600 uppercase tracking-wider bg-blue-50 w-max px-1.5 py-0.5 rounded">
+                        {serviceTypeLabel(voucher.serviceType)}
+                      </span>
+                    )}
                     <span className="text-xs font-medium text-navy mt-1">{voucher.serviceName}</span>
                   </div>
                 </TableCell>

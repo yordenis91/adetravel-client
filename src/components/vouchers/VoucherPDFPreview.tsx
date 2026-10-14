@@ -143,9 +143,11 @@ export function VoucherPDFPreview({
 
             {/* Service Card */}
             <div className="service-card bg-[#f0f4f8] p-8 rounded-xl mb-8 relative">
-              <div className="service-type-badge inline-block px-3 py-1 bg-[#0F1E3C] text-white text-[9px] font-bold rounded mb-3">
-                {serviceTypeLabel(voucher.serviceType)}
-              </div>
+              {serviceTypeLabel(voucher.serviceType) && (
+                <div className="service-type-badge inline-block px-3 py-1 bg-[#0F1E3C] text-white text-[9px] font-bold rounded mb-3">
+                  {serviceTypeLabel(voucher.serviceType)}
+                </div>
+              )}
               <h2 className="service-name text-2xl font-extrabold text-[#0F1E3C] mb-4">
                 {voucher.serviceName}
               </h2>
