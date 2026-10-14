@@ -9,42 +9,42 @@ export function ExcursionFields({ control }: { control: Control<any> }) {
       <FormField control={control} name="details.clientName" render={({ field }) => (
         <FormItem className="sm:col-span-2">
           <FormLabel className="text-xs font-bold text-navy">Cliente *</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.excursionName" render={({ field }) => (
         <FormItem className="sm:col-span-2">
           <FormLabel className="text-xs font-bold text-navy">Nombre de la excursión *</FormLabel>
-          <FormControl><Input {...field} className="bg-white" /></FormControl>
+          <FormControl><Input {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.startDateTime" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Fecha y hora de comienzo *</FormLabel>
-          <FormControl><Input type="datetime-local" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="datetime-local" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.endDateTime" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Fecha y hora de término</FormLabel>
-          <FormControl><Input type="datetime-local" {...field} className="bg-white" /></FormControl>
+          <FormControl><Input type="datetime-local" {...field} value={field.value ?? ""} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.adultsCount" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Adultos (+12 años) *</FormLabel>
-          <FormControl><Input type="number" min={1} {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-white" /></FormControl>
+          <FormControl><Input type="number" min={1} {...field} value={Number.isFinite(field.value) ? field.value : ""} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
       <FormField control={control} name="details.childrenCount" render={({ field }) => (
         <FormItem>
           <FormLabel className="text-xs font-bold text-navy">Niños (0-12 años)</FormLabel>
-          <FormControl><Input type="number" min={0} {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-white" /></FormControl>
+          <FormControl><Input type="number" min={0} {...field} value={Number.isFinite(field.value) ? field.value : ""} onChange={(e) => field.onChange(e.target.valueAsNumber)} className="bg-white" /></FormControl>
           <FormMessage className="text-[10px]" />
         </FormItem>
       )} />
