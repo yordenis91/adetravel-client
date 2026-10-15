@@ -57,7 +57,7 @@ export function ExchangeRatesWidget({ exchangeRates = [], autoSync = false, inte
             {activeRates.length > 0 ? (
               activeRates.map((rate, index) => {
                 const isClpTarget = rate.fromCurrency === "CLP" || rate.toCurrency === "CLP";
-                let displayString = "";
+                let displayString: string;
                 
                 if (rate.fromCurrency === "CLP") {
                   // If source is CLP, usually we want to see how much 1 of the other is in CLP
