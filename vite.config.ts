@@ -30,23 +30,23 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
-      // Igual que en el backend: la cobertura se mide solo sobre los módulos
-      // que ya tienen tests reales (pagos, cliente de API compartido, hook de
-      // notificaciones, StatsCard). El resto del frontend aún no tiene suite
-      // y diluiría el número sin decir nada útil.
-      include: [
-        "src/lib/api.ts",
-        "src/components/payments/PaymentFormDialog.tsx",
-        "src/components/payments/PaymentsTable.tsx",
-        "src/hooks/useNotifications.ts",
-        "src/components/dashboard/StatsCard.tsx",
+      reporter: ["text-summary", "json-summary", "html"],
+      // Se mide TODO src/, no solo los módulos con tests: el número tiene que decir cuánto del
+      // sistema está probado de verdad. Quedan fuera lo que no es código propio (componentes
+      // generados de shadcn en components/ui), los propios tests y los tipos.
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/components/ui/**",
+        "src/**/__tests__/**",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.d.ts",
+        "src/main.tsx",
       ],
       thresholds: {
-        statements: 60,
-        branches: 55,
-        functions: 55,
-        lines: 60,
+        statements: 25,
+        branches: 25,
+        functions: 25,
+        lines: 25,
       },
     },
   },
