@@ -5,7 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  { ignores: ["dist", "coverage"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -24,6 +24,9 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      // Hay 420 usos heredados de `any`. Se muestran como aviso y el CI (npm run lint:ci) falla si
+      // aparece uno más: el número solo puede bajar. Ver docs/CALIDAD.md en el repo del API.
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   }
 );
