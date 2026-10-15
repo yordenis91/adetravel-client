@@ -23,8 +23,20 @@ jobs:
       - name: 📦 Instalar dependencias
         run: npm install --legacy-peer-deps
 
-      - name: 🧪 Ejecutar tests con cobertura
+      - name: 🧪 Ejecutar tests con cobertura (todo src/)
         run: npm run test:coverage
+
+      # La cobertura de todo src/ queda a la vista en el resumen de cada ejecución.
+      - name: 📊 Publicar cobertura en el resumen
+        if: always()
+        run: |
+          node -e '
+          const fs = require("fs");
+          if (!fs.existsSync("coverage/coverage-summary.json")) process.exit(0);
+          const t = JSON.parse(fs.readFileSync("coverage/coverage-summary.json", "utf8")).total;
+          const row = (k, n) => `| ${n} | ${t[k].pct} % | ${t[k].covered} / ${t[k].total} |`;
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, ["### Cobertura del cliente (todo src/)", "", "| Métrica | Cobertura | Cubierto |", "|---|---|---|", row("statements", "Sentencias"), row("branches", "Ramas"), row("functions", "Funciones"), row("lines", "Líneas"), ""].join("\n"));
+          '
 
       - name: 🔨 Construir Vite
         env:
