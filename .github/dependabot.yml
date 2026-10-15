@@ -7,6 +7,9 @@ updates:
       day: "monday"
     open-pull-requests-limit: 5
     groups:
+      # ESLint y sus complementos se actualizan siempre juntos: @eslint/js 10 exige eslint 10.
+      eslint:
+        patterns: ["eslint", "@eslint/*", "eslint-plugin-*", "typescript-eslint", "globals"]
       # Agrupa las actualizaciones menores y de parche para no recibir un PR por paquete.
       minor-and-patch:
         update-types: ["minor", "patch"]

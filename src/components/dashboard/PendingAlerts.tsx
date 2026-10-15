@@ -147,12 +147,10 @@ export function PendingAlerts() {
       if (list.length === 0) return;
       const firstVoucher = list[0];
       
-      let message = "";
-      if (list.length === 1) {
-        message = `1 cliente viaja a ${firstVoucher.destination || 'su destino'}. Vouchers listos.`;
-      } else {
-        message = `${list.length} viajeros salen a sus destinos. Vouchers listos.`;
-      }
+      const message =
+        list.length === 1
+          ? `1 cliente viaja a ${firstVoucher.destination || 'su destino'}. Vouchers listos.`
+          : `${list.length} viajeros salen a sus destinos. Vouchers listos.`;
 
       generatedAlerts.push({ id, type: 'info', title, message });
     };
