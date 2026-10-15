@@ -23,6 +23,18 @@ jobs:
       - name: 📦 Instalar dependencias
         run: npm install --legacy-peer-deps
 
+      - name: 🔎 Comprobar tipos (tsc)
+        run: npm run typecheck
+
+      # Línea base de 457 avisos heredados (420 son `any`): el CI falla si aparece uno nuevo.
+      - name: 🔎 Lint (sin avisos nuevos)
+        run: npm run lint:ci
+
+      # Solo dependencias de producción. Falla con severidad alta o crítica; las moderadas
+      # (uuid vía exceljs, sin corrección que no sea un retroceso de versión) se revisan aparte.
+      - name: 🛡️ Auditoría de dependencias
+        run: npm audit --omit=dev --audit-level=high
+
       - name: 🧪 Ejecutar tests con cobertura (todo src/)
         run: npm run test:coverage
 
