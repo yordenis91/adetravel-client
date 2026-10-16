@@ -134,7 +134,7 @@ export function VoucherPDFPreview({
                   {voucher.status}
                 </div>
                 <div className="mt-3 text-[10px] text-slate-500">
-                  Fecha Emisión: <span className="font-bold text-[#0F1E3C]">{format(new Date(voucher.created_at || new Date()), "dd/MM/yyyy")}</span>
+                  Fecha Emisión: <span className="font-bold text-[#0F1E3C]">{format(new Date(voucher.createdAt || new Date()), "dd/MM/yyyy")}</span>
                 </div>
               </div>
             </div>
