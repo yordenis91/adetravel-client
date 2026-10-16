@@ -28,5 +28,11 @@ export default tseslint.config(
       // aparece uno más: el número solo puede bajar. Ver docs/CALIDAD.md en el repo del API.
       "@typescript-eslint/no-explicit-any": "warn",
     },
+  },
+  {
+    // Componentes generados de shadcn/ui (también fuera de la cobertura): exportan variantes y contextos
+    // junto a los componentes por diseño. Las versiones nuevas de eslint-plugin-react-refresh los marcan.
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: { "react-refresh/only-export-components": "off" },
   }
 );

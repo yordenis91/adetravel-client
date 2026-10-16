@@ -6,6 +6,11 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    ignore:
+      # jsdom 30 rompe la suite de pruebas (42 errores no controlados en Vitest). Las versiones
+      # menores y los parches siguen llegando.
+      - dependency-name: "jsdom"
+        update-types: ["version-update:semver-major"]
     groups:
       # ESLint y sus complementos se actualizan siempre juntos: @eslint/js 10 exige eslint 10.
       eslint:

@@ -9,7 +9,7 @@
         "build:dev": "vite build --mode development",
         "build:analyze": "ANALYZE_BUNDLE=true vite build",
         "lint": "eslint .",
-        "lint:ci": "eslint . --max-warnings 457",
+        "lint:ci": "eslint . --max-warnings 451",
         "typecheck": "tsc --noEmit -p tsconfig.app.json",
         "test": "vitest",
         "test:run": "vitest run",
