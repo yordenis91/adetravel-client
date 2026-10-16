@@ -120,7 +120,7 @@ export function QuotationPDFPreview({
                 <div className="text-[#C9A84C] text-4xl font-black mb-1">COTIZACIÓN</div>
                 <div className="text-[#0F1E3C] text-lg font-bold mb-4">{quotation.quotationNumber}</div>
                 <div className="space-y-1 text-[10px] text-slate-500">
-                  <div>Fecha Emisión: <span className="font-bold text-[#0F1E3C]">{format(new Date(quotation.created_at || new Date()), "dd/MM/yyyy")}</span></div>
+                  <div>Fecha Emisión: <span className="font-bold text-[#0F1E3C]">{format(new Date(quotation.createdAt || new Date()), "dd/MM/yyyy")}</span></div>
                   <div>Válida Hasta: <span className="font-bold text-[#0F1E3C]">{quotation.validUntil ? format(new Date(quotation.validUntil), "dd/MM/yyyy") : "N/A"}</span></div>
                 </div>
               </div>

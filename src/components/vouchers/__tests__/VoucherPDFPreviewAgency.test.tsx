@@ -16,12 +16,12 @@ const voucher = { id: "v1", voucherNumber: "VCH-1", status: "EMITIDO", serviceNa
 
 afterEach(() => vi.restoreAllMocks());
 
-function renderPreview() {
+function renderPreview(voucherOverride: Record<string, unknown> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <TooltipProvider>
-        <VoucherPDFPreview open onOpenChange={() => {}} voucher={voucher} client={{ firstName: "Ana", lastName: "Pérez" }} provider={{}} request={{}} />
+        <VoucherPDFPreview open onOpenChange={() => {}} voucher={{ ...voucher, ...voucherOverride }} client={{ firstName: "Ana", lastName: "Pérez" }} provider={{}} request={{}} />
       </TooltipProvider>
     </QueryClientProvider>
   );
@@ -37,5 +37,14 @@ describe("VoucherPDFPreview: datos de la agencia", () => {
     expect(screen.getByText("+56 32 222 3344")).toBeInTheDocument();
     expect(screen.getByText(/su agente de viajes VIAJES SUR\./)).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/Providencia|2345 6789|contacto@adetravel/);
+  });
+});
+
+describe("VoucherPDFPreview: fecha de emisión", () => {
+  it("muestra la fecha de creación del voucher (createdAt), no la de hoy", async () => {
+    vi.spyOn(api, "get").mockResolvedValue({ data: AGENCY });
+    renderPreview({ createdAt: "2026-03-15T15:00:00.000Z" });
+    await waitFor(() => expect(screen.getByRole("heading", { name: "VIAJES SUR" })).toBeInTheDocument());
+    expect(screen.getByText("15/03/2026")).toBeInTheDocument();
   });
 });
