@@ -106,6 +106,16 @@ Variables de entorno importantes (backend):
 - El frontend incluye ESLint y configuraciones de TypeScript; ejecutar `npm run lint` regularmente.
 - El backend tiene pruebas con Jest (ver `adetravel-api/package.json`).
 
+## Contrato con el API
+
+`src/contracts/api-contract.json` es una copia del contrato que genera el API (`adetravel-api/contracts/api-contract.json`): la forma de sus respuestas clave y las listas de valores que el cliente duplica (estados del flujo, tipos de servicio, permisos). Las pruebas de `src/contracts/__tests__/` comprueban que:
+
+- las constantes del cliente coinciden con esas listas;
+- todo campo que los componentes leen de una entidad (`client.firstName`, `quotation.createdAt`...) existe en la respuesta del API;
+- la copia es idéntica a la del API en `main`.
+
+Si el CI falla por el último punto, el API cambió su contrato: ejecuta `npm run contract:sync`, revisa el diff y ajusta lo que dependa de él. Detalles y alternativas descartadas: ADR 017 en `adetravel-api/docs/adr/`.
+
 ## Troubleshooting
 
 - Si el frontend no encuentra la API, verificar `VITE_API_URL` y CORS en el backend.

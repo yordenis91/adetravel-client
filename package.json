@@ -14,6 +14,7 @@
         "test": "vitest",
         "test:run": "vitest run",
         "test:coverage": "vitest run --coverage",
+        "contract:sync": "node scripts/sync-contract.mjs",
         "preview": "vite preview"
     },
     "dependencies": {
