@@ -5,6 +5,8 @@
 //   3. la copia no se ha quedado atrás respecto al contrato del API en main.
 // Si algo falla por (3): npm run contract:sync, revisar el diff y ajustar lo que dependa de él.
 import { describe, it, expect } from "vitest";
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import contract from "../api-contract.json";
 import { WORKFLOW_STATUSES, VALID_TRANSITIONS, STATUS_LABELS, STATUS_COLORS, STATUS_PHASES } from "@/lib/workflow-status";
 import { SERVICE_TYPES } from "@/types/service";
@@ -13,9 +15,14 @@ type Shape = string | { [key: string]: Shape } | { $array: Shape };
 const enums = contract.enums as Record<string, unknown>;
 const responses = contract.responses as Record<string, { status: number; body: { data?: Shape } }>;
 
-// Todo el código del cliente como texto, para buscar usos (sin tocar el sistema de archivos).
-const SOURCES = import.meta.glob<string>("/src/**/*.{ts,tsx}", { query: "?raw", import: "default", eager: true });
-const productionSources = Object.entries(SOURCES).filter(([file]) => !/__tests__|\.test\.|\/contracts\//.test(file));
+// Todo el código del cliente como texto, para buscar usos. Se lee con fs y NO con import.meta.glob("?raw"):
+// importar los archivos por el sistema de módulos de Vite hace que la cobertura los dé por cargados y deje
+// de contar los que no tienen pruebas, lo que inflaba la cobertura del cliente del 27 % al 61 %.
+const SRC_DIR = path.resolve(process.cwd(), "src");
+const productionSources: [string, string][] = (readdirSync(SRC_DIR, { recursive: true }) as string[])
+  .map((rel) => rel.split(path.sep).join("/"))
+  .filter((rel) => /\.(ts|tsx)$/.test(rel) && !/__tests__|\.test\.|^contracts\//.test(rel))
+  .map((rel): [string, string] => [`/src/${rel}`, readFileSync(path.join(SRC_DIR, rel), "utf8")]);
 
 describe("constantes duplicadas del cliente frente al contrato del API", () => {
   it("los 17 estados del flujo coinciden, en el mismo orden", () => {
