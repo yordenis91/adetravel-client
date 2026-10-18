@@ -7,6 +7,8 @@ import { ListError } from "@/components/shared/ListError";
 import { ClientsTable } from "./ClientsTable";
 import { ClientFormDialog } from "./ClientFormDialog";
 import { ClientPreviewDialog } from "./ClientPreviewDialog";
+import { ImportClientsDialog } from "./ImportClientsDialog";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -16,7 +18,8 @@ import {
   Users, 
   UserCheck, 
   UserX, 
-  Download
+  Download,
+  Upload
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -63,6 +66,8 @@ export default function ClientsPage() {
   const inactiveClients = useListTotal("clients", "/clients", { isActive: "false" });
 
   const toggleClientStatusMutation = useToggleClientStatus();
+  const { hasPermission } = useAuth();
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const handleEdit = (client: any) => {
     setSelectedClient(client);
@@ -159,6 +164,16 @@ export default function ClientsPage() {
             <Download className="w-4 h-4" />
             Exportar {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
           </Button>
+          {hasPermission("CREATE_CLIENT") && (
+            <Button
+              variant="outline"
+              onClick={() => setIsImportOpen(true)}
+              className="gap-2 bg-white text-xs font-bold uppercase tracking-wider"
+            >
+              <Upload className="w-4 h-4" />
+              Importar
+            </Button>
+          )}
           <Button onClick={handleAdd} className="gap-2 text-xs font-bold uppercase tracking-wider shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" />
             Nuevo Cliente
@@ -243,6 +258,12 @@ export default function ClientsPage() {
         onOpenChange={setIsFormOpen} 
         client={selectedClient}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["clients"] })}
+      />
+
+      <ImportClientsDialog
+        open={isImportOpen}
+        onOpenChange={setIsImportOpen}
+        onImported={() => queryClient.invalidateQueries({ queryKey: ["clients"] })}
       />
 
       <ClientPreviewDialog 
