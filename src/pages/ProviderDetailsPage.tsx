@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { serviceTypeLabel } from "@/lib/service-types";
+import { EmailLink } from "@/components/shared/EmailLink";
 
 export default function ProviderDetailsPage() {
   const { providerId } = useParams<{ providerId: string }>();
@@ -90,7 +91,10 @@ export default function ProviderDetailsPage() {
               <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2"><Building2 className="w-3 h-3 text-primary/60" /> RUC/NIT: {provider.rut || "—"}</span>
                 <span className="flex items-center gap-2"><MapPin className="w-3 h-3 text-primary/60" /> {provider.city || "Ciudad"}, {provider.country || "País"}</span>
-                {provider.email && <span className="flex items-center gap-2"><Mail className="w-3 h-3 text-primary/60" /> {provider.email}</span>}
+                {provider.email && <span className="flex items-center gap-2"><Mail className="w-3 h-3 text-primary/60" /> <EmailLink email={provider.email} /></span>}
+                {(provider.additionalEmails ?? []).map((extra: string) => (
+                  <span key={extra} className="flex items-center gap-2" data-testid="additional-email"><Mail className="w-3 h-3 text-primary/40" /> <EmailLink email={extra} /></span>
+                ))}
                 {provider.phone && <span className="flex items-center gap-2"><Phone className="w-3 h-3 text-primary/60" /> {provider.phone}</span>}
               </div>
             </div>
@@ -182,7 +186,7 @@ export default function ProviderDetailsPage() {
                 <DetailRow label="Nombre del Ejecutivo" value={provider.executiveName} />
                 <div className="grid grid-cols-2 gap-4">
                   <DetailRow label="Teléfono Directo" value={provider.executivePhone} />
-                  <DetailRow label="Correo Electrónico" value={provider.executiveEmail} />
+                  <DetailRow label="Correo Electrónico" value={provider.executiveEmail} email />
                 </div>
               </CardContent>
             </Card>
@@ -198,7 +202,7 @@ export default function ProviderDetailsPage() {
                 <DetailRow label="Nombre del Contacto" value={provider.contactName} />
                 <div className="grid grid-cols-2 gap-4">
                   <DetailRow label="Teléfono / WhatsApp" value={provider.contactPhone} />
-                  <DetailRow label="Correo de Reservas" value={provider.contactEmail} />
+                  <DetailRow label="Correo de Reservas" value={provider.contactEmail} email />
                 </div>
                 <DetailRow label="ID / RUT de Contacto" value={provider.contactRut} />
               </CardContent>
@@ -292,7 +296,7 @@ export default function ProviderDetailsPage() {
 }
 
 // Sub-componente para renderizar pares Label/Value uniformemente
-function DetailRow({ label, value }: { label: string, value: any }) {
+function DetailRow({ label, value, email = false }: { label: string, value: any, email?: boolean }) {
   if (value === undefined || value === null || value === "") return (
     <div className="flex flex-col gap-1">
       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">{label}</span>
@@ -303,7 +307,7 @@ function DetailRow({ label, value }: { label: string, value: any }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-navy">{value}</span>
+      <span className="text-sm font-medium text-navy">{email ? <EmailLink email={String(value)} /> : value}</span>
     </div>
   );
 }

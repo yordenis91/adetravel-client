@@ -144,7 +144,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
   };
 
   return (
-    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Solicitud" : "Nueva Solicitud"} description="Registra los datos generales del viaje. Los servicios específicos (alojamiento, pasajes, etc.) se agregan luego desde el detalle de la solicitud." widthClassName="sm:max-w-[600px]">
+    <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={request?.id ?? "nuevo"} title={isEditing ? "Editar Solicitud" : "Nueva Solicitud"} description="Registra los datos generales del viaje. Los servicios específicos (alojamiento, pasajes, etc.) se agregan luego desde el detalle de la solicitud." widthClassName="sm:max-w-[600px]">
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">

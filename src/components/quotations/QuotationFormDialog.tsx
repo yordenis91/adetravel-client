@@ -196,7 +196,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
   const selectedClient = selectedRequest?.client ?? quotation?.client;
 
   return (
-    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Cotización" : "Nueva Cotización"} description="Genera un documento formal de propuesta para el cliente." widthClassName="sm:max-w-[800px]">
+    <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={quotation?.id ?? "nuevo"} title={isEditing ? "Editar Cotización" : "Nueva Cotización"} description="Genera un documento formal de propuesta para el cliente." widthClassName="sm:max-w-[800px]">
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">

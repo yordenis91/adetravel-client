@@ -177,7 +177,7 @@ export function TaskFormDialog({
 
   return (
     <>
-      <FormSheet open={open} onOpenChange={onOpenChange} title={task ? "Editar Tarea" : "Nueva Tarea"} description="Registra un pendiente, asígnalo y vincúlalo a un registro si corresponde." widthClassName="sm:max-w-[500px]">
+      <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={task?.id ?? "nuevo"} title={task ? "Editar Tarea" : "Nueva Tarea"} description="Registra un pendiente, asígnalo y vincúlalo a un registro si corresponde." widthClassName="sm:max-w-[500px]">
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">

@@ -28,7 +28,7 @@ const BRAND = "bg-[#25D366] hover:bg-[#1EBE5A] text-white";
 export function WhatsAppButton({ phone, message, variant = "full", label = "Escribir por WhatsApp", className }: WhatsAppButtonProps) {
   const url = buildWhatsAppUrl(phone, message);
   const isIcon = variant !== "full";
-  const iconSize = variant === "icon-sm" ? "h-6 w-6" : "h-8 w-8";
+  const iconSize = variant === "icon-sm" ? "h-6 w-6 max-md:h-9 max-md:w-9" : "h-8 w-8";
   const disabledReason = !phone?.trim() ? "El cliente no tiene teléfono" : "Teléfono sin código de país (use +56…)";
 
   if (!url) {

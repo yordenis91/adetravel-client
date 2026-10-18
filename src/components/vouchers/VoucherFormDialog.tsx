@@ -196,7 +196,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
   })();
 
   return (
-    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Voucher" : "Generar Nuevo Voucher"} description="Complete los detalles del servicio para emitir el voucher de confirmación." widthClassName="sm:max-w-[700px]">
+    <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={voucher?.id ?? "nuevo"} title={isEditing ? "Editar Voucher" : "Generar Nuevo Voucher"} description="Complete los detalles del servicio para emitir el voucher de confirmación." widthClassName="sm:max-w-[700px]">
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
