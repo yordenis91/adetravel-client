@@ -207,7 +207,7 @@ export function PaymentFormDialog({ open, onOpenChange, payment }: PaymentFormDi
   }, [selectedRequestId, selectedRequest, quotations, form, isEditing, toast]);
 
   return (
-    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Pago" : "Registrar Nuevo Pago"} description="Complete los detalles del pago recibido para la solicitud seleccionada." widthClassName="sm:max-w-[600px]">
+    <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={payment?.id ?? "nuevo"} title={isEditing ? "Editar Pago" : "Registrar Nuevo Pago"} description="Complete los detalles del pago recibido para la solicitud seleccionada." widthClassName="sm:max-w-[600px]">
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">

@@ -154,37 +154,37 @@ export default function ProvidersPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-            <Building2 className="w-6 h-6" />
+      <div className="grid grid-cols-3 gap-2 md:gap-6">
+        <div className="bg-white p-3 md:p-4 rounded-2xl border border-gray-100 flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-4 shadow-sm">
+          <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+            <Building2 className="w-4 h-4 md:w-6 md:h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Proveedores</p>
+            <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wider md:tracking-widest">Total<span className="hidden md:inline"> Proveedores</span></p>
             <p className="text-2xl font-playfair font-bold text-navy">{totalProviders ?? "—"}</p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-            <CheckCircle2 className="w-6 h-6" />
+        <div className="bg-white p-3 md:p-4 rounded-2xl border border-gray-100 flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-4 shadow-sm">
+          <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+            <CheckCircle2 className="w-4 h-4 md:w-6 md:h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Activos</p>
+            <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wider md:tracking-widest">Activos</p>
             <p className="text-2xl font-playfair font-bold text-navy">{activeProviders ?? "—"}</p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
-          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
-            <XCircle className="w-6 h-6" />
+        <div className="bg-white p-3 md:p-4 rounded-2xl border border-gray-100 flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-4 shadow-sm">
+          <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
+            <XCircle className="w-4 h-4 md:w-6 md:h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Inactivos</p>
+            <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wider md:tracking-widest">Inactivos</p>
             <p className="text-2xl font-playfair font-bold text-navy">{inactiveProviders ?? "—"}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
+      <div className="bg-white rounded-2xl p-3 md:p-6 border border-gray-100 shadow-sm space-y-4 md:space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
             <TabsList className="bg-muted/50 p-1">
@@ -194,8 +194,8 @@ export default function ProvidersPage() {
             </TabsList>
           </Tabs>
 
-          <div className="flex items-center gap-2 flex-1 md:max-w-2xl">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap items-center gap-2 flex-1 md:max-w-2xl">
+            <div className="relative min-w-full flex-1 sm:min-w-[12rem]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
                 placeholder="Buscar por nombre, tipo, email..." aria-label="Buscar por nombre, tipo, email" 
@@ -206,7 +206,7 @@ export default function ProvidersPage() {
             </div>
             
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px] bg-slate-50 border-slate-100 text-xs font-medium">
+              <SelectTrigger className="w-full sm:w-[180px] bg-slate-50 border-slate-100 text-xs font-medium">
                 <SelectValue placeholder="Tipo de Servicio" />
               </SelectTrigger>
               <SelectContent>

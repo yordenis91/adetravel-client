@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { 
   ArrowLeft, Calendar, FileText, CreditCard, Ticket, ClipboardList, 
-  AlertTriangle, User, Plus, ChevronRight, TrendingUp, Clock, DollarSign, Briefcase, Eye, ExternalLink, X, CheckSquare
+  AlertTriangle, User, Plus, ChevronRight, TrendingUp, Mail, Phone, DollarSign, Briefcase, Eye, ExternalLink, X, CheckSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import { isWorkflowStatus, getStatusColor as getWorkflowStatusColor } from "@/li
 import { serviceTypeLabel } from "@/lib/service-types";
 import { activityActionLabel } from "@/lib/activity-labels";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
+import { EmailLink } from "@/components/shared/EmailLink";
 import { whatsAppMessages } from "@/lib/whatsapp";
 
 type EventType = "solicitud" | "cotizacion" | "pago" | "voucher" | "bitacora" | "tarea";
@@ -230,8 +231,11 @@ export default function ClientTimelinePage() {
                 </Badge>
               </div>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-2"><Clock className="w-3 h-3 text-primary/60" /> {client.email}</span>
-                <span className="flex items-center gap-2"><Clock className="w-3 h-3 text-primary/60" /> {client.phone}</span>
+                {client.email && <span className="flex items-center gap-2"><Mail className="w-3 h-3 text-primary/60" /> <EmailLink email={client.email} /></span>}
+                {(client.additionalEmails ?? []).map((extra: string) => (
+                  <span key={extra} className="flex items-center gap-2" data-testid="additional-email"><Mail className="w-3 h-3 text-primary/40" /> <EmailLink email={extra} /></span>
+                ))}
+                {client.phone && <span className="flex items-center gap-2"><Phone className="w-3 h-3 text-primary/60" /> {client.phone}</span>}
               </div>
             </div>
           </div>

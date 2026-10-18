@@ -23,6 +23,8 @@ import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X } from "lucide-react";
+import { AdditionalEmailsField } from "@/components/shared/AdditionalEmailsField";
+import { MAX_ADDITIONAL_EMAILS } from "@/lib/mailto";
 
 import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
 import { IdCard, Landmark, Phone, SlidersHorizontal, User } from "lucide-react";
@@ -30,6 +32,7 @@ const clientSchema = z.object({
   firstName: z.string().min(2, "Nombre es requerido"),
   lastName: z.string().min(2, "Apellido es requerido"),
   email: z.string().email("Email inválido").or(z.string().length(0)),
+  additionalEmails: z.array(z.string().trim().email("Correo inválido").or(z.literal(""))).max(MAX_ADDITIONAL_EMAILS).default([]),
   phone: z.string().optional(),
   rut: z.string().optional(),
   passportNumber: z.string().optional(),
@@ -69,6 +72,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
       firstName: "",
       lastName: "",
       email: "",
+      additionalEmails: [],
       phone: "",
       rut: "",
       passportNumber: "",
@@ -94,6 +98,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
         firstName: client.firstName || "",
         lastName: client.lastName || "",
         email: client.email || "",
+        additionalEmails: Array.isArray(client.additionalEmails) ? client.additionalEmails : [],
         phone: client.phone || "",
         rut: client.rut || "",
         passportNumber: client.passportNumber || "",
@@ -116,6 +121,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
         firstName: "",
         lastName: "",
         email: "",
+        additionalEmails: [],
         phone: "",
         rut: "",
         passportNumber: "",
@@ -143,6 +149,8 @@ const onSubmit = async (values: ClientFormValues) => {
       const cleanValues = {
         ...values,
         email: values.email?.trim() === "" ? undefined : values.email,
+        // Siempre se envía la lista (también vacía) para que quitar todos los correos adicionales se guarde.
+        additionalEmails: (values.additionalEmails ?? []).map((e) => e.trim()).filter(Boolean),
         rut: values.rut?.trim() === "" ? undefined : values.rut,
       };
 
@@ -179,7 +187,7 @@ const onSubmit = async (values: ClientFormValues) => {
   };
 
   return (
-    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Cliente" : "Nuevo Cliente"} description="Completa la información del titular para el registro de viajes y reservas." widthClassName="sm:max-w-[600px]">
+    <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={client?.id ?? "nuevo"} title={isEditing ? "Editar Cliente" : "Nuevo Cliente"} description="Completa la información del titular para el registro de viajes y reservas." widthClassName="sm:max-w-[600px]">
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
@@ -379,6 +387,16 @@ const onSubmit = async (values: ClientFormValues) => {
                       )}
                     />
                   </div>
+                  <FormField
+                    control={form.control}
+                    name="additionalEmails"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold text-navy">Correos adicionales</FormLabel>
+                        <AdditionalEmailsField value={field.value ?? []} onChange={field.onChange} error={fieldState.error} />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="referralSource"

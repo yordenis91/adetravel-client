@@ -131,7 +131,7 @@ export function ConfirmationFormDialog({ open, onOpenChange, requestId, confirma
   };
 
   return (
-    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Confirmación" : "Nueva Confirmación"} description="Registra la confirmación de reserva emitida por el proveedor." widthClassName="sm:max-w-[600px]">
+    <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={confirmation?.id ?? "nuevo"} title={isEditing ? "Editar Confirmación" : "Nueva Confirmación"} description="Registra la confirmación de reserva emitida por el proveedor." widthClassName="sm:max-w-[600px]">
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">

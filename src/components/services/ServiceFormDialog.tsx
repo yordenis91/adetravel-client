@@ -137,7 +137,7 @@ export function ServiceFormDialog({ open, onOpenChange, requestId, defaultClient
   };
 
   return (
-    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Servicio" : "Agregar Servicio"} description="Completa los datos específicos según el tipo de servicio." widthClassName="sm:max-w-[680px]">
+    <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={service?.id ?? "nuevo"} title={isEditing ? "Editar Servicio" : "Agregar Servicio"} description="Completa los datos específicos según el tipo de servicio." widthClassName="sm:max-w-[680px]">
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">

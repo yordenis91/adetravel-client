@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
 import { whatsAppMessages } from "@/lib/whatsapp";
+import { EmailLink } from "@/components/shared/EmailLink";
 import { 
   User, 
   Fingerprint, 
@@ -158,7 +159,7 @@ export function ClientPreviewDialog({ open, onOpenChange, client }: ClientPrevie
                   </div>
                   <div className="overflow-hidden">
                     <p className="text-[9px] font-bold uppercase text-muted-foreground">Correo Electrónico</p>
-                    <p className="text-sm font-medium text-navy truncate">{client.email || "Sin correo"}</p>
+                    <p className="text-sm font-medium text-navy truncate"><EmailLink email={client.email} fallback="Sin correo" className="break-normal" /></p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-100">

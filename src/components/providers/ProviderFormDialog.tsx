@@ -23,6 +23,8 @@ import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog, useCitiesForCountry } from "@/hooks/useCatalogs";
 import { Loader2, Plus, X, Building2, MapPin, Phone, User, Settings, CreditCard } from "lucide-react";
+import { AdditionalEmailsField } from "@/components/shared/AdditionalEmailsField";
+import { MAX_ADDITIONAL_EMAILS } from "@/lib/mailto";
 
 import { FormSheet, FormSheetBody, FormSheetFooter, FormSection } from "@/components/ui/form-sheet";
 import { Headset, Landmark, UserCog } from "lucide-react";
@@ -35,6 +37,7 @@ const providerSchema = z.object({
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email inválido").or(z.string().length(0)),
+  additionalEmails: z.array(z.string().trim().email("Correo inválido").or(z.literal(""))).max(MAX_ADDITIONAL_EMAILS).default([]),
   businessType: z.string().default("OTHER"),
   executiveName: z.string().optional(),
   executivePhone: z.string().optional(),
@@ -103,6 +106,7 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
         address: provider.address || "",
         phone: provider.phone || "",
         email: provider.email || "",
+        additionalEmails: Array.isArray(provider.additionalEmails) ? provider.additionalEmails : [],
         businessType: provider.businessType || "OTHER",
         executiveName: provider.executiveName || "",
         executivePhone: provider.executivePhone || "",
@@ -127,6 +131,7 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
         address: "",
         phone: "",
         email: "",
+        additionalEmails: [],
         businessType: "OTHER",
         executiveName: "",
         executivePhone: "",
@@ -146,11 +151,13 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
 
   const onSubmit = async (values: ProviderFormValues) => {
     try {
+      // Siempre se envía la lista (también vacía) para que quitar todos los correos adicionales se guarde.
+      const payload = { ...values, additionalEmails: (values.additionalEmails ?? []).map((e) => e.trim()).filter(Boolean) };
       if (isEditing) {
-        await api.patch(`/providers/${provider.id}`, values);
+        await api.patch(`/providers/${provider.id}`, payload);
         toast({ title: "Proveedor actualizado", description: "Los datos se guardaron correctamente." });
       } else {
-        await api.post('/providers', values);
+        await api.post('/providers', payload);
         toast({ title: "Proveedor creado", description: "El nuevo proveedor ha sido registrado." });
       }
       onSuccess();
@@ -166,7 +173,7 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
   };
 
   return (
-    <FormSheet open={open} onOpenChange={onOpenChange} title={isEditing ? "Editar Proveedor" : "Nuevo Proveedor"} description="Registra la información completa del proveedor para operaciones y pagos." widthClassName="sm:max-w-[700px]">
+    <FormSheet open={open} onOpenChange={onOpenChange} restoreKey={provider?.id ?? "nuevo"} title={isEditing ? "Editar Proveedor" : "Nuevo Proveedor"} description="Registra la información completa del proveedor para operaciones y pagos." widthClassName="sm:max-w-[700px]">
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
@@ -338,6 +345,16 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
                       )}
                     />
                   </div>
+                  <FormField
+                    control={form.control}
+                    name="additionalEmails"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold text-navy">Correos adicionales</FormLabel>
+                        <AdditionalEmailsField value={field.value ?? []} onChange={field.onChange} error={fieldState.error} placeholder="otro@proveedor.com" />
+                      </FormItem>
+                    )}
+                  />
                 </FormSection>
 
 
