@@ -40,7 +40,9 @@ interface QuotationsTableProps {
   isLoading: boolean;
   onEdit: (quotation: any) => void;
   onView: (quotation: any) => void;
-  onStatusChange: (id: string, newStatus: string) => void;
+  onStatusChange: (id: string, newStatus: string, options?: { sendEmail?: boolean }) => void;
+  /** Abre el diálogo para enviar (o reenviar) la cotización por correo. */
+  onSend: (quotation: { id: string; quotationNumber: string }) => void;
   onPreviewPDF: (quotation: any) => void;
   onDuplicate: (id: string) => void;
 }
@@ -51,6 +53,7 @@ export function QuotationsTable({
   onEdit,
   onView,
   onStatusChange,
+  onSend,
   onPreviewPDF,
   onDuplicate,
 }: QuotationsTableProps) {
@@ -166,9 +169,13 @@ export function QuotationsTable({
                           {/* Desde Borrador */}
                           {quotation.status === "Borrador" && (
                             <>
-                              <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Enviada")}>
+                              <DropdownMenuItem onClick={() => onSend(quotation)}>
                                 <Send className="mr-2 h-4 w-4 text-blue-500" /> 
-                                Marcar como Enviada
+                                Enviar por correo…
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Enviada", { sendEmail: false })}>
+                                <CheckCircle2 className="mr-2 h-4 w-4 text-slate-400" /> 
+                                Marcar como Enviada (sin correo)
                               </DropdownMenuItem>
                               <DropdownMenuItem className="text-destructive" onClick={() => onStatusChange(quotation.id, "Rechazada")}>
                                 <XCircle className="mr-2 h-4 w-4" /> 
@@ -180,6 +187,10 @@ export function QuotationsTable({
                           {/* Desde Enviada */}
                           {quotation.status === "Enviada" && (
                             <>
+                              <DropdownMenuItem onClick={() => onSend(quotation)}>
+                                <Send className="mr-2 h-4 w-4 text-blue-500" /> 
+                                Reenviar por correo…
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => onStatusChange(quotation.id, "Aceptada")}>
                                 <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" /> 
                                 Aceptar Cotización

@@ -10,6 +10,7 @@ import { QuotationsTable } from "./QuotationsTable";
 import { QuotationFormDialog } from "./QuotationFormDialog";
 import { QuotationDetailSheet } from "./QuotationDetailSheet";
 import { QuotationPDFPreview } from "./QuotationPDFPreview";
+import { SendQuotationDialog } from "./SendQuotationDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -77,8 +78,9 @@ export default function QuotationsPage() {
   const isLoading = list.isLoading;
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string, status: string }) => 
-      api.patch(`/quotations/${id}/status`, { status: status.toUpperCase() }), // enviar estado en MAYÚSCULAS como espera el backend
+    mutationFn: ({ id, status, sendEmail }: { id: string, status: string, sendEmail?: boolean }) =>
+      // Estado en MAYÚSCULAS como espera el backend; sendEmail:false = cambiar el estado sin el correo automático.
+      api.patch(`/quotations/${id}/status`, { status: status.toUpperCase(), ...(sendEmail === false ? { sendEmail: false } : {}) }),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
       toast({ title: "Estado actualizado", description: "La cotización ha cambiado de estado exitosamente." });
@@ -118,8 +120,17 @@ export default function QuotationsPage() {
   // deshabilitado, así que ese intento siempre fallaba en silencio (atrapado
   // por un catch que solo hacía console.error, y el toast de "éxito" nunca
   // llegaba a mostrarse).
-  const handleStatusChange = (id: string, newStatus: string) => {
-    updateStatusMutation.mutate({ id, status: newStatus });
+  const handleStatusChange = (id: string, newStatus: string, options?: { sendEmail?: boolean }) => {
+    updateStatusMutation.mutate({ id, status: newStatus, sendEmail: options?.sendEmail });
+  };
+
+  // Enviar por correo: abre el diálogo donde se revisa y edita el mensaje (ver SendQuotationDialog).
+  const [sendTarget, setSendTarget] = useState<{ id: string; quotationNumber: string } | null>(null);
+  const handleSent = (result: { quotationId: string; statusChanged: boolean }) => {
+    queryClient.invalidateQueries({ queryKey: ["quotations"] });
+    if (result.statusChanged && viewedQuotation?.id === result.quotationId) {
+      setViewedQuotation((prev) => ({ ...prev, status: formatStatus("ENVIADA") }));
+    }
   };
 
   const handleEdit = (quotation: any) => {
@@ -239,6 +250,7 @@ export default function QuotationsPage() {
               onEdit={handleEdit}
               onView={handleView}
               onStatusChange={handleStatusChange}
+              onSend={setSendTarget}
               onPreviewPDF={handlePreviewPDF}
               onDuplicate={handleDuplicate}
             />
@@ -262,6 +274,14 @@ export default function QuotationsPage() {
         client={viewedQuotation?.client}
         onEdit={handleEdit}
         onStatusChange={handleStatusChange}
+        onSend={setSendTarget}
+      />
+
+      <SendQuotationDialog
+        open={!!sendTarget}
+        onOpenChange={(open) => { if (!open) setSendTarget(null); }}
+        quotation={sendTarget}
+        onSent={handleSent}
       />
 
       <QuotationPDFPreview 

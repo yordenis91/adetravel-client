@@ -35,7 +35,9 @@ interface QuotationDetailSheetProps {
   request: any;
   client: any;
   onEdit: (quotation: any) => void;
-  onStatusChange: (id: string, newStatus: string) => void;
+  onStatusChange: (id: string, newStatus: string, options?: { sendEmail?: boolean }) => void;
+  /** Abre el diálogo para enviar (o reenviar) la cotización por correo. */
+  onSend: (quotation: { id: string; quotationNumber: string }) => void;
 }
 
 export function QuotationDetailSheet({
@@ -46,6 +48,7 @@ export function QuotationDetailSheet({
   client,
   onEdit,
   onStatusChange,
+  onSend,
 }: QuotationDetailSheetProps) {
   if (!quotation) return null;
 
@@ -96,12 +99,20 @@ export function QuotationDetailSheet({
           </div>
           <div className="flex items-center gap-2">
             {quotation.status === "Borrador" && (
-              <Button size="sm" onClick={() => onStatusChange(quotation.id, "Enviada")} className="gap-2 bg-blue-600 hover:bg-blue-700">
-                <Send className="w-3.5 h-3.5" /> Marcar como Enviada
-              </Button>
+              <>
+                <Button size="sm" onClick={() => onSend(quotation)} className="gap-2 bg-blue-600 hover:bg-blue-700">
+                  <Send className="w-3.5 h-3.5" /> Enviar por correo
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => onStatusChange(quotation.id, "Enviada", { sendEmail: false })} className="gap-2">
+                  Marcar como Enviada (sin correo)
+                </Button>
+              </>
             )}
             {quotation.status === "Enviada" && (
               <>
+                <Button size="sm" variant="outline" onClick={() => onSend(quotation)} className="gap-2">
+                  <Send className="w-3.5 h-3.5" /> Reenviar por correo
+                </Button>
                 <Button size="sm" onClick={() => onStatusChange(quotation.id, "Aceptada")} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Aceptar Cotización
                 </Button>
