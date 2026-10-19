@@ -21,6 +21,8 @@ import {
   Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { notificationIcon, notificationTarget } from "@/lib/notification-links";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -39,6 +41,7 @@ export default function NotificationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recientesFirst");
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -104,17 +107,8 @@ export default function NotificationsPage() {
   });
 
   const getIcon = (type?: string) => {
-    switch ((type || "").toUpperCase()) {
-      case "SUCCESS":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-      case "WARNING":
-        return <AlertCircle className="w-5 h-5 text-yellow-600" />;
-      case "ERROR":
-        return <AlertCircle className="w-5 h-5 text-red-600" />;
-      case "INFO":
-      default:
-        return <Info className="w-5 h-5 text-blue-600" />;
-    }
+    const { Icon, className } = notificationIcon(type);
+    return <Icon className={`w-5 h-5 ${className}`} />;
   };
 
   const getBgColor = (type?: string) => {
@@ -283,6 +277,11 @@ export default function NotificationsPage() {
                       >
                         <Check className="w-4 h-4 mr-1" />
                         Marcar como leída
+                      </Button>
+                    )}
+                    {notificationTarget(notification) && (
+                      <Button size="sm" variant="ghost" className="text-navy" onClick={() => navigate(notificationTarget(notification)!)}>
+                        Ver cotización
                       </Button>
                     )}
                     <Button

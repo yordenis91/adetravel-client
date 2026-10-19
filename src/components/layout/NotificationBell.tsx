@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNotifications } from "@/hooks/useNotifications";
+import { notificationIcon, notificationTarget } from "@/lib/notification-links";
 
 export function NotificationBell() {
   const navigate = useNavigate();
@@ -28,17 +29,8 @@ export function NotificationBell() {
   } = useNotifications();
 
   const getIcon = (type?: string) => {
-    switch ((type || "").toUpperCase()) {
-      case "SUCCESS":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-      case "WARNING":
-        return <AlertCircle className="w-5 h-5 text-yellow-600" />;
-      case "ERROR":
-        return <AlertCircle className="w-5 h-5 text-red-600" />;
-      case "INFO":
-      default:
-        return <Info className="w-5 h-5 text-blue-600" />;
-    }
+    const { Icon, className } = notificationIcon(type);
+    return <Icon className={`w-5 h-5 ${className}`} />;
   };
 
   return (
@@ -101,7 +93,11 @@ export function NotificationBell() {
             return (
               <DropdownMenuItem
                 key={n.id}
-                onClick={() => { if (!n.isRead) markAsRead(n.id); }}
+                onClick={() => {
+                  if (!n.isRead) markAsRead(n.id);
+                  const target = notificationTarget(n);
+                  if (target) { setIsOpen(false); navigate(target); }
+                }}
                 className={`flex gap-3 items-start px-3 py-3 cursor-pointer ${bg} hover:bg-slate-100 transition-colors`}
               >
                 <div className="flex-shrink-0 mt-0.5">

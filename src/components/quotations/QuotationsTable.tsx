@@ -32,8 +32,8 @@ import {
   RefreshCw,
   Calendar
 } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { trackingBadge, formatDateOnly } from "@/lib/quotationOnline";
+import { cn } from "@/lib/utils";
 
 interface QuotationsTableProps {
   quotations: any[];
@@ -133,7 +133,7 @@ export function QuotationsTable({
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Calendar className="w-3 h-3" />
                     <span className="text-xs">
-                      {quotation.validUntil ? format(new Date(quotation.validUntil), "dd MMM, yyyy", { locale: es }) : "---"}
+                      {formatDateOnly(quotation.validUntil, "dd MMM, yyyy")}
                     </span>
                   </div>
                 </TableCell>
@@ -143,7 +143,26 @@ export function QuotationsTable({
                   </p>
                 </TableCell>
                 <TableCell>
-                  <QuotationStatusBadge status={quotation.status} />
+                  <div className="flex flex-col items-start gap-1">
+                    <QuotationStatusBadge status={quotation.status} />
+                    {(() => {
+                      const badge = trackingBadge(quotation.status, quotation.tracking);
+                      return badge ? (
+                        <span
+                          title={badge.title}
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold",
+                            badge.tone === "success" && "bg-emerald-100 text-emerald-700",
+                            badge.tone === "info" && "bg-sky-50 text-sky-700",
+                            badge.tone === "warning" && "bg-amber-100 text-amber-800",
+                            badge.tone === "neutral" && "bg-slate-100 text-slate-500"
+                          )}
+                        >
+                          {badge.label}
+                        </span>
+                      ) : null;
+                    })()}
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">

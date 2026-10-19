@@ -22,11 +22,11 @@ import {
   Clock,
   Briefcase
 } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
 import { whatsAppMessages } from "@/lib/whatsapp";
+import { QuotationOnlinePanel } from "./QuotationOnlinePanel";
+import { formatDateOnly } from "@/lib/quotationOnline";
 
 interface QuotationDetailSheetProps {
   open: boolean;
@@ -85,7 +85,7 @@ export function QuotationDetailSheet({
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1">Válida Hasta</span>
               <div className="flex items-center gap-2 text-navy font-bold">
                 <Calendar className="w-4 h-4 text-gold" />
-                {quotation.validUntil ? format(new Date(quotation.validUntil), "dd MMMM, yyyy", { locale: es }) : "N/A"}
+                {quotation.validUntil ? formatDateOnly(quotation.validUntil, "dd MMMM, yyyy") : "N/A"}
               </div>
             </div>
           </div>
@@ -124,8 +124,15 @@ export function QuotationDetailSheet({
           </div>
         </div>
 
-        <ScrollArea className="flex-1 px-8 py-8">
+        <ScrollArea className="flex-1 px-4 py-6 sm:px-8 sm:py-8 [&_[data-radix-scroll-area-viewport]>div]:!block">
           <div className="space-y-10">
+            {/* 0. Seguimiento en línea: aperturas, aceptación pedida, enlace para compartir y envíos programados */}
+            <QuotationOnlinePanel
+              quotationId={quotation.id}
+              status={quotation.status}
+              onConfirmAcceptance={() => onStatusChange(quotation.id, "Aceptada")}
+            />
+
             {/* 1. Información de Partes */}
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-3">
@@ -163,8 +170,8 @@ export function QuotationDetailSheet({
             {/* 2. Detalle de Servicios */}
             <div className="space-y-4">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Servicios y Tarifas</h3>
-              <div className="rounded-2xl border border-slate-100 overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="rounded-2xl border border-slate-100 overflow-x-auto">
+                <table className="w-full min-w-[460px] text-sm">
                   <thead>
                     <tr className="bg-slate-50/50 border-b border-slate-100">
                       <th className="text-left py-4 px-6 font-bold text-navy/60 uppercase text-[10px]">Servicio</th>

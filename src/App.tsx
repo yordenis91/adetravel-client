@@ -25,6 +25,7 @@ const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 const TermsOfService = React.lazy(() => import("./pages/legal/TermsOfService"));
 const PrivacyPolicy = React.lazy(() => import("./pages/legal/PrivacyPolicy"));
+const PublicQuotation = React.lazy(() => import("./pages/PublicQuotation"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Clients = React.lazy(() => import("./pages/Clients"));
 const ClientTimeline = React.lazy(() => import("@/pages/ClientTimeline"));
@@ -120,6 +121,8 @@ const App = () => (
               <Route path="/auth/register" element={<Suspense fallback={<PublicPageFallback />}><Register /></Suspense>} />
               <Route path="/auth/forgot-password" element={<Suspense fallback={<PublicPageFallback />}><ForgotPassword /></Suspense>} />
               <Route path="/auth/reset-password/:token" element={<Suspense fallback={<PublicPageFallback />}><ResetPassword /></Suspense>} />
+              {/* Cotización en línea: la abre el cliente final con el enlace que le envió su agente (sin sesión) */}
+              <Route path="/c/:code" element={<Suspense fallback={<PublicPageFallback />}><PublicQuotation /></Suspense>} />
               <Route path="/legal/terminos-de-servicio" element={<Suspense fallback={<PublicPageFallback />}><TermsOfService /></Suspense>} />
               <Route path="/legal/politica-de-privacidad" element={<Suspense fallback={<PublicPageFallback />}><PrivacyPolicy /></Suspense>} />
 
