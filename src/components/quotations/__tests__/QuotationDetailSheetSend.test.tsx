@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+// El seguimiento en línea tiene sus propias pruebas (QuotationOnlinePanel.test); aquí solo se comprueba que se monta.
+const panel = vi.fn((_: { quotationId: string; status: string; onConfirmAcceptance: () => void }) => <div data-testid="panel-en-linea" />);
+vi.mock("../QuotationOnlinePanel", () => ({ QuotationOnlinePanel: (props: Parameters<typeof panel>[0]) => panel(props) }));
+
 import { QuotationDetailSheet } from "../QuotationDetailSheet";
 
 // Acciones de envío del panel de detalle: enviar por correo (editable) o marcar como enviada sin correo.
@@ -49,5 +53,19 @@ describe("QuotationDetailSheet: envío", () => {
   it("en Aceptada no se ofrece enviar", () => {
     setup("Aceptada");
     expect(screen.queryByRole("button", { name: /correo/ })).not.toBeInTheDocument();
+  });
+
+  it("muestra el seguimiento en línea y confirmar la aceptación pasa la cotización a Aceptada", () => {
+    const { onStatusChange } = setup("Enviada");
+    expect(screen.getByTestId("panel-en-linea")).toBeInTheDocument();
+    const props = panel.mock.calls.at(-1)![0];
+    expect(props).toMatchObject({ quotationId: "q1", status: "Enviada" });
+    props.onConfirmAcceptance();
+    expect(onStatusChange).toHaveBeenCalledWith("q1", "Aceptada");
+  });
+
+  it("la fecha de vigencia se muestra sin el desfase de zona horaria (31 de diciembre sigue siendo 31)", () => {
+    setup("Enviada");
+    expect(screen.getByText(/31 diciembre, 2099/i)).toBeInTheDocument();
   });
 });

@@ -43,8 +43,11 @@ export default function QuotationsPage() {
   // Paginado, búsqueda (N° de cotización) y pestañas de estado en el servidor. Cliente y solicitud
   // vienen incrustados en cada cotización: no hace falta pedir sus listas.
   const debouncedSearch = useDebouncedValue(search.trim());
+  // «Sin abrir» y «Quieren aceptar» son filtros de seguimiento (cotizaciones Enviadas con enlace en línea).
+  const trackingTab = statusTab === "SinAbrir" ? "unopened" : statusTab === "QuierenAceptar" ? "acceptance" : undefined;
   const list = usePagedList("quotations", "/quotations", {
-    status: statusTab === "Todas" ? undefined : statusTab.toUpperCase(),
+    status: trackingTab || statusTab === "Todas" ? undefined : statusTab.toUpperCase(),
+    tracking: trackingTab,
     search: debouncedSearch,
   });
 
@@ -128,6 +131,8 @@ export default function QuotationsPage() {
   const [sendTarget, setSendTarget] = useState<{ id: string; quotationNumber: string } | null>(null);
   const handleSent = (result: { quotationId: string; statusChanged: boolean }) => {
     queryClient.invalidateQueries({ queryKey: ["quotations"] });
+    queryClient.invalidateQueries({ queryKey: ["quotation-link", result.quotationId] });
+    queryClient.invalidateQueries({ queryKey: ["quotation-scheduled", result.quotationId] });
     if (result.statusChanged && viewedQuotation?.id === result.quotationId) {
       setViewedQuotation((prev) => ({ ...prev, status: formatStatus("ENVIADA") }));
     }
@@ -157,6 +162,8 @@ export default function QuotationsPage() {
     borrador: useListTotal("quotations", "/quotations", { status: "BORRADOR" }) ?? 0,
     enviadas: useListTotal("quotations", "/quotations", { status: "ENVIADA" }) ?? 0,
     aceptadas: useListTotal("quotations", "/quotations", { status: "ACEPTADA" }) ?? 0,
+    sinAbrir: useListTotal("quotations", "/quotations", { tracking: "unopened" }) ?? 0,
+    quierenAceptar: useListTotal("quotations", "/quotations", { tracking: "acceptance" }) ?? 0,
   };
 
   return (
@@ -224,6 +231,12 @@ export default function QuotationsPage() {
               <TabsTrigger value="Enviada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Enviadas</TabsTrigger>
               <TabsTrigger value="Aceptada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Aceptadas</TabsTrigger>
               <TabsTrigger value="Rechazada" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">Rechazadas</TabsTrigger>
+              <TabsTrigger value="SinAbrir" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">
+                Sin abrir{stats.sinAbrir > 0 && <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 text-amber-800">{stats.sinAbrir}</span>}
+              </TabsTrigger>
+              <TabsTrigger value="QuierenAceptar" className="text-[10px] font-bold uppercase tracking-wider px-3 h-8">
+                Quieren aceptar{stats.quierenAceptar > 0 && <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 text-emerald-700">{stats.quierenAceptar}</span>}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
 
