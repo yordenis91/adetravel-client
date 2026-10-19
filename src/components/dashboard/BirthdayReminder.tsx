@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -19,6 +19,7 @@ import {
   SheetFooter
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Cake, 
   Send, 
@@ -27,7 +28,8 @@ import {
   PartyPopper,
   Calendar,
   Loader2,
-  Mail
+  Mail,
+  RotateCcw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -39,6 +41,24 @@ export function BirthdayReminder() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [sendingStatus, setSendingStatus] = useState<string | 'all' | null>(null);
+  // Saludo editado para el cliente de la vista previa (null = el de la plantilla). Se envía solo si se cambió.
+  const [editedMessage, setEditedMessage] = useState<string | null>(null);
+  const [debouncedMessage, setDebouncedMessage] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedMessage(editedMessage), 400);
+    return () => clearTimeout(t);
+  }, [editedMessage]);
+
+  // Vista previa del correo tal como saldrá: la arma el servidor con la plantilla activa (Configuración > Plantillas).
+  const { data: preview, isFetching: previewLoading, isError: previewError } = useQuery({
+    queryKey: ["birthday-preview", selectedClient?.id, debouncedMessage],
+    queryFn: async () =>
+      ((await api.post('/clients/birthday/preview', { clientId: selectedClient.id, ...(debouncedMessage ? { message: debouncedMessage } : {}) })) as { data: { subject: string; html: string; message: string } }).data,
+    enabled: isPreviewOpen && !!selectedClient,
+    placeholderData: keepPreviousData,
+    staleTime: 0,
+  });
 
   // 1. Obtener clientes desde la API
   const { data: clientsData, isLoading } = useQuery({
@@ -82,24 +102,35 @@ export function BirthdayReminder() {
   }, [clientsData]);
 
   // 3. Manejador de envío a través de nuestro Backend Enterprise
-  const handleSendEmails = async (clientIds: string[], type: string | 'all') => {
+  const handleSendEmails = async (clientIds: string[], type: string | 'all', messages?: Record<string, string>) => {
     try {
       setSendingStatus(type);
-      
-      // Llamamos a la ruta que armaste en el backend
-      await api.post('/clients/birthday', { clientIds });
-      
-      toast({
-        title: type === 'all' ? "Envío masivo completado" : "¡Correo enviado!",
-        description: type === 'all' 
-          ? `Se enviaron ${clientIds.length} saludos de cumpleaños correctamente.`
-          : `Se ha enviado el saludo de cumpleaños con éxito.`,
-        className: "bg-emerald-50 border-emerald-200 text-emerald-800",
-      });
-      
+      const res = (await api.post('/clients/birthday', { clientIds, ...(messages ? { messages } : {}) })) as { sent?: number; skipped?: number; failed?: number };
+      const sent = res?.sent ?? clientIds.length;
+      const failed = res?.failed ?? 0;
+      const skipped = res?.skipped ?? 0;
+
+      if (sent === 0) {
+        toast({
+          variant: "destructive",
+          title: failed > 0 ? "El correo no salió" : "No se envió ningún correo",
+          description: failed > 0
+            ? "No se pudo enviar el saludo (revisa la configuración de correo). Puedes intentarlo de nuevo."
+            : "Ya estaba felicitado este año o el cliente no tiene correo.",
+        });
+      } else {
+        toast({
+          title: type === 'all' ? "Envío masivo completado" : "¡Correo enviado!",
+          description: sent === 1 && failed === 0 && skipped === 0
+            ? "Se ha enviado el saludo de cumpleaños con éxito."
+            : `Se enviaron ${sent} saludo${sent !== 1 ? 's' : ''}${failed ? `; ${failed} no salió${failed !== 1 ? 'eron' : ''}` : ''}${skipped ? `; ${skipped} se omitió${skipped !== 1 ? ' (ya felicitados o sin correo)' : ' (ya felicitado o sin correo)'}` : ''}.`,
+          className: failed ? undefined : "bg-emerald-50 border-emerald-200 text-emerald-800",
+        });
+      }
+
       // Refrescar los clientes para que se muevan a la lista de "Enviados"
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-      setIsPreviewOpen(false);
+      if (sent > 0) setIsPreviewOpen(false);
     } catch (error) {
       toast({
         variant: "destructive",
@@ -113,6 +144,8 @@ export function BirthdayReminder() {
 
   const handlePreview = (client: any) => {
     setSelectedClient(client);
+    setEditedMessage(null);
+    setDebouncedMessage(null);
     setIsPreviewOpen(true);
   };
 
@@ -129,25 +162,6 @@ export function BirthdayReminder() {
   const hasPending = pendingBirthdays.length > 0;
   const hasSent = sentBirthdays.length > 0;
   const allSent = hasSent && !hasPending;
-
-  // Plantilla HTML de respaldo para la Vista Previa
-  const getPreviewHtml = (client: any) => `
-    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #f1f5f9; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-      <div style="background-color: #0f172a; padding: 30px 20px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-family: Georgia, serif;">¡Feliz Cumpleaños!</h1>
-      </div>
-      <div style="padding: 30px 20px; background-color: #ffffff; text-align: center;">
-        <p style="font-size: 18px; color: #334155; margin-bottom: 20px;">Estimado/a <strong>${client?.firstName} ${client?.lastName}</strong>,</p>
-        <p style="color: #64748b; line-height: 1.6; margin-bottom: 30px;">En nombre de todo el equipo de ADE Travel, queremos desearte un día maravilloso lleno de alegría y rodeado de tus seres queridos. ¡Que este nuevo año de vida venga cargado de nuevos viajes y aventuras inolvidables!</p>
-        <div style="display: inline-block; padding: 12px 24px; background-color: #f8fafc; color: #0f172a; border-radius: 8px; font-weight: bold; border: 1px solid #e2e8f0;">
-          🎉 ¡Disfruta tu día al máximo!
-        </div>
-      </div>
-      <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
-        ADE Travel &copy; ${new Date().getFullYear()}
-      </div>
-    </div>
-  `;
 
   return (
     <>
@@ -283,33 +297,55 @@ export function BirthdayReminder() {
               Vista Previa
             </SheetTitle>
             <SheetDescription>
-              Así es como {selectedClient?.firstName} recibirá su felicitación.
+              Así recibirá {selectedClient?.firstName} su felicitación. Puedes personalizar el mensaje antes de enviar.
             </SheetDescription>
           </SheetHeader>
 
           {selectedClient && (
             <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="birthday-message" className="text-xs font-bold text-slate-600">Mensaje para {selectedClient.firstName}</label>
+                  {editedMessage !== null && (
+                    <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => setEditedMessage(null)}>
+                      <RotateCcw className="w-3 h-3" /> Restablecer
+                    </Button>
+                  )}
+                </div>
+                <Textarea
+                  id="birthday-message"
+                  rows={4}
+                  maxLength={2000}
+                  value={editedMessage ?? preview?.message ?? ""}
+                  onChange={(e) => setEditedMessage(e.target.value)}
+                  placeholder="Escribe un saludo personal para este cliente"
+                />
+                <p className="text-[11px] text-muted-foreground">Es el texto central del correo. Si no lo cambias, se usa el de la plantilla.</p>
+              </div>
+
               <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
                 <div className="bg-slate-100/50 border-b border-slate-200 p-4 text-xs space-y-2">
-                  <div className="flex gap-2">
-                    <span className="font-bold text-slate-500 w-16">De:</span>
-                    <span className="text-navy font-medium">ADE Travel &lt;info@adetravel.cl&gt;</span>
-                  </div>
                   <div className="flex gap-2">
                     <span className="font-bold text-slate-500 w-16">Para:</span>
                     <span className="text-navy">{selectedClient.email}</span>
                   </div>
                   <div className="flex gap-2">
                     <span className="font-bold text-slate-500 w-16">Asunto:</span>
-                    <span className="font-bold text-navy">¡Feliz Cumpleaños, {selectedClient.firstName}! 🎂</span>
+                    <span className="font-bold text-navy">{preview?.subject ?? ""}</span>
                   </div>
                 </div>
-                
-                {/* Renderizado de HTML Seguro */}
-                <div 
-                  className="bg-white p-6 flex justify-center"
-                  dangerouslySetInnerHTML={{ __html: getPreviewHtml(selectedClient) }}
-                />
+
+                {previewError && !preview ? (
+                  <p role="alert" className="p-6 text-sm text-red-700">No se pudo cargar la vista previa.</p>
+                ) : (
+                  // iframe aislado: la plantilla es HTML de Configuración y no debe tocar la aplicación.
+                  <iframe
+                    title="Vista previa del correo"
+                    sandbox=""
+                    srcDoc={preview?.html ?? ""}
+                    className={cn("w-full h-[420px] bg-white transition-opacity", previewLoading && "opacity-60")}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -321,7 +357,7 @@ export function BirthdayReminder() {
             <Button 
               className="bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-md"
               disabled={sendingStatus !== null}
-              onClick={() => handleSendEmails([selectedClient.id], selectedClient.id)}
+              onClick={() => handleSendEmails([selectedClient.id], selectedClient.id, editedMessage?.trim() ? { [selectedClient.id]: editedMessage.trim() } : undefined)}
             >
               {sendingStatus === selectedClient?.id ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
