@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { 
-  Plus, Mail, Search, Edit2, Trash2, CheckCircle2, XCircle, FileText, Calculator, CheckCircle, Ticket
+  Plus, Mail, Search, Edit2, Trash2, CheckCircle2, XCircle, FileText, Calculator, CheckCircle, Ticket, Cake
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +71,7 @@ export default function EmailTemplatesPage() {
       case 'green': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'purple': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'amber': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'pink': return 'bg-pink-100 text-pink-700 border-pink-200';
       default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
@@ -81,6 +82,7 @@ export default function EmailTemplatesPage() {
       case 'PAYMENT_CONFIRMED': return CheckCircle;
       case 'VOUCHER_ISSUED': return Ticket;
       case 'REQUEST_CREATED': return FileText;
+      case 'BIRTHDAY_GREETING': return Cake;
       default: return Mail;
     }
   };
