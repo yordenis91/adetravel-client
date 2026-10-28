@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { coerceNumber } from "@/lib/zod-helpers";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -38,7 +39,7 @@ const formSchema = z.object({
   quotationId: z.string().optional().nullable(),
   clientId: z.string().min(1, "El cliente es requerido"),
   paymentNumber: z.string(),
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+  amount: coerceNumber().positive("El monto debe ser mayor a 0"),
   currency: z.string().min(1, "La moneda es requerida"),
   paymentDate: z.string().min(1, "La fecha es requerida"),
   method: z.string().min(1, "El método es requerido"),

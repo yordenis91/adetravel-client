@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { coerceNumber } from "@/lib/zod-helpers";
 import { useQuery } from "@tanstack/react-query";
 import { api, getErrorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -25,9 +26,9 @@ const confirmationSchema = z.object({
   serviceId: z.string().optional().nullable(),
   providerId: z.string().min(1, "El proveedor es obligatorio"),
   providerConfirmationNumber: z.string().optional(),
-  price: z.coerce.number().min(0, "El precio no puede ser negativo"),
+  price: coerceNumber().min(0, "El precio no puede ser negativo"),
   validUntil: z.string().optional(),
-  exchangeRate: z.coerce.number().optional(),
+  exchangeRate: coerceNumber().optional(),
   notes: z.string().optional(),
 });
 

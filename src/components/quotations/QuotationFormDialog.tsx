@@ -74,7 +74,7 @@ export function QuotationFormDialog({ open, onOpenChange, quotation, onSuccess }
     { enabled: open }
   );
 
-  const form = useForm<QuotationFormValues>({
+  const form = useForm<z.input<typeof quotationSchema>, unknown, QuotationFormValues>({
     resolver: zodResolver(quotationSchema),
     defaultValues: {
       requestId: "",

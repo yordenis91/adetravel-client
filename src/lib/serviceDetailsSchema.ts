@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { coerceNumber } from "@/lib/zod-helpers";
 
 // Espejo en frontend de adetravel-api/src/validators/services.validator.ts (campo `details`).
 
@@ -36,7 +37,7 @@ const alojamientoRoomSchema = z.object({
 
 const alojamientoDetailsSchema = z.object({
   type: z.literal("ALOJAMIENTO"),
-  roomCount: z.coerce.number().int().min(1, "La cantidad de habitaciones es obligatoria"),
+  roomCount: coerceNumber().int().min(1, "La cantidad de habitaciones es obligatoria"),
   rooms: z.array(alojamientoRoomSchema).min(1, "Debe indicar al menos una habitación"),
   checkIn: z.string().min(1, "La fecha de entrada es obligatoria"),
   checkOut: z.string().min(1, "La fecha de salida es obligatoria"),
@@ -46,12 +47,12 @@ const alojamientoDetailsSchema = z.object({
   hotelCountry: z.string().optional(),
   hotelRegion: z.string().optional(),
   hotelChain: z.string().min(1, "La cadena hotelera es obligatoria"),
-  starRating: z.coerce.number().int().min(1).max(5).optional(),
-  netRate: z.coerce.number().min(0).optional(),
-  commissionableRate: z.coerce.number().min(0).optional(),
-  commissionPercentage: z.coerce.number().min(0).max(100).optional(),
+  starRating: coerceNumber().int().min(1).max(5).optional(),
+  netRate: coerceNumber().min(0).optional(),
+  commissionableRate: coerceNumber().min(0).optional(),
+  commissionPercentage: coerceNumber().min(0).max(100).optional(),
   includesVat: z.boolean().optional(),
-  vatValue: z.coerce.number().min(0).optional(),
+  vatValue: coerceNumber().min(0).optional(),
 });
 
 const pasajeAereoDetailsSchema = z.object({
@@ -81,7 +82,7 @@ const arriendoAutoDetailsSchema = z.object({
   carBrand: z.string().optional(),
   carModel: z.string().optional(),
   unlimitedMileage: z.boolean(),
-  mileageLimitPerDay: z.coerce.number().min(0).optional(),
+  mileageLimitPerDay: coerceNumber().min(0).optional(),
   arrivalFlightDateTime: z.string().optional(),
   departureFlightDateTime: z.string().optional(),
 });
@@ -92,8 +93,8 @@ const excursionDetailsSchema = z.object({
   startDateTime: z.string().min(1, "La fecha y hora de comienzo es obligatoria"),
   endDateTime: z.string().optional(),
   excursionName: z.string().min(1, "El nombre de la excursión es obligatorio"),
-  adultsCount: z.coerce.number().int().min(1, "La cantidad de adultos es obligatoria"),
-  childrenCount: z.coerce.number().int().min(0).default(0),
+  adultsCount: coerceNumber().int().min(1, "La cantidad de adultos es obligatoria"),
+  childrenCount: coerceNumber().int().min(0).default(0),
 });
 
 const trasladoDetailsSchema = z.object({
@@ -103,9 +104,9 @@ const trasladoDetailsSchema = z.object({
   endDateTime: z.string().optional(),
   originAddress: z.string().min(1, "La dirección de origen es obligatoria"),
   destinationAddress: z.string().min(1, "La dirección de destino es obligatoria"),
-  infantsCount: z.coerce.number().int().min(0).default(0),
-  childrenCount: z.coerce.number().int().min(0).default(0),
-  adultsCount: z.coerce.number().int().min(0).default(0),
+  infantsCount: coerceNumber().int().min(0).default(0),
+  childrenCount: coerceNumber().int().min(0).default(0),
+  adultsCount: coerceNumber().int().min(0).default(0),
   arrivalFlightDateTime: z.string().optional(),
   departureFlightDateTime: z.string().optional(),
 });
@@ -115,8 +116,8 @@ const cruceroDetailsSchema = z.object({
   clientName: z.string().min(1, "El nombre del cliente es obligatorio"),
   cruiseName: z.string().min(1, "El nombre del crucero es obligatorio"),
   cabinType: z.enum(["INTERNA", "EXTERNA"]),
-  cabinCount: z.coerce.number().int().min(1).optional(),
-  passengerCount: z.coerce.number().int().min(1).optional(),
+  cabinCount: coerceNumber().int().min(1).optional(),
+  passengerCount: coerceNumber().int().min(1).optional(),
   route: z.string().optional(),
 });
 
@@ -126,7 +127,7 @@ const circuitoDetailsSchema = z.object({
   circuitName: z.string().min(1, "El nombre del circuito es obligatorio"),
   startDate: z.string().min(1, "La fecha de inicio es obligatoria"),
   endDate: z.string().optional(),
-  passengerCount: z.coerce.number().int().min(1).optional(),
+  passengerCount: coerceNumber().int().min(1).optional(),
   route: z.string().optional(),
 });
 
