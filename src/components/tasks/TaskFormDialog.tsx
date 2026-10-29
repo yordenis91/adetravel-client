@@ -81,7 +81,7 @@ export function TaskFormDialog({
   });
   const assignableUsers = extractArrayFromResponse(usersResponse as any);
 
-  const form = useForm<TaskFormValues>({
+  const form = useForm<z.input<typeof taskSchema>, unknown, TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       title: "",

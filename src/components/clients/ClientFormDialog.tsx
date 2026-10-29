@@ -66,7 +66,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSuccess }: Clie
   const { data: nationalities } = useCatalog("nationalities");
   const { data: countries } = useCatalog("countries");
 
-  const form = useForm<ClientFormValues>({
+  const form = useForm<z.input<typeof clientSchema>, unknown, ClientFormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       firstName: "",

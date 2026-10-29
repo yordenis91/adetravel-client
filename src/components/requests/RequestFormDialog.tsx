@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { coerceNumber } from "@/lib/zod-helpers";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -30,9 +31,9 @@ const requestSchema = z.object({
   originCity: z.string().optional(),
   destinationCountry: z.string().min(1, "País destino es requerido"),
   destinationCity: z.string().min(1, "Ciudad destino es requerida"),
-  durationDays: z.coerce.number().min(1, "Mínimo 1 día"),
-  budgetMin: z.coerce.number().optional(),
-  budgetMax: z.coerce.number().optional(),
+  durationDays: coerceNumber().min(1, "Mínimo 1 día"),
+  budgetMin: coerceNumber().optional(),
+  budgetMax: coerceNumber().optional(),
   status: z.string().default("RECEPCIONADA"),
   description: z.string().optional(),
 }).refine(data => {
@@ -65,7 +66,7 @@ export function RequestFormDialog({ open, onOpenChange, request, onSuccess }: Re
   });
   const { data: countries } = useCatalog("countries");
 
-  const form = useForm<RequestFormValues>({
+  const form = useForm<z.input<typeof requestSchema>, unknown, RequestFormValues>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
       clientId: "",
