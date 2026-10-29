@@ -19,6 +19,16 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // La v7 del plugin añade reglas pensadas para el React Compiler, que este proyecto no usa:
+      // marcan patrones válidos (setState en efectos, Date.now en render, etc.). Se mantienen
+      // rules-of-hooks y exhaustive-deps, que sí atrapan errores reales.
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/globals": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/incompatible-library": "off",
+
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
