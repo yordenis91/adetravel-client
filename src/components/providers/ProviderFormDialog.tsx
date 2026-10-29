@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { coerceNumber } from "@/lib/zod-helpers";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -49,7 +50,7 @@ const providerSchema = z.object({
   bankAccount: z.string().optional(),
   bankAccountHolder: z.string().optional(),
   paymentMethod: z.string().optional(),
-  vatPercentage: z.coerce.number().optional(),
+  vatPercentage: coerceNumber().optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -67,7 +68,7 @@ export function ProviderFormDialog({ open, onOpenChange, provider, onSuccess }: 
   const { data: countries } = useCatalog("countries");
   const isEditing = !!provider;
 
-  const form = useForm<ProviderFormValues>({
+  const form = useForm<z.input<typeof providerSchema>, unknown, ProviderFormValues>({
     resolver: zodResolver(providerSchema),
     defaultValues: {
       name: "",
