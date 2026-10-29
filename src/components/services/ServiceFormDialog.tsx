@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { coerceNumber } from "@/lib/zod-helpers";
 import { useQuery } from "@tanstack/react-query";
 import { api, getErrorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ const serviceSchema = z.object({
   type: z.enum(SERVICE_TYPES),
   providerId: z.string().optional().nullable(),
   clientId: z.string().optional().nullable(),
-  price: z.coerce.number().min(0).optional().nullable(),
+  price: coerceNumber().min(0).optional().nullable(),
   currency: z.enum(["CLP", "USD"]).default("CLP"),
   details: serviceDetailsSchema,
 }).refine((data) => data.type === data.details.type, {
@@ -54,7 +55,7 @@ export function ServiceFormDialog({ open, onOpenChange, requestId, defaultClient
 
   const providerOptions = useProviderOptions(open);
 
-  const form = useForm<ServiceFormValues>({
+  const form = useForm<z.input<typeof serviceSchema>, unknown, ServiceFormValues>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
       type: "ALOJAMIENTO",

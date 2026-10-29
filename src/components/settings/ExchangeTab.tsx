@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { coerceNumber } from "@/lib/zod-helpers";
 import { 
   Card, 
   CardContent, 
@@ -55,7 +56,7 @@ const rateSchema = z.object({
   fromCurrency: z.string().min(1, "Moneda origen es requerida"),
   toCurrency: z.string().min(1, "Moneda destino es requerida"),
   label: z.string().min(1, "Etiqueta es requerida"),
-  rate: z.coerce.number().positive("La tasa debe ser mayor a 0"),
+  rate: coerceNumber().positive("La tasa debe ser mayor a 0"),
   isActive: z.boolean().default(true),
 }).refine(data => data.fromCurrency !== data.toCurrency, {
   message: "La moneda de origen y destino deben ser diferentes",
@@ -142,7 +143,7 @@ export default function ExchangeTab({ config, configId }: ExchangeTabProps) {
     setCustomMinutes(INTERVAL_PRESETS.some((p) => p.minutes === minutes) ? "" : String(minutes));
   }, [config?.exchangeAutoSync, config?.exchangeSyncIntervalMinutes]);
 
-  const form = useForm<RateFormValues>({
+  const form = useForm<z.input<typeof rateSchema>, unknown, RateFormValues>({
     resolver: zodResolver(rateSchema),
     defaultValues: {
       fromCurrency: "USD",

@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { coerceNumber } from "@/lib/zod-helpers";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -54,7 +55,7 @@ const formSchema = z.object({
   passengerNames: z.array(z.string()).min(1, "Debe agregar al menos un pasajero"),
   confirmationCode: z.string().optional(),
   status: z.string().min(1, "El estado es requerido"),
-  amount: z.coerce.number().optional(),
+  amount: coerceNumber().optional(),
   currency: z.string().optional(),
   notes: z.string().optional(),
 });
