@@ -52,7 +52,7 @@ const formSchema = z.object({
   checkIn: z.string().min(1, "La fecha de inicio es requerida"),
   checkOut: z.string().min(1, "La fecha de fin es requerida"),
   destination: z.string().min(1, "El destino es requerido"),
-  passengerNames: z.array(z.string()).min(1, "Debe agregar al menos un pasajero"),
+  passengerNames: z.array(z.string().trim().min(1, "Escribe el nombre del pasajero")).min(1, "Debe agregar al menos un pasajero"),
   confirmationCode: z.string().optional(),
   status: z.string().min(1, "El estado es requerido"),
   amount: coerceNumber().optional(),
@@ -393,6 +393,7 @@ export function VoucherFormDialog({ open, onOpenChange, voucher }: VoucherFormDi
                           <FormControl>
                             <Input placeholder="Nombre Completo del Pasajero" aria-label={`Pasajero ${index + 1}`} {...field} />
                           </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
